@@ -85,3 +85,16 @@ body::after {
   background: rgba(200, 169, 110, 0.25);
   color: var(--accent-light);
 }
+
+/* Cheat Sheet print */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .cheatsheet-page {
+    padding: 16px;
+  }
+  .cheatsheet-content {
+    break-inside: avoid;
+  }
+}
