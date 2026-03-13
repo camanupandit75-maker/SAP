@@ -3268,52 +3268,961 @@ function SimulatorShell({ state, setState }) {
   );
 }
 
-function SimulatorScreen({ state }) {
-  // For brevity, this demo shows the active T-code name and a placeholder.
-  // Realistic field-level simulation can extend from this shell without
-  // affecting the learning platform.
-  return (
-    <div>
-      <div
-        style={{
-          background: SAP_SIM.headerBg,
-          color: SAP_SIM.headerText,
-          padding: '8px 12px',
-          borderRadius: 6,
-          marginBottom: 12,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <div style={{ fontSize: 13, fontWeight: 600 }}>
-          Transaction {state.currentTcode}
-        </div>
-        <div style={{ fontSize: 11, opacity: 0.9 }}>
-          Training system · Demo data only
-        </div>
+function SimulatorScreen({ state, setState }) {
+  const header = (
+    <div
+      style={{
+        background: SAP_SIM.headerBg,
+        color: SAP_SIM.headerText,
+        padding: '8px 12px',
+        borderRadius: 6,
+        marginBottom: 12,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+      }}
+    >
+      <div style={{ fontSize: 13, fontWeight: 600 }}>
+        Transaction {state.currentTcode}
       </div>
-      <div
-        style={{
-          background: '#ffffff',
-          borderRadius: 6,
-          border: '1px solid #e5e7eb',
-          padding: 16,
-          fontSize: 12,
-          color: '#111827',
-        }}
-      >
-        <div style={{ marginBottom: 8, fontWeight: 600 }}>
-          SAP Simulator placeholder
-        </div>
-        <div style={{ color: '#4b5563', lineHeight: 1.6 }}>
-          This shell behaves like the SAP GUI: you can switch transactions from
-          the left sidebar or via the command field above. Implementing full
-          field-level behaviour and document posting can be layered on top of
-          this shell without touching the learning platform code.
-        </div>
+      <div style={{ fontSize: 11, opacity: 0.9 }}>
+        Training system · Demo data only
       </div>
     </div>
+  );
+
+  const code = state.currentTcode;
+
+  let body;
+  switch (code) {
+    case 'FB50':
+      body = <SimFB50 state={state} setState={setState} />;
+      break;
+    case 'FB03':
+      body = <SimFB03 state={state} />;
+      break;
+    case 'FBL3N':
+      body = <SimFBL3N state={state} />;
+      break;
+    case 'FB60':
+      body = <SimFB60 state={state} setState={setState} />;
+      break;
+    case 'F-53':
+      body = <SimF53 state={state} setState={setState} />;
+      break;
+    case 'F110':
+      body = <SimF110 state={state} setState={setState} />;
+      break;
+    case 'FBL1N':
+      body = <SimFBL1N state={state} />;
+      break;
+    case 'FBL5N':
+      body = <SimFBL5N state={state} />;
+      break;
+    case 'F.01':
+      body = <SimF01 state={state} />;
+      break;
+    case 'FF67':
+      body = <SimFF67 state={state} />;
+      break;
+    case 'FEBAN':
+      body = <SimFEBAN state={state} />;
+      break;
+    case 'OB52':
+      body = <SimOB52 state={state} />;
+      break;
+    case 'AFAB':
+      body = <SimAFAB state={state} />;
+      break;
+    case 'F.16':
+      body = <SimF16 state={state} />;
+      break;
+    default:
+      body = (
+        <div
+          style={{
+            background: '#ffffff',
+            borderRadius: 6,
+            border: '1px solid #e5e7eb',
+            padding: 16,
+            fontSize: 12,
+            color: '#111827',
+          }}
+        >
+          <div style={{ marginBottom: 8, fontWeight: 600 }}>
+            Screen not implemented yet
+          </div>
+          <div style={{ color: '#4b5563', lineHeight: 1.6 }}>
+            The simulator shell is active, but this specific training screen
+            has not been configured.
+          </div>
+        </div>
+      );
+  }
+
+  return (
+    <div>
+      {header}
+      {body}
+    </div>
+  );
+}
+
+// ─── Simulator screen helpers and implementations (light SAP theme) ────────────
+
+function SimCard({ children }) {
+  return (
+    <div
+      style={{
+        background: '#ffffff',
+        borderRadius: 6,
+        border: '1px solid #e5e7eb',
+        padding: 16,
+        fontSize: 12,
+        color: '#111827',
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function SimFieldRow({ label, required, children }) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 6,
+      }}
+    >
+      <div
+        style={{
+          minWidth: 140,
+          fontSize: 11,
+          color: SAP_SIM.label,
+          fontWeight: required ? 600 : 400,
+        }}
+      >
+        {label}
+        {required ? ' *' : ''}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function SimInput({ value, onChange, width = 140, readOnly }) {
+  return (
+    <input
+      value={value}
+      onChange={onChange}
+      readOnly={readOnly}
+      style={{
+        height: 22,
+        borderRadius: 2,
+        border: `1px solid ${SAP_SIM.fieldBorder}`,
+        padding: '2px 6px',
+        fontFamily: C.mono,
+        fontSize: 11,
+        width,
+        background: readOnly ? '#f9fafb' : '#ffffff',
+      }}
+    />
+  );
+}
+
+function SimTable({ columns, rows, getKey }) {
+  return (
+    <table
+      style={{
+        width: '100%',
+        borderCollapse: 'collapse',
+        fontSize: 11,
+        marginTop: 8,
+      }}
+    >
+      <thead>
+        <tr>
+          {columns.map((c) => (
+            <th
+              key={c.key}
+              style={{
+                background: SAP_SIM.tableHeaderBg,
+                color: '#ffffff',
+                padding: '4px 6px',
+                textAlign: 'left',
+              }}
+            >
+              {c.label}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row, idx) => (
+          <tr
+            key={getKey ? getKey(row, idx) : idx}
+            style={{
+              background: idx % 2 === 0 ? '#ffffff' : SAP_SIM.tableAltRow,
+            }}
+          >
+            {columns.map((c) => (
+              <td
+                key={c.key}
+                style={{ padding: '3px 6px', border: '1px solid #e5e7eb' }}
+              >
+                {c.render ? c.render(row, idx) : row[c.key]}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+// FB50 — Post G/L Document
+function SimFB50({ state, setState }) {
+  const [docDate, setDocDate] = useState('2024-04-30');
+  const [postDate, setPostDate] = useState('2024-04-30');
+  const [companyCode] = useState('IN01');
+  const [rows, setRows] = useState([
+    { gl: '400100', dc: 'D', amount: '50000', costCenter: 'CC001', text: '' },
+    { gl: '200300', dc: 'C', amount: '50000', costCenter: '', text: '' },
+  ]);
+
+  const addRow = () =>
+    setRows((prev) => [...prev, { gl: '', dc: 'D', amount: '', costCenter: '', text: '' }]);
+
+  const deleteRow = (index) =>
+    setRows((prev) => prev.filter((_, idx) => idx !== index));
+
+  const updateRow = (index, field, value) =>
+    setRows((prev) =>
+      prev.map((r, idx) => (idx === index ? { ...r, [field]: value } : r)),
+    );
+
+  const totals = rows.reduce(
+    (acc, r) => {
+      const amt = parseFloat(r.amount || '0') || 0;
+      if (r.dc === 'D') acc.debit += amt;
+      else acc.credit += amt;
+      return acc;
+    },
+    { debit: 0, credit: 0 },
+  );
+
+  const handleSave = () => {
+    if (!docDate || !postDate) {
+      setState((prev) => ({
+        ...prev,
+        status: {
+          type: 'error',
+          message: 'Document Date and Posting Date are required in company code IN01',
+        },
+      }));
+      return;
+    }
+    if (Math.round(totals.debit) !== Math.round(totals.credit)) {
+      const diff = Math.abs(totals.debit - totals.credit).toFixed(2);
+      setState((prev) => ({
+        ...prev,
+        status: {
+          type: 'error',
+          message: `Enter an account for the remaining amount of ₹${diff}`,
+        },
+      }));
+      return;
+    }
+    const seq = state.journalDocs.length + 1;
+    const docNo = `18${String(seq).padStart(8, '0')}`;
+    const newDoc = {
+      docNo,
+      tcode: 'FB50',
+      date: docDate,
+      companyCode,
+      items: rows.map((r) => ({
+        gl: r.gl,
+        dc: r.dc,
+        amount: parseFloat(r.amount || '0') || 0,
+        text: r.text,
+      })),
+    };
+    setState((prev) => ({
+      ...prev,
+      journalDocs: [...prev.journalDocs, newDoc],
+      status: {
+        type: 'success',
+        message: `Document ${docNo} posted in company code IN01`,
+      },
+    }));
+  };
+
+  return (
+    <SimCard>
+      <div style={{ fontWeight: 600, marginBottom: 8 }}>Enter G/L Account Document</div>
+      <div style={{ marginBottom: 12 }}>
+        <SimFieldRow label="Document Date" required>
+          <SimInput value={docDate} onChange={(e) => setDocDate(e.target.value)} />
+        </SimFieldRow>
+        <SimFieldRow label="Posting Date" required>
+          <SimInput value={postDate} onChange={(e) => setPostDate(e.target.value)} />
+        </SimFieldRow>
+        <SimFieldRow label="Company Code" required>
+          <SimInput value={companyCode} readOnly />
+        </SimFieldRow>
+      </div>
+
+      <div style={{ fontSize: 11, fontWeight: 600, color: SAP_SIM.label, marginBottom: 4 }}>
+        G/L Line Items
+      </div>
+      <SimTable
+        columns={[
+          {
+            key: 'gl',
+            label: 'G/L Account',
+            render: (r, idx) => (
+              <SimInput
+                value={r.gl}
+                onChange={(e) => updateRow(idx, 'gl', e.target.value)}
+                width={100}
+              />
+            ),
+          },
+          {
+            key: 'dc',
+            label: 'D/C',
+            render: (r, idx) => (
+              <select
+                value={r.dc}
+                onChange={(e) => updateRow(idx, 'dc', e.target.value)}
+                style={{
+                  height: 22,
+                  borderRadius: 2,
+                  border: `1px solid ${SAP_SIM.fieldBorder}`,
+                  fontSize: 11,
+                }}
+              >
+                <option value="D">D</option>
+                <option value="C">C</option>
+              </select>
+            ),
+          },
+          {
+            key: 'amount',
+            label: 'Amount',
+            render: (r, idx) => (
+              <SimInput
+                value={r.amount}
+                onChange={(e) => updateRow(idx, 'amount', e.target.value)}
+                width={100}
+              />
+            ),
+          },
+          {
+            key: 'costCenter',
+            label: 'Cost Centre',
+            render: (r, idx) => (
+              <SimInput
+                value={r.costCenter}
+                onChange={(e) => updateRow(idx, 'costCenter', e.target.value)}
+                width={100}
+              />
+            ),
+          },
+          {
+            key: 'text',
+            label: 'Text',
+            render: (r, idx) => (
+              <SimInput
+                value={r.text}
+                onChange={(e) => updateRow(idx, 'text', e.target.value)}
+                width={180}
+              />
+            ),
+          },
+          {
+            key: 'actions',
+            label: '',
+            render: (_r, idx) => (
+              <button
+                type="button"
+                onClick={() => deleteRow(idx)}
+                style={{
+                  fontSize: 10,
+                  border: 'none',
+                  background: 'transparent',
+                  color: '#b91c1c',
+                  cursor: 'pointer',
+                }}
+              >
+                ✕
+              </button>
+            ),
+          },
+        ]}
+        rows={rows}
+      />
+
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          marginTop: 8,
+          fontSize: 11,
+        }}
+      >
+        <div>
+          <button
+            type="button"
+            onClick={addRow}
+            style={{
+              borderRadius: 3,
+              border: '1px solid #9ca3af',
+              padding: '2px 8px',
+              background: 'linear-gradient(180deg,#f9fafb,#e5e7eb)',
+              fontSize: 11,
+              cursor: 'pointer',
+              marginRight: 6,
+            }}
+          >
+            Add Row
+          </button>
+        </div>
+        <div>
+          <span style={{ marginRight: 12 }}>
+            Debit: ₹{totals.debit.toFixed(2)}
+          </span>
+          <span>
+            Credit: ₹{totals.credit.toFixed(2)}
+          </span>
+        </div>
+      </div>
+
+      <div style={{ textAlign: 'right', marginTop: 12 }}>
+        <button
+          type="button"
+          onClick={handleSave}
+          style={{
+            borderRadius: 3,
+            border: '1px solid #2563eb',
+            padding: '4px 18px',
+            background: 'linear-gradient(180deg,#3b82f6,#1d4ed8)',
+            fontSize: 11,
+            color: '#ffffff',
+            cursor: 'pointer',
+          }}
+        >
+          Post (Save)
+        </button>
+      </div>
+    </SimCard>
+  );
+}
+
+// FB03 — simple display of journalDocs
+function SimFB03({ state }) {
+  return (
+    <SimCard>
+      <div style={{ fontWeight: 600, marginBottom: 8 }}>Display Document</div>
+      <div style={{ fontSize: 11, color: '#4b5563', marginBottom: 8 }}>
+        Below are sample documents posted in this training client.
+      </div>
+      <SimTable
+        columns={[
+          { key: 'docNo', label: 'Document' },
+          { key: 'date', label: 'Doc Date' },
+          { key: 'companyCode', label: 'Company Code' },
+          {
+            key: 'amount',
+            label: 'Amount',
+            render: (r) =>
+              r.items
+                .filter((i) => i.dc === 'D')
+                .reduce((a, i) => a + i.amount, 0)
+                .toFixed(2),
+          },
+        ]}
+        rows={state.journalDocs}
+        getKey={(r) => r.docNo}
+      />
+    </SimCard>
+  );
+}
+
+// FBL3N — flatten journalDocs
+function SimFBL3N({ state }) {
+  const rows = state.journalDocs.flatMap((doc) =>
+    doc.items.map((it, idx) => ({
+      docNo: doc.docNo,
+      type: 'SA',
+      date: doc.date,
+      ref: `Item ${idx + 1}`,
+      text: it.text || '',
+      amount: (it.dc === 'D' ? 1 : -1) * it.amount,
+    })),
+  );
+  const total = rows.reduce((a, r) => a + r.amount, 0);
+  return (
+    <SimCard>
+      <div style={{ fontWeight: 600, marginBottom: 8 }}>G/L Account Line Items</div>
+      <SimTable
+        columns={[
+          { key: 'docNo', label: 'Document' },
+          { key: 'type', label: 'Type', render: () => 'SA' },
+          { key: 'date', label: 'Date' },
+          { key: 'ref', label: 'Reference' },
+          { key: 'text', label: 'Text' },
+          {
+            key: 'amount',
+            label: 'Amount',
+            render: (r) => r.amount.toFixed(2),
+          },
+        ]}
+        rows={rows}
+      />
+      <div style={{ marginTop: 8, fontSize: 11, fontWeight: 600 }}>
+        Total: ₹{total.toFixed(2)}
+      </div>
+    </SimCard>
+  );
+}
+
+// FB60 — skeleton vendor invoice posting (adds to vendorDocs)
+function SimFB60({ state, setState }) {
+  const [vendor, setVendor] = useState('V1001');
+  const [amount, setAmount] = useState('118000');
+  const [invDate, setInvDate] = useState('2024-04-05');
+
+  const post = () => {
+    if (!vendor || !amount) {
+      setState((prev) => ({
+        ...prev,
+        status: {
+          type: 'error',
+          message: 'Vendor and Amount are required in company code IN01',
+        },
+      }));
+      return;
+    }
+    const seq = state.vendorDocs.length + 1;
+    const docNo = `1900000${String(seq).padStart(3, '0')}`;
+    const newDoc = {
+      docNo,
+      vendor,
+      name: vendor === 'V1001' ? 'Tata Steel Ltd' : 'Vendor',
+      amount: parseFloat(amount || '0') || 0,
+      open: true,
+      tcode: 'FB60',
+      date: invDate,
+    };
+    setState((prev) => ({
+      ...prev,
+      vendorDocs: [...prev.vendorDocs, newDoc],
+      status: {
+        type: 'success',
+        message: `Document ${docNo} posted`,
+      },
+    }));
+  };
+
+  return (
+    <SimCard>
+      <div style={{ fontWeight: 600, marginBottom: 8 }}>Enter Vendor Invoice</div>
+      <SimFieldRow label="Vendor" required>
+        <SimInput value={vendor} onChange={(e) => setVendor(e.target.value)} />
+      </SimFieldRow>
+      <SimFieldRow label="Invoice Date" required>
+        <SimInput value={invDate} onChange={(e) => setInvDate(e.target.value)} />
+      </SimFieldRow>
+      <SimFieldRow label="Amount" required>
+        <SimInput value={amount} onChange={(e) => setAmount(e.target.value)} />
+      </SimFieldRow>
+      <div style={{ textAlign: 'right', marginTop: 12 }}>
+        <button
+          type="button"
+          onClick={post}
+          style={{
+            borderRadius: 3,
+            border: '1px solid #2563eb',
+            padding: '4px 18px',
+            background: 'linear-gradient(180deg,#3b82f6,#1d4ed8)',
+            fontSize: 11,
+            color: '#ffffff',
+            cursor: 'pointer',
+          }}
+        >
+          Post
+        </button>
+      </div>
+    </SimCard>
+  );
+}
+
+// FBL1N — vendor line items from vendorDocs
+function SimFBL1N({ state }) {
+  const rows = state.vendorDocs;
+  const outstanding = rows
+    .filter((d) => d.open)
+    .reduce((a, d) => a + d.amount, 0);
+  return (
+    <SimCard>
+      <div style={{ fontWeight: 600, marginBottom: 8 }}>Vendor Line Items</div>
+      <SimTable
+        columns={[
+          { key: 'docNo', label: 'Document' },
+          { key: 'vendor', label: 'Vendor' },
+          { key: 'name', label: 'Name' },
+          { key: 'date', label: 'Date' },
+          {
+            key: 'amount',
+            label: 'Amount',
+            render: (r) => r.amount.toFixed(2),
+          },
+          {
+            key: 'status',
+            label: 'Status',
+            render: (r) => (r.open ? 'Open' : 'Cleared'),
+          },
+        ]}
+        rows={rows}
+        getKey={(r) => r.docNo}
+      />
+      <div style={{ marginTop: 8, fontSize: 11, fontWeight: 600 }}>
+        Total outstanding: ₹{outstanding.toFixed(2)}
+      </div>
+    </SimCard>
+  );
+}
+
+// FBL5N — customer line items (read-only from customerDocs)
+function SimFBL5N({ state }) {
+  const rows = state.customerDocs;
+  const outstanding = rows
+    .filter((d) => d.open)
+    .reduce((a, d) => a + d.amount, 0);
+  return (
+    <SimCard>
+      <div style={{ fontWeight: 600, marginBottom: 8 }}>Customer Line Items</div>
+      <SimTable
+        columns={[
+          { key: 'docNo', label: 'Document' },
+          { key: 'customer', label: 'Customer' },
+          { key: 'name', label: 'Name' },
+          {
+            key: 'amount',
+            label: 'Amount',
+            render: (r) => r.amount.toFixed(2),
+          },
+          {
+            key: 'status',
+            label: 'Status',
+            render: (r) => (r.open ? 'Open' : 'Cleared'),
+          },
+        ]}
+        rows={rows}
+        getKey={(r) => r.docNo}
+      />
+      <div style={{ marginTop: 8, fontSize: 11, fontWeight: 600 }}>
+        Total outstanding: ₹{outstanding.toFixed(2)}
+      </div>
+    </SimCard>
+  );
+}
+
+// F-53 — manual payment: clear vendor open items
+function SimF53({ state, setState }) {
+  const [vendor, setVendor] = useState('V1001');
+  const [selected, setSelected] = useState({});
+
+  const openDocs = state.vendorDocs.filter(
+    (d) => d.vendor === vendor && d.open,
+  );
+
+  const toggle = (docNo) =>
+    setSelected((prev) => ({ ...prev, [docNo]: !prev[docNo] }));
+
+  const post = () => {
+    const docsToClear = openDocs.filter((d) => selected[d.docNo]);
+    if (!docsToClear.length) {
+      setState((prev) => ({
+        ...prev,
+        status: {
+          type: 'error',
+          message: 'Select at least one open item to clear',
+        },
+      }));
+      return;
+    }
+    setState((prev) => ({
+      ...prev,
+      vendorDocs: prev.vendorDocs.map((d) =>
+        docsToClear.some((x) => x.docNo === d.docNo)
+          ? { ...d, open: false }
+          : d,
+      ),
+      status: {
+        type: 'success',
+        message: `Payment document posted. ${docsToClear.length} item(s) cleared.`,
+      },
+    }));
+  };
+
+  return (
+    <SimCard>
+      <div style={{ fontWeight: 600, marginBottom: 8 }}>Post Outgoing Payment</div>
+      <SimFieldRow label="Vendor" required>
+        <SimInput value={vendor} onChange={(e) => setVendor(e.target.value)} />
+      </SimFieldRow>
+      <div style={{ fontSize: 11, fontWeight: 600, marginTop: 8, marginBottom: 4 }}>
+        Open Items
+      </div>
+      <SimTable
+        columns={[
+          {
+            key: 'sel',
+            label: '',
+            render: (r) => (
+              <input
+                type="checkbox"
+                checked={!!selected[r.docNo]}
+                onChange={() => toggle(r.docNo)}
+              />
+            ),
+          },
+          { key: 'docNo', label: 'Document' },
+          {
+            key: 'amount',
+            label: 'Amount',
+            render: (r) => r.amount.toFixed(2),
+          },
+        ]}
+        rows={openDocs}
+        getKey={(r) => r.docNo}
+      />
+      <div style={{ textAlign: 'right', marginTop: 12 }}>
+        <button
+          type="button"
+          onClick={post}
+          style={{
+            borderRadius: 3,
+            border: '1px solid #2563eb',
+            padding: '4px 18px',
+            background: 'linear-gradient(180deg,#3b82f6,#1d4ed8)',
+            fontSize: 11,
+            color: '#ffffff',
+            cursor: 'pointer',
+          }}
+        >
+          Post Payment
+        </button>
+      </div>
+    </SimCard>
+  );
+}
+
+// F110 — simple proposal/execution summarising open vendor docs
+function SimF110({ state, setState }) {
+  const openDocs = state.vendorDocs.filter((d) => d.open);
+  const total = openDocs.reduce((a, d) => a + d.amount, 0);
+
+  const execute = () => {
+    if (!openDocs.length) {
+      setState((prev) => ({
+        ...prev,
+        status: {
+          type: 'info',
+          message: 'No due invoices found for payment run',
+        },
+      }));
+      return;
+    }
+    setState((prev) => ({
+      ...prev,
+      vendorDocs: prev.vendorDocs.map((d) =>
+        openDocs.some((x) => x.docNo === d.docNo) ? { ...d, open: false } : d,
+      ),
+      status: {
+        type: 'success',
+        message: `Payment run completed. ${openDocs.length} payments posted. Total: ₹${total.toFixed(
+          2,
+        )}`,
+      },
+    }));
+  };
+
+  return (
+    <SimCard>
+      <div style={{ fontWeight: 600, marginBottom: 8 }}>Automatic Payment Run</div>
+      <div style={{ fontSize: 11, marginBottom: 6 }}>Proposal (due vendor invoices)</div>
+      <SimTable
+        columns={[
+          { key: 'docNo', label: 'Document' },
+          { key: 'vendor', label: 'Vendor' },
+          { key: 'name', label: 'Name' },
+          {
+            key: 'amount',
+            label: 'Amount',
+            render: (r) => r.amount.toFixed(2),
+          },
+        ]}
+        rows={openDocs}
+        getKey={(r) => r.docNo}
+      />
+      <div style={{ marginTop: 8, fontSize: 11 }}>
+        Total proposal amount: ₹{total.toFixed(2)}
+      </div>
+      <div style={{ textAlign: 'right', marginTop: 12 }}>
+        <button
+          type="button"
+          onClick={execute}
+          style={{
+            borderRadius: 3,
+            border: '1px solid #2563eb',
+            padding: '4px 18px',
+            background: 'linear-gradient(180deg,#3b82f6,#1d4ed8)',
+            fontSize: 11,
+            color: '#ffffff',
+            cursor: 'pointer',
+          }}
+        >
+          Execute Payment Run
+        </button>
+      </div>
+    </SimCard>
+  );
+}
+
+// F.01 — very simple BS + P&L from current doc arrays
+function SimF01({ state }) {
+  const revenue = state.customerDocs.reduce(
+    (a, d) => a + d.amount,
+    0,
+  );
+  const expenses = state.journalDocs.flatMap((d) => d.items).reduce(
+    (a, i) => (i.dc === 'D' ? a + i.amount : a),
+    0,
+  );
+  const profit = revenue - expenses;
+
+  return (
+    <SimCard>
+      <div style={{ fontWeight: 600, marginBottom: 8 }}>Financial Statements</div>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 16,
+          fontSize: 12,
+        }}
+      >
+        <div>
+          <div
+            style={{
+              background: SAP_SIM.headerBg,
+              color: '#ffffff',
+              padding: '4px 8px',
+              marginBottom: 4,
+            }}
+          >
+            Balance Sheet (summary)
+          </div>
+          <div style={{ padding: 8, border: '1px solid #e5e7eb' }}>
+            <div>Assets (sample)</div>
+            <div style={{ fontSize: 11, marginTop: 4 }}>
+              Bank, debtors, fixed assets populated with demo numbers.
+            </div>
+          </div>
+        </div>
+        <div>
+          <div
+            style={{
+              background: SAP_SIM.headerBg,
+              color: '#ffffff',
+              padding: '4px 8px',
+              marginBottom: 4,
+            }}
+          >
+            Profit &amp; Loss (from simulator docs)
+          </div>
+          <div style={{ padding: 8, border: '1px solid #e5e7eb' }}>
+            <div>Revenue: ₹{revenue.toFixed(2)}</div>
+            <div>Expenses: ₹{expenses.toFixed(2)}</div>
+            <div style={{ marginTop: 4, fontWeight: 600 }}>
+              Profit: ₹{profit.toFixed(2)}
+            </div>
+          </div>
+        </div>
+      </div>
+    </SimCard>
+  );
+}
+
+// FF67 / FEBAN / OB52 / AFAB / F.16 — lightweight read-only demos
+function SimFF67({ state }) {
+  return (
+    <SimCard>
+      <div style={{ fontWeight: 600, marginBottom: 8 }}>Manual Bank Statement (FF67)</div>
+      <SimTable
+        columns={[
+          { key: 'date', label: 'Value Date' },
+          { key: 'text', label: 'Text' },
+          { key: 'amount', label: 'Amount', render: (r) => r.amount.toFixed(2) },
+        ]}
+        rows={state.bankLines}
+        getKey={(r) => r.id}
+      />
+    </SimCard>
+  );
+}
+
+function SimFEBAN({ state }) {
+  return (
+    <SimCard>
+      <div style={{ fontWeight: 600, marginBottom: 8 }}>Bank Statement Processing (FEBAN)</div>
+      <div style={{ fontSize: 11, color: '#4b5563' }}>
+        Demo view – use FF67 to imagine statements feeding this monitor.
+      </div>
+    </SimCard>
+  );
+}
+
+function SimOB52({ state }) {
+  return (
+    <SimCard>
+      <div style={{ fontWeight: 600, marginBottom: 8 }}>Posting Periods (OB52)</div>
+      <div style={{ fontSize: 11 }}>Current open period: {state.periods.current} / {state.periods.year}</div>
+    </SimCard>
+  );
+}
+
+function SimAFAB({ state }) {
+  return (
+    <SimCard>
+      <div style={{ fontWeight: 600, marginBottom: 8 }}>Depreciation Run (AFAB)</div>
+      <SimTable
+        columns={[
+          { key: 'id', label: 'Asset' },
+          { key: 'class', label: 'Class' },
+          { key: 'nbv', label: 'NBV', render: (r) => r.nbv.toFixed(2) },
+        ]}
+        rows={state.assets}
+        getKey={(r) => r.id}
+      />
+    </SimCard>
+  );
+}
+
+function SimF16({ state }) {
+  return (
+    <SimCard>
+      <div style={{ fontWeight: 600, marginBottom: 8 }}>Carry Forward Balances (F.16)</div>
+      <div style={{ fontSize: 11 }}>
+        Last simulated carry forward from FY {state.periods.year} would appear here.
+      </div>
+    </SimCard>
   );
 }
 
