@@ -977,8 +977,83 @@ const sapScreenByModule = {
 // Lesson-specific overrides (moduleIndex-lessonIndex)
 // If a key exists here it takes precedence over the module-level screen.
 const sapScreenByLesson = {
-  // FB70 lesson → show FB60 (closest vendor invoice match)
-  '3-0': sapScreenByModule[2],
+  // FB70 lesson → dedicated FB70 Customer Invoice screen
+  '3-0': `
+<div class="sap-mock">
+  <style>${SAP_SCREEN_CSS}</style>
+  <div class="sap-window">
+    <div class="sap-titlebar">
+      <span>Enter Customer Invoice</span>
+      <div class="sap-titlebar-btns"><span>─</span><span>□</span><span>✕</span></div>
+    </div>
+    <div class="sap-menubar">
+      <span class="sap-menu-item">Invoice</span><span class="sap-menu-item">Edit</span><span class="sap-menu-item">Goto</span><span class="sap-menu-item">Extras</span>
+    </div>
+    <div class="sap-toolbar">
+      <span class="sap-btn">💾 Post</span>
+      <span class="sap-btn">Simulate</span>
+      <span class="sap-btn">Hold</span>
+      <span class="sap-btn">Park</span>
+    </div>
+    <div class="sap-tcode-bar">
+      <span style="font-family:'Segoe UI',sans-serif;font-size:11px;">Transaction:</span>
+      <input class="sap-tcode-field" value="FB70" readonly>
+    </div>
+    <div class="sap-content">
+      <div class="sap-tabs">
+        <div class="sap-tab sap-tab-active">Basic Data</div>
+        <div class="sap-tab">Payment</div>
+        <div class="sap-tab">Tax</div>
+        <div class="sap-tab">Notes</div>
+      </div>
+      <div class="sap-form">
+        <div class="sap-row">
+          <span class="sap-label-req">Customer *</span>
+          <input class="sap-field sap-field-med sap-field-req" value="C200156" readonly>
+          <span style="font-size:10px;color:#0054a6;font-family:'Segoe UI',sans-serif;">Reliance Industries Ltd</span>
+        </div>
+        <div class="sap-row">
+          <span class="sap-label-req">Invoice Date *</span>
+          <input class="sap-field sap-field-med sap-field-filled" value="31.03.2025" readonly>
+          <span class="sap-label" style="min-width:80px;">Posting Date</span>
+          <input class="sap-field sap-field-med sap-field-filled" value="31.03.2025" readonly>
+        </div>
+        <div class="sap-row">
+          <span class="sap-label-req">Amount *</span>
+          <input class="sap-field sap-field-med sap-field-filled" value="5,90,000.00" readonly>
+          <span class="sap-label" style="min-width:60px;">Currency</span>
+          <input class="sap-field sap-field-small sap-field-filled" value="INR" readonly>
+        </div>
+        <div class="sap-row">
+          <span class="sap-label">Payment Terms</span>
+          <input class="sap-field sap-field-med" value="NT30" readonly style="background:#e0ffe0;">
+          <span style="font-size:10px;color:#006600;font-family:'Segoe UI',sans-serif;">⟵ Auto from customer master</span>
+        </div>
+        <div class="sap-row">
+          <span class="sap-label">Reference</span>
+          <input class="sap-field sap-field-wide" value="INV/2025/RIL/001" readonly>
+        </div>
+      </div>
+      <div class="sap-section-header">G/L Account Assignment</div>
+      <table class="sap-table">
+        <tr><th>G/L Account</th><th>D/C</th><th>Amount</th><th>Cost Centre</th><th>Text</th></tr>
+        <tr><td class="editable">500100</td><td>C</td><td class="editable" style="text-align:right;">5,00,000.00</td><td class="editable">CC010</td><td class="editable">Sales - Product A</td></tr>
+        <tr><td class="editable">175200</td><td>C</td><td class="editable" style="text-align:right;">90,000.00</td><td></td><td class="editable">GST Output 18%</td></tr>
+      </table>
+      <div style="margin-top:6px;text-align:right;font-size:11px;font-family:'Segoe UI',sans-serif;">
+        <span style="color:#006600;font-weight:bold;">Balance: 0.00 ✓</span>
+      </div>
+      <div style="margin-top:6px;background:#ffe0e0;border:1px solid #cc0000;padding:6px;font-size:10px;font-family:'Segoe UI',sans-serif;color:#cc0000;">
+        ⚠ Confirm with your team — if SD module is active, invoices come from there. Using FB70 will create DUPLICATE entries.
+      </div>
+    </div>
+    <div class="sap-statusbar">
+      <span>FB70 | Customer Invoice Entry</span>
+      <span>Due Date: 30.04.2025 (NT30)</span>
+    </div>
+  </div>
+</div>
+`,
   // FB03 Display Document → dedicated FB03 screen
   '1-1': `
 <div class="sap-mock">
@@ -1191,13 +1266,443 @@ const sapScreenByLesson = {
   </div>
 </div>
 `,
-  // GL Account Line Item Report → FBL3N selection screen
+  // FK03 Look Up a Vendor → Vendor Master screen
+  '2-0': `
+<div class="sap-mock">
+  <style>${SAP_SCREEN_CSS}</style>
+  <div class="sap-window">
+    <div class="sap-titlebar">
+      <span>Display Vendor: General Data</span>
+      <div class="sap-titlebar-btns"><span>─</span><span>□</span><span>✕</span></div>
+    </div>
+    <div class="sap-tcode-bar">
+      <span style="font-family:'Segoe UI',sans-serif;font-size:11px;">Transaction:</span>
+      <input class="sap-tcode-field" value="FK03" readonly>
+    </div>
+    <div class="sap-content">
+      <div class="sap-tabs">
+        <div class="sap-tab sap-tab-active">General Data</div>
+        <div class="sap-tab">Company Code Data</div>
+        <div class="sap-tab">Payment Transactions</div>
+      </div>
+      <div style="background:white;border:1px solid #ccc;padding:10px;font-size:11px;font-family:'Segoe UI',sans-serif;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div>
+            <div style="font-weight:bold;color:#0054a6;margin-bottom:6px;">Vendor Information</div>
+            <div class="sap-row"><span class="sap-label">Vendor Code</span><span style="color:#000080;font-family:monospace;">V100045</span></div>
+            <div class="sap-row"><span class="sap-label">Name</span><span>Tata Consulting Services Ltd</span></div>
+            <div class="sap-row"><span class="sap-label">Search Term</span><span>TCS</span></div>
+            <div class="sap-row"><span class="sap-label">Street</span><span>TCS House, Raveline Street</span></div>
+            <div class="sap-row"><span class="sap-label">City</span><span>Mumbai</span></div>
+            <div class="sap-row"><span class="sap-label">Country</span><span>IN — India</span></div>
+            <div class="sap-row"><span class="sap-label">GST Number</span><span>27AAACT2727Q1ZW</span></div>
+            <div class="sap-row"><span class="sap-label">PAN</span><span>AAACT2727Q</span></div>
+          </div>
+          <div>
+            <div style="font-weight:bold;color:#0054a6;margin-bottom:6px;">Payment Details</div>
+            <div class="sap-row"><span class="sap-label">Payment Terms</span><span style="color:#006600;font-weight:bold;">NT30 (Net 30 days)</span></div>
+            <div class="sap-row"><span class="sap-label">Payment Method</span><span>T — Bank Transfer</span></div>
+            <div class="sap-row"><span class="sap-label">Bank</span><span>HDFC Bank</span></div>
+            <div class="sap-row"><span class="sap-label">Account No</span><span>XXXX XXXX 1234</span></div>
+            <div class="sap-row"><span class="sap-label">IFSC</span><span>HDFC0000060</span></div>
+            <div class="sap-row"><span class="sap-label">Recon. Account</span><span style="color:#000080;font-family:monospace;">200100</span></div>
+            <div style="margin-top:8px;background:#ffffd0;border:1px solid #ccaa00;padding:6px;font-size:10px;">
+              ⚠ Always verify bank details before payment run. Contact master data team for any changes.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sap-statusbar">
+      <span>FK03 | Vendor V100045 displayed</span>
+      <span>Co: 1000 | Read Only</span>
+    </div>
+  </div>
+</div>
+`,
+  // MIRO lesson → PO-based Invoice 3-way match screen
+  '2-2': `
+<div class="sap-mock">
+  <style>${SAP_SCREEN_CSS}</style>
+  <div class="sap-window">
+    <div class="sap-titlebar">
+      <span>Enter Incoming Invoice</span>
+      <div class="sap-titlebar-btns"><span>─</span><span>□</span><span>✕</span></div>
+    </div>
+    <div class="sap-menubar">
+      <span class="sap-menu-item">Invoice</span><span class="sap-menu-item">Edit</span><span class="sap-menu-item">Goto</span><span class="sap-menu-item">Extras</span>
+    </div>
+    <div class="sap-toolbar">
+      <span class="sap-btn">💾 Post</span>
+      <span class="sap-btn">Simulate</span>
+      <span class="sap-btn">Hold</span>
+      <div class="sap-separator"></div>
+      <span class="sap-btn">🔍 Show PO</span>
+    </div>
+    <div class="sap-tcode-bar">
+      <span style="font-family:'Segoe UI',sans-serif;font-size:11px;">Transaction:</span>
+      <input class="sap-tcode-field" value="MIRO" readonly>
+    </div>
+    <div class="sap-content">
+      <div class="sap-tabs">
+        <div class="sap-tab sap-tab-active">Basic Data</div>
+        <div class="sap-tab">Payment</div>
+        <div class="sap-tab">Tax</div>
+        <div class="sap-tab">Contacts</div>
+      </div>
+      <div class="sap-form">
+        <div class="sap-row">
+          <span class="sap-label-req">Invoice Date *</span>
+          <input class="sap-field sap-field-med sap-field-filled" value="20.03.2025" readonly>
+          <span class="sap-label" style="min-width:80px;">Posting Date</span>
+          <input class="sap-field sap-field-med sap-field-filled" value="31.03.2025" readonly>
+        </div>
+        <div class="sap-row">
+          <span class="sap-label-req">Amount *</span>
+          <input class="sap-field sap-field-med sap-field-filled" value="2,36,000.00" readonly>
+          <span class="sap-label" style="min-width:60px;">Currency</span>
+          <input class="sap-field sap-field-small sap-field-filled" value="INR" readonly>
+        </div>
+        <div class="sap-row">
+          <span class="sap-label-req">Purchase Order *</span>
+          <input class="sap-field sap-field-med sap-field-req" value="4500001234" readonly>
+          <span style="font-size:10px;color:#006600;font-family:'Segoe UI',sans-serif;">PO found — details auto-loaded</span>
+        </div>
+      </div>
+      <div class="sap-section-header">PO Line Items — 3-Way Match Status</div>
+      <table class="sap-table">
+        <tr><th>Item</th><th>Material</th><th>PO Qty</th><th>GR Qty</th><th>Inv Qty</th><th>Amount</th><th>Match</th></tr>
+        <tr>
+          <td>10</td>
+          <td>Steel Rods 12mm</td>
+          <td>100 MT</td>
+          <td>100 MT</td>
+          <td class="editable">100 MT</td>
+          <td style="text-align:right;">2,00,000.00</td>
+          <td style="color:#006600;font-weight:bold;">✓ Match</td>
+        </tr>
+        <tr>
+          <td>20</td>
+          <td>GST 18%</td>
+          <td>—</td>
+          <td>—</td>
+          <td>—</td>
+          <td style="text-align:right;">36,000.00</td>
+          <td style="color:#006600;">✓ Tax</td>
+        </tr>
+      </table>
+      <div style="margin-top:6px;font-size:10px;font-family:'Segoe UI',sans-serif;color:#0054a6;">
+        3-Way Match: PO ✓ + GR ✓ + Invoice ✓ — Ready to post.
+      </div>
+    </div>
+    <div class="sap-statusbar">
+      <span>MIRO | Invoice Verification</span>
+      <span>PO: 4500001234 | Vendor: V100045</span>
+    </div>
+  </div>
+</div>
+`,
+  // F-53 Manual Vendor Payment → Outgoing Payment screen
+  '2-3': `
+<div class="sap-mock">
+  <style>${SAP_SCREEN_CSS}</style>
+  <div class="sap-window">
+    <div class="sap-titlebar">
+      <span>Post Outgoing Payments: Header Data</span>
+      <div class="sap-titlebar-btns"><span>─</span><span>□</span><span>✕</span></div>
+    </div>
+    <div class="sap-tcode-bar">
+      <span style="font-family:'Segoe UI',sans-serif;font-size:11px;">Transaction:</span>
+      <input class="sap-tcode-field" value="F-53" readonly>
+    </div>
+    <div class="sap-content">
+      <div class="sap-section-header">Bank Data</div>
+      <div class="sap-form">
+        <div class="sap-row">
+          <span class="sap-label-req">Document Date *</span>
+          <input class="sap-field sap-field-med sap-field-filled" value="01.04.2025" readonly>
+          <span class="sap-label" style="min-width:80px;">Posting Date</span>
+          <input class="sap-field sap-field-med sap-field-filled" value="01.04.2025" readonly>
+        </div>
+        <div class="sap-row">
+          <span class="sap-label-req">Bank G/L Account *</span>
+          <input class="sap-field sap-field-med sap-field-req" value="113100" readonly>
+          <span style="font-size:10px;color:#0054a6;font-family:'Segoe UI',sans-serif;">HDFC Current A/c</span>
+        </div>
+        <div class="sap-row">
+          <span class="sap-label-req">Amount *</span>
+          <input class="sap-field sap-field-med sap-field-filled" value="1,18,000.00" readonly>
+          <span class="sap-label" style="min-width:60px;">Currency</span>
+          <input class="sap-field sap-field-small sap-field-filled" value="INR" readonly>
+        </div>
+        <div class="sap-row">
+          <span class="sap-label">Value Date</span>
+          <input class="sap-field sap-field-med sap-field-filled" value="01.04.2025" readonly>
+        </div>
+      </div>
+      <div class="sap-section-header">Open Item Selection</div>
+      <div class="sap-form">
+        <div class="sap-row">
+          <span class="sap-label-req">Account Type *</span>
+          <input class="sap-field sap-field-small sap-field-filled" value="K" readonly>
+          <span style="font-size:10px;color:#0054a6;font-family:'Segoe UI',sans-serif;">K = Vendor</span>
+        </div>
+        <div class="sap-row">
+          <span class="sap-label-req">Vendor Account *</span>
+          <input class="sap-field sap-field-med sap-field-req" value="V100045" readonly>
+          <span style="font-size:10px;color:#0054a6;font-family:'Segoe UI',sans-serif;">Tata Consulting</span>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:10px;">
+        <span class="sap-btn" style="padding:4px 20px;font-size:11px;background:#0054a6;color:white;">Process Open Items →</span>
+        <div style="margin-top:6px;font-size:10px;font-family:'Segoe UI',sans-serif;color:#666;">SAP will show all unpaid invoices for this vendor.</div>
+      </div>
+    </div>
+    <div class="sap-statusbar">
+      <span>F-53 | Post Outgoing Payment</span>
+      <span>Amount: ₹ 1,18,000.00 | HDFC A/c</span>
+    </div>
+  </div>
+</div>
+`,
+  // F110 Automatic Payment Run → F110 status screen
+  '2-4': `
+<div class="sap-mock">
+  <style>${SAP_SCREEN_CSS}</style>
+  <div class="sap-window">
+    <div class="sap-titlebar">
+      <span>Automatic Payment Transactions: Status</span>
+      <div class="sap-titlebar-btns"><span>─</span><span>□</span><span>✕</span></div>
+    </div>
+    <div class="sap-tcode-bar">
+      <span style="font-family:'Segoe UI',sans-serif;font-size:11px;">Transaction:</span>
+      <input class="sap-tcode-field" value="F110" readonly>
+    </div>
+    <div class="sap-content">
+      <div class="sap-form">
+        <div class="sap-row">
+          <span class="sap-label-req">Run Date *</span>
+          <input class="sap-field sap-field-med sap-field-req" value="01.04.2025" readonly>
+        </div>
+        <div class="sap-row">
+          <span class="sap-label-req">Identification *</span>
+          <input class="sap-field sap-field-med sap-field-req" value="APR01" readonly>
+        </div>
+      </div>
+      <div class="sap-tabs" style="margin-top:8px;">
+        <div class="sap-tab sap-tab-active">Status</div>
+        <div class="sap-tab">Parameters</div>
+        <div class="sap-tab">Free Selection</div>
+        <div class="sap-tab">Additional Log</div>
+        <div class="sap-tab">Printout</div>
+      </div>
+      <div style="background:white;border:1px solid #ccc;padding:8px;font-size:10px;font-family:'Segoe UI',sans-serif;">
+        <div style="color:#006600;font-weight:bold;margin-bottom:4px;">✅ Parameters have been entered</div>
+        <div style="color:#006600;font-weight:bold;margin-bottom:4px;">✅ Payment proposal has been created</div>
+        <div style="color:#888;margin-bottom:4px;">◻ Payment run has not been carried out</div>
+        <div style="color:#888;">◻ Printout has not been issued</div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+        <span class="sap-btn" style="background:#ffffd0;border-color:#ccaa00;">📋 Proposal</span>
+        <span class="sap-btn" style="background:#e0f0ff;border-color:#0054a6;">▶ Payment Run</span>
+        <span class="sap-btn">🖨 Printout</span>
+        <span class="sap-btn">📊 Payment List</span>
+      </div>
+      <div style="margin-top:8px;background:#fff0e0;border:1px solid #cc6600;padding:6px;font-size:10px;font-family:'Segoe UI',sans-serif;color:#cc4400;">
+        ⚠ Always click Proposal first and review all vendors and amounts before running Payment Run.
+      </div>
+    </div>
+    <div class="sap-statusbar">
+      <span class="sap-status-msg">Proposal created: 47 items | ₹ 28,45,320.00</span>
+      <span>F110 | Run: APR01</span>
+    </div>
+  </div>
+</div>
+`,
+  // FBL1N Vendor Line Item Report → vendor line item output screen
+  '2-5': `
+<div class="sap-mock">
+  <style>${SAP_SCREEN_CSS}</style>
+  <div class="sap-window">
+    <div class="sap-titlebar">
+      <span>Vendor Line Item Display — Output</span>
+      <div class="sap-titlebar-btns"><span>─</span><span>□</span><span>✕</span></div>
+    </div>
+    <div class="sap-tcode-bar">
+      <span style="font-family:'Segoe UI',sans-serif;font-size:11px;">Transaction:</span>
+      <input class="sap-tcode-field" value="FBL1N" readonly>
+    </div>
+    <div class="sap-content">
+      <div style="display:flex;gap:8px;margin-bottom:8px;font-size:10px;font-family:'Segoe UI',sans-serif;">
+        <span class="sap-btn">📊 Export Excel</span>
+        <span class="sap-btn">🔍 Filter</span>
+        <span class="sap-btn">Sort</span>
+        <span class="sap-btn">Sum</span>
+      </div>
+      <table class="sap-table" style="font-size:10px;">
+        <tr><th>Doc No</th><th>Doc Date</th><th>Due Date</th><th>Vendor</th><th>Name</th><th>Amount (INR)</th><th>Status</th></tr>
+        <tr><td>1900012</td><td>25.03.25</td><td style="color:#cc0000;font-weight:bold;">24.04.25</td><td>V100045</td><td>Tata Consulting</td><td style="text-align:right;">1,18,000.00</td><td style="color:#cc6600;">Open</td></tr>
+        <tr><td>1900008</td><td>10.03.25</td><td style="color:#cc0000;font-weight:bold;">09.04.25</td><td>V100087</td><td>Infosys Ltd</td><td style="text-align:right;">2,36,000.00</td><td style="color:#cc6600;">Open</td></tr>
+        <tr><td>1900003</td><td>01.03.25</td><td>31.03.25</td><td>V100023</td><td>Wipro Ltd</td><td style="text-align:right;">94,400.00</td><td style="color:#006600;">Cleared</td></tr>
+        <tr><td>1899998</td><td>20.02.25</td><td>21.03.25</td><td>V100045</td><td>Tata Consulting</td><td style="text-align:right;">59,000.00</td><td style="color:#006600;">Cleared</td></tr>
+      </table>
+      <div style="margin-top:6px;font-size:11px;font-family:'Segoe UI',sans-serif;font-weight:bold;">
+        Total Open Items: ₹ 3,54,000.00
+      </div>
+    </div>
+    <div class="sap-statusbar">
+      <span>4 items displayed | 2 open | 2 cleared</span>
+      <span>FBL1N | Vendor: V100045 Co 1000</span>
+    </div>
+  </div>
+</div>
+`,
+  // F.16 Carry Forward Balances lesson → dedicated F.16 screen
+  '6-3': `
+<div class="sap-mock">
+  <style>${SAP_SCREEN_CSS}</style>
+  <div class="sap-window">
+    <div class="sap-titlebar">
+      <span>Balance Carryforward: Accounts Receivable</span>
+      <div class="sap-titlebar-btns"><span>─</span><span>□</span><span>✕</span></div>
+    </div>
+    <div class="sap-menubar">
+      <span class="sap-menu-item">Program</span><span class="sap-menu-item">Edit</span><span class="sap-menu-item">Goto</span><span class="sap-menu-item">System</span>
+    </div>
+    <div class="sap-toolbar">
+      <span class="sap-btn">▶ Execute (F8)</span>
+      <div class="sap-separator"></div>
+      <span class="sap-btn">🖨 Print</span>
+    </div>
+    <div class="sap-tcode-bar">
+      <span style="font-family:'Segoe UI',sans-serif;font-size:11px;">Transaction:</span>
+      <input class="sap-tcode-field" value="F.16" readonly>
+    </div>
+    <div class="sap-content">
+      <div class="sap-form">
+        <div class="sap-row">
+          <span class="sap-label-req">Company Code *</span>
+          <input class="sap-field sap-field-small sap-field-req" value="1000" readonly>
+        </div>
+        <div class="sap-row">
+          <span class="sap-label-req">Carry Forward From FY *</span>
+          <input class="sap-field sap-field-small sap-field-req" value="2025" readonly>
+          <span style="font-size:10px;color:#0054a6;font-family:'Segoe UI',sans-serif;">Carries to FY 2026</span>
+        </div>
+      </div>
+      <div class="sap-section-header">Processing Options</div>
+      <div class="sap-radio" style="flex-direction:column;gap:6px;margin:8px 0;">
+        <label style="display:flex;align-items:center;gap:6px;font-family:'Segoe UI',sans-serif;font-size:11px;"><input type="radio" name="cf" checked> <span>Test Run (recommended first)</span></label>
+        <label style="display:flex;align-items:center;gap:6px;font-family:'Segoe UI',sans-serif;font-size:11px;"><input type="radio" name="cf"> <span>Productive Run</span></label>
+      </div>
+      <div style="background:#ffffd0;border:1px solid #ccaa00;padding:8px;font-size:10px;font-family:'Segoe UI',sans-serif;margin-top:8px;">
+        <strong>Run only once per year end.</strong><br/>
+        All Balance Sheet accounts carry forward to FY 2026.<br/>
+        All P&L balances move to Retained Earnings.<br/>
+        Run only after year end audit is complete and auditors have signed off.
+      </div>
+    </div>
+    <div class="sap-statusbar">
+      <span>F.16 | Balance Carryforward</span>
+      <span>FY 2025 → FY 2026 | Co: 1000</span>
+    </div>
+  </div>
+</div>
+`,
+  // S_ALR_87012172 lesson → G/L Account Balances output
+  '4-2': `
+<div class="sap-mock">
+  <style>${SAP_SCREEN_CSS}</style>
+  <div class="sap-window">
+    <div class="sap-titlebar">
+      <span>G/L Account Balances</span>
+      <div class="sap-titlebar-btns"><span>─</span><span>□</span><span>✕</span></div>
+    </div>
+    <div class="sap-tcode-bar">
+      <span style="font-family:'Segoe UI',sans-serif;font-size:11px;">Transaction:</span>
+      <input class="sap-tcode-field" value="S_ALR_87012172" readonly>
+    </div>
+    <div class="sap-content">
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <span class="sap-btn">📊 Export Excel</span>
+        <span class="sap-btn">🖨 Print</span>
+        <span class="sap-btn">PDF</span>
+        <span class="sap-btn">Filter</span>
+      </div>
+      <table class="sap-table" style="font-size:10px;">
+        <tr>
+          <th>G/L Acct</th>
+          <th>Description</th>
+          <th>Opening Bal</th>
+          <th>Period 1</th>
+          <th>Period 2</th>
+          <th>Period 3</th>
+          <th>YTD Balance</th>
+        </tr>
+        <tr>
+          <td style="color:#0054a6;cursor:pointer;font-family:monospace;">113100</td>
+          <td>HDFC Bank Current</td>
+          <td style="text-align:right;">45,23,456</td>
+          <td style="text-align:right;color:#006600;">+8,50,000</td>
+          <td style="text-align:right;color:#cc0000;">-3,20,000</td>
+          <td style="text-align:right;color:#006600;">+2,10,000</td>
+          <td style="text-align:right;font-weight:bold;">52,63,456</td>
+        </tr>
+        <tr>
+          <td style="color:#0054a6;cursor:pointer;font-family:monospace;">200100</td>
+          <td>Accounts Payable</td>
+          <td style="text-align:right;">12,40,000</td>
+          <td style="text-align:right;color:#cc0000;">-2,36,000</td>
+          <td style="text-align:right;color:#006600;">+1,18,000</td>
+          <td style="text-align:right;color:#cc0000;">-94,400</td>
+          <td style="text-align:right;font-weight:bold;">10,27,600</td>
+        </tr>
+        <tr>
+          <td style="color:#0054a6;cursor:pointer;font-family:monospace;">300100</td>
+          <td>Accounts Receivable</td>
+          <td style="text-align:right;">18,50,000</td>
+          <td style="text-align:right;color:#006600;">+5,90,000</td>
+          <td style="text-align:right;color:#cc0000;">-2,00,000</td>
+          <td style="text-align:right;color:#006600;">+3,50,000</td>
+          <td style="text-align:right;font-weight:bold;">25,90,000</td>
+        </tr>
+        <tr>
+          <td style="color:#0054a6;cursor:pointer;font-family:monospace;">400100</td>
+          <td>Audit Expenses</td>
+          <td style="text-align:right;">0</td>
+          <td style="text-align:right;color:#006600;">+50,000</td>
+          <td style="text-align:right;">0</td>
+          <td style="text-align:right;">0</td>
+          <td style="text-align:right;font-weight:bold;">50,000</td>
+        </tr>
+        <tr>
+          <td style="color:#0054a6;cursor:pointer;font-family:monospace;">500100</td>
+          <td>Sales Revenue</td>
+          <td style="text-align:right;">0</td>
+          <td style="text-align:right;color:#006600;">+5,00,000</td>
+          <td style="text-align:right;color:#006600;">+3,20,000</td>
+          <td style="text-align:right;color:#006600;">+4,10,000</td>
+          <td style="text-align:right;font-weight:bold;">12,30,000</td>
+        </tr>
+      </table>
+      <div style="margin-top:6px;font-size:10px;font-family:'Segoe UI',sans-serif;color:#0054a6;">
+        Double-click any G/L Account to see all individual documents behind that balance (FBL3N drill-down).
+      </div>
+    </div>
+    <div class="sap-statusbar">
+      <span>S_ALR_87012172 | G/L Balances</span>
+      <span>Co: 1000 | FY: 2025 | All Periods</span>
+    </div>
+  </div>
+</div>
+`,
+  // GL Account Line Item Report → FBL3N output (G/L line items)
   '1-3': `
 <div class="sap-mock">
   <style>${SAP_SCREEN_CSS}</style>
   <div class="sap-window">
     <div class="sap-titlebar">
-      <span>G/L Account Line Item Display</span>
+      <span>G/L Account Line Item Display — Account 400100 Audit Expenses</span>
       <div class="sap-titlebar-btns"><span>─</span><span>□</span><span>✕</span></div>
     </div>
     <div class="sap-tcode-bar">
@@ -1205,38 +1710,130 @@ const sapScreenByLesson = {
       <input class="sap-tcode-field" value="FBL3N" readonly>
     </div>
     <div class="sap-content">
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <span class="sap-btn">📊 Export Excel</span>
+        <span class="sap-btn">🔍 Filter</span>
+        <span class="sap-btn">Sort ↕</span>
+        <span class="sap-btn">Σ Sum</span>
+        <span class="sap-btn" style="margin-left:auto;">Change Layout</span>
+      </div>
+      <table class="sap-table" style="font-size:10px;">
+        <tr>
+          <th>Doc No</th>
+          <th>Type</th>
+          <th>Doc Date</th>
+          <th>Posting Date</th>
+          <th>Reference</th>
+          <th>Text</th>
+          <th>Amount (INR)</th>
+          <th>Clrng Doc</th>
+        </tr>
+        <tr style="cursor:pointer;" title="Double-click to open document">
+          <td style="color:#0054a6;text-decoration:underline;">1800000123</td>
+          <td>SA</td>
+          <td>31.03.25</td>
+          <td>31.03.25</td>
+          <td>JV-2025-031</td>
+          <td>Audit fee provision</td>
+          <td style="text-align:right;">50,000.00</td>
+          <td></td>
+        </tr>
+        <tr style="cursor:pointer;">
+          <td style="color:#0054a6;text-decoration:underline;">1800000089</td>
+          <td>SA</td>
+          <td>28.02.25</td>
+          <td>28.02.25</td>
+          <td>JV-2025-022</td>
+          <td>Audit fee Q3</td>
+          <td style="text-align:right;">45,000.00</td>
+          <td>1800000102</td>
+        </tr>
+        <tr style="cursor:pointer;">
+          <td style="color:#0054a6;text-decoration:underline;">1800000056</td>
+          <td>SA</td>
+          <td>31.01.25</td>
+          <td>31.01.25</td>
+          <td>JV-2025-011</td>
+          <td>Audit fee Q3 adj</td>
+          <td style="text-align:right;">5,000.00</td>
+          <td>1800000102</td>
+        </tr>
+      </table>
+      <div style="margin-top:6px;font-size:11px;font-family:'Segoe UI',sans-serif;font-weight:bold;">
+        Total: ₹ 1,00,000.00 &nbsp;&nbsp; | &nbsp;&nbsp;
+        <span style="color:#006600;">Open: ₹ 50,000.00</span> &nbsp;&nbsp; | &nbsp;&nbsp;
+        <span style="color:#888;">Cleared: ₹ 50,000.00</span>
+      </div>
+      <div style="margin-top:4px;font-size:10px;font-family:'Segoe UI',sans-serif;color:#0054a6;">
+        Double-click any document number to open it in FB03. Use Ctrl+Shift+F7 to export to Excel.
+      </div>
+    </div>
+    <div class="sap-statusbar">
+      <span>3 items | G/L: 400100 | All Items</span>
+      <span>Co: 1000 | FY: 2025 | 01.04.24-31.03.25</span>
+    </div>
+  </div>
+</div>
+`,
+  // FB08 Reverse a Document → dedicated FB08 screen
+  '1-2': `
+<div class="sap-mock">
+  <style>${SAP_SCREEN_CSS}</style>
+  <div class="sap-window">
+    <div class="sap-titlebar">
+      <span>Reverse Document: Header Data</span>
+      <div class="sap-titlebar-btns"><span>─</span><span>□</span><span>✕</span></div>
+    </div>
+    <div class="sap-menubar">
+      <span class="sap-menu-item">Document</span><span class="sap-menu-item">Edit</span><span class="sap-menu-item">Goto</span><span class="sap-menu-item">Extras</span>
+    </div>
+    <div class="sap-toolbar">
+      <span class="sap-btn">💾 Post</span>
+      <div class="sap-separator"></div>
+      <span class="sap-btn">🔍 Display Doc</span>
+    </div>
+    <div class="sap-tcode-bar">
+      <span style="font-family:'Segoe UI',sans-serif;font-size:11px;">Transaction:</span>
+      <input class="sap-tcode-field" value="FB08" readonly>
+    </div>
+    <div class="sap-content">
       <div class="sap-form">
         <div class="sap-row">
-          <span class="sap-label-req">G/L Account *</span>
-          <input class="sap-field sap-field-med sap-field-req" value="400100" readonly>
-          <span style="font-size:10px;font-family:'Segoe UI',sans-serif;color:#666;">to</span>
-          <input class="sap-field sap-field-med" value="" readonly>
+          <span class="sap-label-req">Document Number *</span>
+          <input class="sap-field sap-field-med sap-field-req" value="1800000123" readonly>
         </div>
         <div class="sap-row">
           <span class="sap-label-req">Company Code *</span>
           <input class="sap-field sap-field-small sap-field-req" value="1000" readonly>
-        </div>
-        <div style="margin:6px 0;font-family:'Segoe UI',sans-serif;font-size:11px;font-weight:bold;color:#000;">Line Item Selection</div>
-        <div class="sap-radio">
-          <label><input type="radio" name="li"> Open Items</label>
-          <label><input type="radio" name="li"> Cleared Items</label>
-          <label><input type="radio" name="li" checked> All Items</label>
-        </div>
-        <div class="sap-row" style="margin-top:6px;">
-          <span class="sap-label">Posting Date</span>
-          <input class="sap-field sap-field-med sap-field-filled" value="01.04.2024" readonly>
-          <span style="font-size:10px;font-family:'Segoe UI',sans-serif;color:#666;">to</span>
-          <input class="sap-field sap-field-med sap-field-filled" value="31.03.2025" readonly>
+          <span class="sap-label" style="min-width:60px;">Fiscal Year</span>
+          <input class="sap-field sap-field-small sap-field-filled" value="2025" readonly>
         </div>
       </div>
-      <div style="text-align:center;margin-top:10px;">
-        <span class="sap-btn" style="padding:4px 20px;font-size:12px;background:#0054a6;color:white;border-color:#003d7a;">▶ Execute (F8)</span>
-        <span style="margin-left:20px;font-size:10px;font-family:'Segoe UI',sans-serif;color:#666;">Results export to Excel via toolbar.</span>
+      <div class="sap-section-header">Reversal Data</div>
+      <div class="sap-form">
+        <div class="sap-row">
+          <span class="sap-label-req">Reversal Reason *</span>
+          <select style="border:1px solid #666;background:white;padding:1px 4px;font-size:11px;font-family:'Segoe UI',sans-serif;height:20px;color:#000080;">
+            <option>01 — Reversal in current period</option>
+            <option>02 — Reversal in closed period</option>
+            <option>03 — Accrual reversal</option>
+          </select>
+        </div>
+        <div class="sap-row">
+          <span class="sap-label-req">Reversal Date *</span>
+          <input class="sap-field sap-field-med sap-field-req" value="31.03.2025" readonly>
+          <span style="font-size:10px;color:#cc6600;font-family:'Segoe UI',sans-serif;">Must be in open period</span>
+        </div>
+      </div>
+      <div style="background:#e8f0ff;border:1px solid #0054a6;padding:8px;font-size:10px;font-family:'Segoe UI',sans-serif;margin-top:8px;">
+        <strong>Original Document Preview:</strong><br/>
+        Doc: 1800000123 | Date: 31.03.2025 | Amount: ₹50,000 | Type: SA<br/>
+        <span style="color:#006600;">Both original and reversal document remain visible for audit.</span>
       </div>
     </div>
     <div class="sap-statusbar">
-      <span>FBL3N | G/L Line Items</span>
-      <span>Tip: Ctrl+Shift+F7 to export to Excel</span>
+      <span>FB08 | Reverse Document</span>
+      <span>Reversal document will be created in same company code</span>
     </div>
   </div>
 </div>
