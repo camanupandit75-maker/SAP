@@ -2141,6 +2141,24 @@ function HomePage({ navigate, completedLessons }) {
           >
             Cheat Sheet
           </button>
+          <button
+            style={{
+              ...s.card,
+              padding: '8px 16px',
+              fontSize: 12,
+              color: C.accentLight,
+              fontFamily: C.mono,
+              fontWeight: 500,
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: 'rgba(15,32,48,0.9)',
+              border: `1px solid ${C.border}`,
+              ...(h.is('sim-btn') ? { borderColor: C.accent, color: C.accentLight } : {}),
+            }}
+            {...h.bind('sim-btn')}
+            onClick={() => navigate('simulator')}
+          >
+            🖥 Launch SAP Simulator
+          </button>
         </div>
       </header>
 
@@ -2854,6 +2872,452 @@ function CheatSheetPage({ navigate }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// PAGE 6: SAP SIMULATOR (light SAP GUI shell, isolated state)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Simulator colours and simple helpers (kept separate from dark platform theme)
+const SAP_SIM = {
+  bg: '#f0f2f5',
+  shellBg: '#d4d0c8',
+  headerBg: '#1a3a5c',
+  headerText: '#ffffff',
+  label: '#333333',
+  fieldBorder: '#b0b8c4',
+  tableHeaderBg: '#1a3a5c',
+  tableAltRow: '#eef0f3',
+  statusBg: '#1a1a1a',
+  statusOk: '#63b35d',
+  statusErr: '#e07171',
+};
+
+function createInitialSimState() {
+  return {
+    currentTcode: 'FB50',
+    status: { type: 'info', message: 'Ready.' },
+    journalDocs: [
+      {
+        docNo: '1800000001',
+        tcode: 'FB50',
+        date: '2024-04-01',
+        companyCode: 'IN01',
+        items: [
+          { gl: '400100', dc: 'D', amount: 50000, text: 'Audit fee provision' },
+          { gl: '200300', dc: 'C', amount: 50000, text: 'Provision - audit fees' },
+        ],
+      },
+    ],
+    vendorDocs: [
+      {
+        docNo: '1900000001',
+        vendor: 'V1001',
+        name: 'Tata Steel Ltd',
+        amount: 118000,
+        open: true,
+        tcode: 'FB60',
+      },
+    ],
+    customerDocs: [
+      {
+        docNo: '2000000001',
+        customer: 'C2001',
+        name: 'Mahindra & Mahindra',
+        amount: 590000,
+        open: true,
+        tcode: 'FB70',
+      },
+    ],
+    bankLines: [
+      { id: 1, date: '2024-04-01', text: 'Opening balance', amount: 4523456 },
+    ],
+    periods: { current: 1, year: 2024, open: true },
+    assets: [
+      { id: 'ASSET-001', class: 'Plant & Machinery', nbv: 1500000 },
+      { id: 'ASSET-002', class: 'Office Equipment', nbv: 250000 },
+    ],
+  };
+}
+
+const simulatorSidebar = [
+  {
+    label: 'G/L Accounting',
+    items: [
+      { code: 'FB50', label: 'Post G/L Document' },
+      { code: 'FB03', label: 'Display Document' },
+      { code: 'FB08', label: 'Reverse Document' },
+      { code: 'FBL3N', label: 'G/L Line Items' },
+    ],
+  },
+  {
+    label: 'Accounts Payable',
+    items: [
+      { code: 'FK03', label: 'Vendor Master' },
+      { code: 'FB60', label: 'Post Vendor Invoice' },
+      { code: 'F-53', label: 'Manual Payment' },
+      { code: 'F110', label: 'Auto Payment Run' },
+      { code: 'FBL1N', label: 'Vendor Report' },
+    ],
+  },
+  {
+    label: 'Accounts Receivable',
+    items: [
+      { code: 'FD03', label: 'Customer Master' },
+      { code: 'FB70', label: 'Customer Invoice' },
+      { code: 'F-28', label: 'Incoming Payment' },
+      { code: 'FBL5N', label: 'Customer Report' },
+    ],
+  },
+  {
+    label: 'Financial Reports',
+    items: [
+      { code: 'F.01', label: 'Financial Statements' },
+      { code: 'S_ALR_87012284', label: 'BS/PL Report' },
+    ],
+  },
+  {
+    label: 'Bank',
+    items: [
+      { code: 'FF67', label: 'Bank Statement' },
+      { code: 'FEBAN', label: 'Bank Processing' },
+    ],
+  },
+  {
+    label: 'Period Close',
+    items: [
+      { code: 'OB52', label: 'Posting Periods' },
+      { code: 'AFAB', label: 'Depreciation Run' },
+      { code: 'F.16', label: 'Carry Forward' },
+    ],
+  },
+];
+
+function SimulatorStatusBar({ status }) {
+  const color =
+    status.type === 'success'
+      ? SAP_SIM.statusOk
+      : status.type === 'error'
+      ? SAP_SIM.statusErr
+      : '#e0e0e0';
+  return (
+    <div
+      style={{
+        background: SAP_SIM.statusBg,
+        color,
+        fontSize: 11,
+        padding: '4px 10px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        fontFamily: "'IBM Plex Sans', -apple-system, sans-serif",
+      }}
+    >
+      <span>{status.message}</span>
+      <span style={{ color: '#9ca3af' }}>Client 100 · User CA_TRAINEE</span>
+    </div>
+  );
+}
+
+function SimulatorShell({ state, setState }) {
+  const [cmd, setCmd] = useState(state.currentTcode);
+
+  const navigateTcode = (code) => {
+    setState((prev) => ({ ...prev, currentTcode: code, status: prev.status }));
+    setCmd(code);
+  };
+
+  const handleCommandSubmit = (e) => {
+    e.preventDefault();
+    const trimmed = cmd.trim().toUpperCase();
+    if (!trimmed) return;
+    const exists = simulatorSidebar.some((group) =>
+      group.items.some((it) => it.code === trimmed),
+    );
+    if (!exists) {
+      setState((prev) => ({
+        ...prev,
+        status: {
+          type: 'error',
+          message: `Transaction ${trimmed} is not available in this training system`,
+        },
+      }));
+      return;
+    }
+    navigateTcode(trimmed);
+    setState((prev) => ({
+      ...prev,
+      status: {
+        type: 'info',
+        message: `Transaction ${trimmed} ready`,
+      },
+    }));
+  };
+
+  return (
+    <div
+      style={{
+        minHeight: '100vh',
+        background: SAP_SIM.bg,
+        padding: 16,
+        fontFamily: "'IBM Plex Sans', -apple-system, sans-serif",
+      }}
+    >
+      {/* SAP shell frame */}
+      <div
+        style={{
+          borderRadius: 8,
+          border: '1px solid #cbd5e1',
+          overflow: 'hidden',
+          boxShadow: '0 18px 45px rgba(15,23,42,0.25)',
+          background: '#ffffff',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        {/* Top bar */}
+        <div
+          style={{
+            background:
+              'linear-gradient(90deg,#0f172a,#1e293b,#0f172a)',
+            color: '#e5e7eb',
+            padding: '6px 12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            fontSize: 12,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div
+              style={{
+                width: 18,
+                height: 18,
+                borderRadius: 4,
+                background:
+                  'linear-gradient(135deg,#38bdf8,#0ea5e9,#0369a1)',
+              }}
+            />
+            <span style={{ fontWeight: 600 }}>SAP</span>
+          </div>
+          <div>Bharat Manufacturing Pvt Ltd · SAP ERP 6.0 · Company Code IN01 · FY 2024-25</div>
+          <div style={{ fontFamily: C.mono, fontSize: 11 }}>User: CA_TRAINEE</div>
+        </div>
+
+        {/* Menu bar */}
+        <div
+          style={{
+            background: SAP_SIM.shellBg,
+            borderBottom: '1px solid #9ca3af',
+            padding: '2px 8px',
+            display: 'flex',
+            gap: 16,
+            fontSize: 11,
+          }}
+        >
+          {['System', 'Edit', 'Favourites', 'Extras', 'Help'].map((m) => (
+            <span key={m} style={{ cursor: 'default', color: '#111827' }}>
+              {m}
+            </span>
+          ))}
+        </div>
+
+        {/* Toolbar */}
+        <div
+          style={{
+            background: SAP_SIM.shellBg,
+            borderBottom: '1px solid #9ca3af',
+            padding: '4px 8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            fontSize: 11,
+          }}
+        >
+          {[
+            '◀ Back',
+            '▶ Forward',
+            '✕ Cancel',
+            '💾 Save',
+            '🔍 Find',
+            '🖨 Print',
+          ].map((label) => (
+            <button
+              key={label}
+              type="button"
+              style={{
+                borderRadius: 3,
+                border: '1px solid #9ca3af',
+                padding: '2px 8px',
+                background:
+                  'linear-gradient(180deg,#f9fafb,#e5e7eb)',
+                fontSize: 11,
+                cursor: 'default',
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Command field */}
+        <form
+          onSubmit={handleCommandSubmit}
+          style={{
+            background: SAP_SIM.shellBg,
+            borderBottom: '2px solid #9ca3af',
+            padding: '4px 8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            fontSize: 11,
+          }}
+        >
+          <span style={{ minWidth: 70 }}>Transaction:</span>
+          <input
+            value={cmd}
+            onChange={(e) => setCmd(e.target.value)}
+            style={{
+              border: '1px inset #6b7280',
+              background: '#ffffff',
+              padding: '2px 6px',
+              width: 120,
+              fontFamily: C.mono,
+              fontSize: 11,
+              color: '#1f2937',
+            }}
+          />
+        </form>
+
+        {/* Main simulator body */}
+        <div
+          style={{
+            display: 'flex',
+            minHeight: 520,
+          }}
+        >
+          {/* Sidebar */}
+          <div
+            style={{
+              width: 260,
+              borderRight: '1px solid #e5e7eb',
+              background: '#f9fafb',
+              padding: '10px 8px',
+              overflowY: 'auto',
+            }}
+          >
+            {simulatorSidebar.map((group) => (
+              <div key={group.label} style={{ marginBottom: 12 }}>
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: '#0f172a',
+                    marginBottom: 6,
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {group.label}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {group.items.map((it) => (
+                    <button
+                      key={it.code}
+                      type="button"
+                      onClick={() => navigateTcode(it.code)}
+                      style={{
+                        textAlign: 'left',
+                        borderRadius: 4,
+                        border: 'none',
+                        padding: '4px 6px',
+                        fontSize: 11,
+                        background:
+                          state.currentTcode === it.code
+                            ? 'rgba(37,99,235,0.08)'
+                            : 'transparent',
+                        color:
+                          state.currentTcode === it.code
+                            ? '#1d4ed8'
+                            : '#374151',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <span style={{ fontFamily: C.mono, marginRight: 4 }}>
+                        {it.code}
+                      </span>
+                      {it.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Screen area */}
+          <div
+            style={{
+              flex: 1,
+              background: SAP_SIM.bg,
+              padding: 16,
+              overflow: 'auto',
+            }}
+          >
+            <SimulatorScreen state={state} setState={setState} />
+          </div>
+        </div>
+
+        <SimulatorStatusBar status={state.status} />
+      </div>
+    </div>
+  );
+}
+
+function SimulatorScreen({ state }) {
+  // For brevity, this demo shows the active T-code name and a placeholder.
+  // Realistic field-level simulation can extend from this shell without
+  // affecting the learning platform.
+  return (
+    <div>
+      <div
+        style={{
+          background: SAP_SIM.headerBg,
+          color: SAP_SIM.headerText,
+          padding: '8px 12px',
+          borderRadius: 6,
+          marginBottom: 12,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <div style={{ fontSize: 13, fontWeight: 600 }}>
+          Transaction {state.currentTcode}
+        </div>
+        <div style={{ fontSize: 11, opacity: 0.9 }}>
+          Training system · Demo data only
+        </div>
+      </div>
+      <div
+        style={{
+          background: '#ffffff',
+          borderRadius: 6,
+          border: '1px solid #e5e7eb',
+          padding: 16,
+          fontSize: 12,
+          color: '#111827',
+        }}
+      >
+        <div style={{ marginBottom: 8, fontWeight: 600 }}>
+          SAP Simulator placeholder
+        </div>
+        <div style={{ color: '#4b5563', lineHeight: 1.6 }}>
+          This shell behaves like the SAP GUI: you can switch transactions from
+          the left sidebar or via the command field above. Implementing full
+          field-level behaviour and document posting can be layered on top of
+          this shell without touching the learning platform code.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // APP SHELL — Navigation Router
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function App() {
@@ -2861,6 +3325,7 @@ export default function App() {
   const [moduleIndex, setModuleIndex] = useState(0);
   const [lessonIndex, setLessonIndex] = useState(0);
   const [completedLessons, setCompletedLessons] = useState(() => new Set());
+  const [simState, setSimState] = useState(() => createInitialSimState());
 
   const navigate = (target, modIdx, lesIdx) => {
     setPage(target);
@@ -2900,6 +3365,13 @@ export default function App() {
       return <TCodePage navigate={navigate} />;
     case 'cheatsheet':
       return <CheatSheetPage navigate={navigate} />;
+    case 'simulator':
+      return (
+        <SimulatorShell
+          state={simState}
+          setState={setSimState}
+        />
+      );
     default:
       return <HomePage navigate={navigate} completedLessons={completedLessons} />;
   }
