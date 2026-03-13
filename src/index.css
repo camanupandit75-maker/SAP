@@ -1,0 +1,87 @@
+:root {
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #111827;
+  --bg-card: #151f30;
+  --accent: #c8a96e;
+  --accent-light: #e8d5a3;
+  --text-primary: #e8d5a3;
+  --text-secondary: #8a9bb0;
+  --text-muted: #4a5a6a;
+  --success: #4aaa7a;
+  --tcode: #5aacda;
+  --tcode-bg: #0f2030;
+  --border: #1e2a3a;
+  --warning: #d4a44a;
+}
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Dark gradient mesh background with noise */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(ellipse at 20% 0%, #111d35 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, #1a1530 0%, transparent 40%),
+    radial-gradient(ellipse at 50% 80%, #0d1825 0%, transparent 50%),
+    radial-gradient(ellipse at 0% 60%, #101828 0%, transparent 40%),
+    linear-gradient(180deg, #0a0e1a 0%, #0d1220 40%, #0a0f1c 100%);
+}
+
+/* Subtle noise texture overlay */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 128px 128px;
+  pointer-events: none;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Selection */
+::selection {
+  background: rgba(200, 169, 110, 0.25);
+  color: var(--accent-light);
+}
