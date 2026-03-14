@@ -3189,6 +3189,7 @@ function createInitialSimState() {
         open: true,
         tcode: 'FB60',
         costCentre: 'CC001',
+        gl: '400100',
       },
     ],
     customerDocs: [
@@ -3776,7 +3777,18 @@ function SimulatorScreen({ state, setState }) {
       body = <SimS_ALR_87012284 state={state} setState={setState} />;
       break;
     case 'FB60':
-      body = <SimFB60 state={state} setState={setState} />;
+      body = (
+        <div
+          className="sap-fb60-full"
+          style={{
+            background: '#fff',
+            borderRadius: 6,
+            overflow: 'auto',
+            minHeight: 320,
+          }}
+          dangerouslySetInnerHTML={{ __html: sapScreenByModule[2] }}
+        />
+      );
       break;
     case 'F-53':
       body = <SimF53 state={state} setState={setState} />;
@@ -4426,11 +4438,20 @@ function SimFBL3N({ state, setState }) {
   );
 }
 
+// Expense GL range 400000-499999; Income GL range 500000-599999 (for P&L)
+const EXPENSE_GL_MIN = 400000;
+const EXPENSE_GL_MAX = 499999;
+const INCOME_GL_MIN = 500000;
+const INCOME_GL_MAX = 599999;
+const isExpenseGL = (gl) => { const n = parseInt(gl, 10); return !Number.isNaN(n) && n >= EXPENSE_GL_MIN && n <= EXPENSE_GL_MAX; };
+const isIncomeGL = (gl) => { const n = parseInt(gl, 10); return !Number.isNaN(n) && n >= INCOME_GL_MIN && n <= INCOME_GL_MAX; };
+
 // FB60 — skeleton vendor invoice posting (adds to vendorDocs)
 function SimFB60({ state, setState }) {
   const [vendor, setVendor] = useState('V1001');
   const [amount, setAmount] = useState('118000');
   const [invDate, setInvDate] = useState('2024-04-05');
+  const [glAccount, setGlAccount] = useState('400100');
 
   const post = () => {
     if (!vendor || !amount) {
@@ -4454,6 +4475,7 @@ function SimFB60({ state, setState }) {
       tcode: 'FB60',
       date: invDate,
       costCentre: 'CC001',
+      gl: (glAccount || '400100').trim(),
     };
     setState((prev) => ({
       ...prev,
@@ -4477,6 +4499,9 @@ function SimFB60({ state, setState }) {
       </SimFieldRow>
       <SimFieldRow label="Amount" required>
         <SimInput value={amount} onChange={(e) => setAmount(e.target.value)} />
+      </SimFieldRow>
+      <SimFieldRow label="G/L Account (expense 4xxxxx)">
+        <SimInput value={glAccount} onChange={(e) => setGlAccount(e.target.value)} width={100} placeholder="400100" />
       </SimFieldRow>
       <div style={{ textAlign: 'right', marginTop: 12 }}>
         <button
@@ -4779,8 +4804,6 @@ function SimF01({ state, setState }) {
   }, [prefill?.tcode, prefill?.autoExecute]);
 
   const glMasters = state.glMasters || [];
-  const expenseGLs = new Set(glMasters.filter((g) => g.type === 'Expense').map((g) => g.number));
-  const incomeGLs = new Set(glMasters.filter((g) => g.type === 'Income').map((g) => g.number));
 
   const debtors = (state.customerDocs || []).filter((d) => d.open === true).reduce((a, d) => a + (d.amount || 0), 0);
   const creditors = (state.vendorDocs || []).filter((d) => d.open === true).reduce((a, d) => a + (d.amount || 0), 0);
@@ -4788,8 +4811,11 @@ function SimF01({ state, setState }) {
   const revenueFromOps = (state.customerDocs || []).reduce((a, d) => a + (d.amount || 0), 0);
   const expenseFromJournal = (state.journalDocs || [])
     .flatMap((d) => d.items || [])
-    .filter((i) => i.dc === 'D' && expenseGLs.has(i.gl))
+    .filter((i) => i.dc === 'D' && isExpenseGL(i.gl))
     .reduce((a, i) => a + (i.amount || 0), 0);
+  const expenseFromFB60 = (state.vendorDocs || [])
+    .filter((d) => !d.gl || isExpenseGL(d.gl))
+    .reduce((a, d) => a + (d.amount || 0), 0);
   const depreciation = state.depreciationTotal ?? 0;
 
   const PLANT_MACHINERY = 25000000;
@@ -4809,7 +4835,7 @@ function SimF01({ state, setState }) {
 
   const totalIncome = revenueFromOps + OTHER_INCOME;
   const otherExpenses = Math.max(0, expenseFromJournal - depreciation);
-  const totalExpenses = COST_OF_MATERIALS + EMPLOYEE_COSTS + depreciation + otherExpenses;
+  const totalExpenses = COST_OF_MATERIALS + EMPLOYEE_COSTS + depreciation + otherExpenses + expenseFromFB60;
   const profitBeforeTax = totalIncome - totalExpenses;
   const tax = Math.max(0, profitBeforeTax * 0.25);
   const netProfit = profitBeforeTax - tax;
@@ -5809,12 +5835,12 @@ function SimS_ALR_87012284({ state, setState }) {
   }, [prefill?.tcode, prefill?.autoExecute]);
 
   const glMasters = state.glMasters || [];
-  const expenseGLs = new Set(glMasters.filter((g) => g.type === 'Expense').map((g) => g.number));
   const debtors = (state.customerDocs || []).filter((d) => d.open === true).reduce((a, d) => a + (d.amount || 0), 0);
   const creditors = (state.vendorDocs || []).filter((d) => d.open === true).reduce((a, d) => a + (d.amount || 0), 0);
   const bankBalance = (state.bankLines || []).reduce((a, l) => a + (l.amount || 0), 0);
   const revenue = (state.customerDocs || []).reduce((a, d) => a + (d.amount || 0), 0);
-  const expenseFromJournal = (state.journalDocs || []).flatMap((d) => d.items || []).filter((i) => i.dc === 'D' && expenseGLs.has(i.gl)).reduce((a, i) => a + (i.amount || 0), 0);
+  const expenseFromJournal = (state.journalDocs || []).flatMap((d) => d.items || []).filter((i) => i.dc === 'D' && isExpenseGL(i.gl)).reduce((a, i) => a + (i.amount || 0), 0);
+  const expenseFromFB60 = (state.vendorDocs || []).filter((d) => !d.gl || isExpenseGL(d.gl)).reduce((a, d) => a + (d.amount || 0), 0);
   const depreciation = state.depreciationTotal ?? 0;
   const PLANT_MACHINERY = 25000000;
   const SHARE_CAPITAL = 20000000;
@@ -5825,7 +5851,7 @@ function SimS_ALR_87012284({ state, setState }) {
   const netBlock = PLANT_MACHINERY - depreciation;
   const totalCurrentAssets = debtors + bankBalance + CASH + CLOSING_STOCK;
   const totalAssets = netBlock + totalCurrentAssets;
-  const totalExpenses = depreciation + Math.max(0, expenseFromJournal - depreciation);
+  const totalExpenses = depreciation + Math.max(0, expenseFromJournal - depreciation) + expenseFromFB60;
   const profit = revenue - totalExpenses;
   const tax = Math.max(0, profit * 0.25);
   const netProfit = profit - tax;
