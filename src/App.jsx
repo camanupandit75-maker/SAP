@@ -2927,8 +2927,9 @@ function createInitialSimState() {
       },
     ],
     bankLines: [
-      { id: 1, date: '2024-04-01', text: 'Opening balance', amount: 4523456 },
+      { id: 1, date: '2024-04-01', text: 'Opening balance', amount: 5263456 },
     ],
+    depreciationTotal: 0,
     periods: { current: 1, year: 2024, open: true },
     assets: [
       { id: 'ASSET-001', class: 'Plant & Machinery', nbv: 1500000 },
@@ -2951,6 +2952,14 @@ function createInitialSimState() {
       { id: 'F3', date: '2024-04-03', amount: 590000, description: 'NEFT CR - Bajaj', status: 'Processed', action: '' },
       { id: 'F4', date: '2024-04-04', amount: -105136, description: 'Bank Charges', status: 'Exception', action: 'Manual assign' },
       { id: 'F5', date: '2024-04-05', amount: 50000, description: 'Unknown NEFT', status: 'Unprocessed', action: 'Match' },
+    ],
+    glMasters: [
+      { number: '100100', name: 'Cash', type: 'Asset' },
+      { number: '200100', name: 'Sundry Creditors', type: 'Liability' },
+      { number: '200300', name: 'Provisions', type: 'Liability' },
+      { number: '400100', name: 'Sales Revenue', type: 'Income' },
+      { number: '410000', name: 'Revenue from Operations', type: 'Income' },
+      { number: '500100', name: 'Office Expenses', type: 'Expense' },
     ],
   };
 }
@@ -3326,10 +3335,10 @@ function SimulatorScreen({ state, setState }) {
       body = <SimFB08 state={state} setState={setState} />;
       break;
     case 'FK03':
-      body = <SimFK03 state={state} />;
+      body = <SimFK03 state={state} setState={setState} />;
       break;
     case 'FD03':
-      body = <SimFD03 state={state} />;
+      body = <SimFD03 state={state} setState={setState} />;
       break;
     case 'FB70':
       body = <SimFB70 state={state} setState={setState} />;
@@ -3356,7 +3365,7 @@ function SimulatorScreen({ state, setState }) {
       body = <SimFBL5N state={state} />;
       break;
     case 'F.01':
-      body = <SimF01 state={state} />;
+      body = <SimF01 state={state} setState={setState} />;
       break;
     case 'FF67':
       body = <SimFF67 state={state} />;
@@ -3368,7 +3377,7 @@ function SimulatorScreen({ state, setState }) {
       body = <SimOB52 state={state} />;
       break;
     case 'AFAB':
-      body = <SimAFAB state={state} />;
+      body = <SimAFAB state={state} setState={setState} />;
       break;
     case 'F.16':
       body = <SimF16 state={state} />;
@@ -3528,6 +3537,11 @@ function SimFB50({ state, setState }) {
     { gl: '400100', dc: 'D', amount: '50000', costCenter: 'CC001', text: '' },
     { gl: '200300', dc: 'C', amount: '50000', costCenter: '', text: '' },
   ]);
+  const [glSearchRowIndex, setGlSearchRowIndex] = useState(null);
+  const [showCreateGL, setShowCreateGL] = useState(false);
+  const [newGLNumber, setNewGLNumber] = useState('');
+  const [newGLName, setNewGLName] = useState('');
+  const [newGLType, setNewGLType] = useState('Income');
 
   const addRow = () =>
     setRows((prev) => [...prev, { gl: '', dc: 'D', amount: '', costCenter: '', text: '' }]);
@@ -3539,6 +3553,27 @@ function SimFB50({ state, setState }) {
     setRows((prev) =>
       prev.map((r, idx) => (idx === index ? { ...r, [field]: value } : r)),
     );
+
+  const glMasters = state.glMasters || [];
+
+  const handleSaveNewGL = () => {
+    if (!newGLNumber.trim() || !newGLName.trim()) return;
+    if (glMasters.some((g) => g.number === newGLNumber.trim())) {
+      setState((prev) => ({ ...prev, status: { type: 'error', message: 'G/L account number already exists' } }));
+      return;
+    }
+    const num = newGLNumber.trim();
+    setState((prev) => ({
+      ...prev,
+      glMasters: [...(prev.glMasters || []), { number: num, name: newGLName.trim(), type: newGLType }],
+    }));
+    if (glSearchRowIndex !== null) setRows((prev) => prev.map((r, idx) => (idx === glSearchRowIndex ? { ...r, gl: num } : r)));
+    setGlSearchRowIndex(null);
+    setShowCreateGL(false);
+    setNewGLNumber('');
+    setNewGLName('');
+    setNewGLType('Income');
+  };
 
   const totals = rows.reduce(
     (acc, r) => {
@@ -3614,17 +3649,81 @@ function SimFB50({ state, setState }) {
       <div style={{ fontSize: 11, fontWeight: 600, color: SAP_SIM.label, marginBottom: 4 }}>
         G/L Line Items
       </div>
+      {glSearchRowIndex !== null && (
+        <div style={{ marginBottom: 12, border: '1px solid #cbd5e1', borderRadius: 4, padding: 10, background: '#fff', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+          <div style={{ fontWeight: 600, fontSize: 11, marginBottom: 8 }}>G/L Account search</div>
+          {!showCreateGL ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setShowCreateGL(true)}
+                style={{
+                  marginBottom: 8,
+                  padding: '4px 10px',
+                  background: SAP_SIM.headerBg,
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 4,
+                  fontSize: 11,
+                  cursor: 'pointer',
+                }}
+              >
+                Create New G/L Account
+              </button>
+              <div style={{ maxHeight: 140, overflow: 'auto', border: '1px solid #e5e7eb', borderRadius: 4 }}>
+                {glMasters.map((g) => (
+                  <div
+                    key={g.number}
+                    onClick={() => { updateRow(glSearchRowIndex, 'gl', g.number); setGlSearchRowIndex(null); }}
+                    style={{ padding: '6px 8px', cursor: 'pointer', fontSize: 11, borderBottom: '1px solid #f3f4f6' }}
+                  >
+                    {g.number} — {g.name} ({g.type})
+                  </div>
+                ))}
+              </div>
+              <button type="button" onClick={() => setGlSearchRowIndex(null)} style={{ marginTop: 6, fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer' }}>Close</button>
+            </>
+          ) : (
+            <div style={{ padding: 8, background: '#fafafa', borderRadius: 4, border: '1px solid #e5e7eb' }}>
+              <div style={{ fontWeight: 600, fontSize: 11, marginBottom: 8 }}>Create New G/L Account</div>
+              <SimFieldRow label="Account Number" required><SimInput value={newGLNumber} onChange={(e) => setNewGLNumber(e.target.value)} width={120} placeholder="e.g. 600100" /></SimFieldRow>
+              <SimFieldRow label="Account Name" required><SimInput value={newGLName} onChange={(e) => setNewGLName(e.target.value)} width={200} /></SimFieldRow>
+              <SimFieldRow label="Account Type">
+                <select value={newGLType} onChange={(e) => setNewGLType(e.target.value)} style={{ height: 22, border: `1px solid ${SAP_SIM.fieldBorder}`, borderRadius: 2, fontSize: 11, minWidth: 140, background: '#fff' }}>
+                  <option value="Asset">Asset</option>
+                  <option value="Liability">Liability</option>
+                  <option value="Income">Income</option>
+                  <option value="Expense">Expense</option>
+                </select>
+              </SimFieldRow>
+              <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                <button type="button" onClick={handleSaveNewGL} style={{ padding: '4px 12px', background: SAP_SIM.headerBg, color: '#fff', border: 'none', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Save</button>
+                <button type="button" onClick={() => { setShowCreateGL(false); setNewGLNumber(''); setNewGLName(''); }} style={{ padding: '4px 12px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Cancel</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
       <SimTable
         columns={[
           {
             key: 'gl',
             label: 'G/L Account',
             render: (r, idx) => (
-              <SimInput
-                value={r.gl}
-                onChange={(e) => updateRow(idx, 'gl', e.target.value)}
-                width={100}
-              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <SimInput
+                  value={r.gl}
+                  onChange={(e) => updateRow(idx, 'gl', e.target.value)}
+                  width={90}
+                />
+                <button
+                  type="button"
+                  onClick={() => setGlSearchRowIndex(idx)}
+                  style={{ padding: '2px 4px', border: '1px solid #9ca3af', borderRadius: 2, fontSize: 10, background: '#f0f2f5', cursor: 'pointer' }}
+                >
+                  F4
+                </button>
+              </div>
             ),
           },
           {
@@ -4131,65 +4230,214 @@ function SimF110({ state, setState }) {
   );
 }
 
-// F.01 — very simple BS + P&L from current doc arrays
-function SimF01({ state }) {
-  const revenue = state.customerDocs.reduce(
-    (a, d) => a + d.amount,
-    0,
+// F.01 — Schedule III Financial Statements (live from simulator state)
+const F01_HEADER_BG = '#1a3a5c';
+const F01_ROW_ALT = '#f8fafc';
+const fmt = (n) => (n ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+function SimF01({ state, setState }) {
+  const [companyCode, setCompanyCode] = useState('IN01');
+  const [fiscalYear, setFiscalYear] = useState('2024');
+  const [fromPeriod, setFromPeriod] = useState('1');
+  const [toPeriod, setToPeriod] = useState('12');
+  const [executed, setExecuted] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [exportMsg, setExportMsg] = useState(null);
+
+  const glMasters = state.glMasters || [];
+  const expenseGLs = new Set(glMasters.filter((g) => g.type === 'Expense').map((g) => g.number));
+  const incomeGLs = new Set(glMasters.filter((g) => g.type === 'Income').map((g) => g.number));
+
+  const debtors = (state.customerDocs || []).filter((d) => d.open === true).reduce((a, d) => a + (d.amount || 0), 0);
+  const creditors = (state.vendorDocs || []).filter((d) => d.open === true).reduce((a, d) => a + (d.amount || 0), 0);
+  const bankBalance = (state.bankLines || []).reduce((a, l) => a + (l.amount || 0), 0);
+  const revenueFromOps = (state.customerDocs || []).reduce((a, d) => a + (d.amount || 0), 0);
+  const expenseFromJournal = (state.journalDocs || [])
+    .flatMap((d) => d.items || [])
+    .filter((i) => i.dc === 'D' && expenseGLs.has(i.gl))
+    .reduce((a, i) => a + (i.amount || 0), 0);
+  const depreciation = state.depreciationTotal ?? 0;
+
+  const PLANT_MACHINERY = 25000000;
+  const SHARE_CAPITAL = 20000000;
+  const LONG_TERM_LOANS = 5000000;
+  const CLOSING_STOCK = 3500000;
+  const CASH = 200000;
+  const OTHER_INCOME = 0;
+  const COST_OF_MATERIALS = 0;
+  const EMPLOYEE_COSTS = 0;
+  const GST_PAYABLE = 0;
+
+  const accDepreciation = depreciation;
+  const netBlock = PLANT_MACHINERY - accDepreciation;
+  const totalCurrentAssets = debtors + bankBalance + CASH + CLOSING_STOCK;
+  const totalAssets = netBlock + totalCurrentAssets;
+
+  const totalIncome = revenueFromOps + OTHER_INCOME;
+  const otherExpenses = Math.max(0, expenseFromJournal - depreciation);
+  const totalExpenses = COST_OF_MATERIALS + EMPLOYEE_COSTS + depreciation + otherExpenses;
+  const profitBeforeTax = totalIncome - totalExpenses;
+  const tax = Math.max(0, profitBeforeTax * 0.25);
+  const netProfit = profitBeforeTax - tax;
+
+  const reservesAndSurplus = totalAssets - SHARE_CAPITAL - LONG_TERM_LOANS - creditors - GST_PAYABLE - netProfit;
+  const totalLiabilities = SHARE_CAPITAL + reservesAndSurplus + LONG_TERM_LOANS + creditors + GST_PAYABLE + netProfit;
+
+  const handleExecute = () => {
+    setExecuted(true);
+    setLastUpdated(new Date());
+  };
+
+  const handlePrint = () => window.print();
+
+  const handleExport = () => {
+    setExportMsg('Export to Excel completed successfully.');
+    setTimeout(() => setExportMsg(null), 3000);
+  };
+
+  const BsRow = ({ label, amount, bold, sub, total, alt }) => (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        padding: sub ? '2px 8px 2px 16px' : '4px 8px',
+        fontSize: total ? 13 : 11,
+        fontWeight: bold || total ? 600 : 400,
+        background: total ? '#e0e7ff' : alt ? F01_ROW_ALT : '#fff',
+        borderBottom: '1px solid #e5e7eb',
+      }}
+    >
+      <span>{label}</span>
+      <span style={{ fontFamily: 'monospace' }}>{amount != null ? `₹${fmt(amount)}` : '—'}</span>
+    </div>
   );
-  const expenses = state.journalDocs.flatMap((d) => d.items).reduce(
-    (a, i) => (i.dc === 'D' ? a + i.amount : a),
-    0,
+
+  const BsSection = ({ title, children }) => (
+    <>
+      <div style={{ background: F01_HEADER_BG, color: '#fff', padding: '6px 10px', fontSize: 12, fontWeight: 600, marginTop: 8 }}>
+        {title}
+      </div>
+      {children}
+    </>
   );
-  const profit = revenue - expenses;
+
+  if (!executed) {
+    return (
+      <SimCard>
+        <div style={{ fontWeight: 600, marginBottom: 10, color: F01_HEADER_BG }}>Financial Statements (F.01) — Schedule III</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginBottom: 16 }}>
+          <SimFieldRow label="Company Code">
+            <SimInput value={companyCode} onChange={(e) => setCompanyCode(e.target.value)} width={70} />
+          </SimFieldRow>
+          <SimFieldRow label="Fiscal Year">
+            <SimInput value={fiscalYear} onChange={(e) => setFiscalYear(e.target.value)} width={70} />
+          </SimFieldRow>
+          <SimFieldRow label="From Period">
+            <SimInput value={fromPeriod} onChange={(e) => setFromPeriod(e.target.value)} width={50} />
+          </SimFieldRow>
+          <SimFieldRow label="To Period">
+            <SimInput value={toPeriod} onChange={(e) => setToPeriod(e.target.value)} width={50} />
+          </SimFieldRow>
+          <button
+            type="button"
+            onClick={handleExecute}
+            style={{ padding: '6px 16px', background: F01_HEADER_BG, color: '#fff', border: 'none', borderRadius: 4, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}
+          >
+            Execute
+          </button>
+        </div>
+        <div style={{ fontSize: 11, color: '#6b7280' }}>Click Execute to generate Balance Sheet and P&amp;L from current period data.</div>
+      </SimCard>
+    );
+  }
 
   return (
     <SimCard>
-      <div style={{ fontWeight: 600, marginBottom: 8 }}>Financial Statements</div>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 16,
-          fontSize: 12,
-        }}
-      >
-        <div>
-          <div
-            style={{
-              background: SAP_SIM.headerBg,
-              color: '#ffffff',
-              padding: '4px 8px',
-              marginBottom: 4,
-            }}
-          >
-            Balance Sheet (summary)
-          </div>
-          <div style={{ padding: 8, border: '1px solid #e5e7eb' }}>
-            <div>Assets (sample)</div>
-            <div style={{ fontSize: 11, marginTop: 4 }}>
-              Bank, debtors, fixed assets populated with demo numbers.
-            </div>
-          </div>
+      <div style={{ fontWeight: 600, marginBottom: 8, color: F01_HEADER_BG }}>Financial Statements (F.01) — Schedule III</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginBottom: 12 }}>
+        <SimFieldRow label="Company Code">
+          <SimInput value={companyCode} onChange={(e) => setCompanyCode(e.target.value)} width={70} />
+        </SimFieldRow>
+        <SimFieldRow label="Fiscal Year">
+          <SimInput value={fiscalYear} onChange={(e) => setFiscalYear(e.target.value)} width={70} />
+        </SimFieldRow>
+        <SimFieldRow label="From Period">
+          <SimInput value={fromPeriod} onChange={(e) => setFromPeriod(e.target.value)} width={50} />
+        </SimFieldRow>
+        <SimFieldRow label="To Period">
+          <SimInput value={toPeriod} onChange={(e) => setToPeriod(e.target.value)} width={50} />
+        </SimFieldRow>
+        <button type="button" onClick={handleExecute} style={{ padding: '4px 12px', background: F01_HEADER_BG, color: '#fff', border: 'none', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Execute</button>
+        <button type="button" onClick={handlePrint} style={{ padding: '4px 12px', background: '#f0f2f5', border: '1px solid #9ca3af', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Print</button>
+        <button type="button" onClick={handleExport} style={{ padding: '4px 12px', background: '#f0f2f5', border: '1px solid #9ca3af', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Export to Excel</button>
+        {exportMsg && <span style={{ fontSize: 11, color: '#059669' }}>{exportMsg}</span>}
+      </div>
+      {lastUpdated && (
+        <div style={{ fontSize: 10, color: '#6b7280', marginBottom: 10 }}>Last updated: {lastUpdated.toLocaleString()}</div>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, alignItems: 'start' }}>
+        {/* Balance Sheet — Left */}
+        <div style={{ border: '1px solid #e5e7eb', borderRadius: 4, overflow: 'hidden' }}>
+          <BsSection title="BALANCE SHEET">{(() => {
+            const rows = [
+              { label: 'ASSETS', amount: null, header: true },
+              { label: 'Fixed Assets', amount: null, sub: true },
+              { label: 'Plant & Machinery', amount: PLANT_MACHINERY, sub: true },
+              { label: 'Less: Accumulated Depreciation', amount: -accDepreciation, sub: true },
+              { label: 'Net Block', amount: netBlock, bold: true, sub: true },
+              { label: 'Current Assets', amount: null, sub: true },
+              { label: 'Debtors', amount: debtors, sub: true },
+              { label: 'Bank — HDFC Current', amount: bankBalance, sub: true },
+              { label: 'Cash', amount: CASH, sub: true },
+              { label: 'Closing Stock', amount: CLOSING_STOCK, sub: true },
+              { label: 'Total Current Assets', amount: totalCurrentAssets, bold: true, sub: true },
+              { label: 'TOTAL ASSETS', amount: totalAssets, total: true },
+              { label: 'LIABILITIES & EQUITY', amount: null, header: true },
+              { label: 'Share Capital', amount: SHARE_CAPITAL, sub: true },
+              { label: 'Reserves & Surplus', amount: reservesAndSurplus, sub: true },
+              { label: 'Long Term Loans', amount: LONG_TERM_LOANS, sub: true },
+              { label: 'Current Liabilities', amount: null, sub: true },
+              { label: 'Creditors', amount: creditors, sub: true },
+              { label: 'GST Payable', amount: GST_PAYABLE, sub: true },
+              { label: 'TOTAL LIABILITIES & EQUITY', amount: totalLiabilities, total: true },
+            ];
+            let rowIdx = 0;
+            return (
+              <>
+                {rows.map((r, i) => {
+                  if (r.header) return <div key={i} style={{ background: F01_HEADER_BG, color: '#fff', padding: '6px 10px', fontSize: 12, fontWeight: 600, marginTop: 8 }}>{r.label}</div>;
+                  return <BsRow key={i} label={r.label} amount={r.amount} bold={r.bold} sub={r.sub} total={r.total} alt={rowIdx++ % 2 === 1} />;
+                })}
+              </>
+            );
+          })()}</BsSection>
         </div>
-        <div>
-          <div
-            style={{
-              background: SAP_SIM.headerBg,
-              color: '#ffffff',
-              padding: '4px 8px',
-              marginBottom: 4,
-            }}
-          >
-            Profit &amp; Loss (from simulator docs)
-          </div>
-          <div style={{ padding: 8, border: '1px solid #e5e7eb' }}>
-            <div>Revenue: ₹{revenue.toFixed(2)}</div>
-            <div>Expenses: ₹{expenses.toFixed(2)}</div>
-            <div style={{ marginTop: 4, fontWeight: 600 }}>
-              Profit: ₹{profit.toFixed(2)}
-            </div>
-          </div>
+
+        {/* P&L — Right */}
+        <div style={{ border: '1px solid #e5e7eb', borderRadius: 4, overflow: 'hidden' }}>
+          <BsSection title="PROFIT & LOSS STATEMENT">{(() => {
+            const rows = [
+              { label: 'Revenue from Operations', amount: revenueFromOps, sub: true },
+              { label: 'Other Income', amount: OTHER_INCOME, sub: true },
+              { label: 'TOTAL INCOME', amount: totalIncome, bold: true },
+              { label: 'Cost of Materials', amount: COST_OF_MATERIALS, sub: true },
+              { label: 'Employee Costs', amount: EMPLOYEE_COSTS, sub: true },
+              { label: 'Depreciation', amount: depreciation, sub: true },
+              { label: 'Other Expenses', amount: otherExpenses, sub: true },
+              { label: 'TOTAL EXPENSES', amount: totalExpenses, bold: true },
+              { label: 'PROFIT BEFORE TAX', amount: profitBeforeTax, bold: true },
+              { label: 'Tax @ 25%', amount: tax, sub: true },
+              { label: 'NET PROFIT', amount: netProfit, total: true },
+            ];
+            return (
+              <>
+                {rows.map((r, i) => (
+                  <BsRow key={i} label={r.label} amount={r.amount} bold={r.bold} sub={r.sub} total={r.total} alt={i % 2 === 1} />
+                ))}
+              </>
+            );
+          })()}</BsSection>
         </div>
       </div>
     </SimCard>
@@ -4312,11 +4560,21 @@ function SimFB08({ state, setState }) {
 }
 
 // FK03 — Vendor Master Display
-function SimFK03({ state }) {
+function SimFK03({ state, setState }) {
   const [vendorNo, setVendorNo] = useState('');
   const [companyCode, setCompanyCode] = useState('IN01');
   const [tab, setTab] = useState('general');
   const [displayed, setDisplayed] = useState(null);
+  const [showSearch, setShowSearch] = useState(false);
+  const [showCreateVendor, setShowCreateVendor] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newCity, setNewCity] = useState('');
+  const [newPaymentTerms, setNewPaymentTerms] = useState('NT30');
+  const [newBank, setNewBank] = useState('');
+  const [newAccountNo, setNewAccountNo] = useState('');
+  const [newIfsc, setNewIfsc] = useState('');
+  const [newGst, setNewGst] = useState('');
+  const [newPan, setNewPan] = useState('');
 
   const vendors = state.vendorMasters || [];
   const vendor = displayed || vendors.find((v) => v.code === vendorNo || v.searchTerm.toLowerCase().includes((vendorNo || '').toLowerCase()));
@@ -4326,12 +4584,123 @@ function SimFK03({ state }) {
     setDisplayed(v || null);
   };
 
+  const nextVendorCode = () => {
+    const newCount = vendors.filter((v) => /^V100\d{3}$/.test(v.code)).length;
+    return 'V' + (100005 + newCount);
+  };
+
+  const handleSaveNewVendor = () => {
+    if (!newName.trim()) return;
+    const code = nextVendorCode();
+    const searchTerm = newName.trim().split(/\s+/)[0] || newName.trim().slice(0, 8);
+    const paymentTermsLabel = { NT30: 'NT30 (Net 30 days)', NT45: 'NT45', NT60: 'NT60' }[newPaymentTerms];
+    const newVendor = {
+      code,
+      name: newName.trim(),
+      searchTerm,
+      street: '',
+      city: newCity.trim() || '—',
+      country: 'IN — India',
+      gst: newGst.trim() || '—',
+      pan: newPan.trim() || '—',
+      paymentTerms: paymentTermsLabel,
+      paymentMethod: 'T — Bank Transfer',
+      bank: newBank.trim() || '—',
+      accountNo: newAccountNo.trim() || '—',
+      ifsc: newIfsc.trim() || '—',
+      reconAccount: '200100',
+    };
+    setState((prev) => ({
+      ...prev,
+      vendorMasters: [...(prev.vendorMasters || []), newVendor],
+    }));
+    setVendorNo(code);
+    setDisplayed(newVendor);
+    setShowCreateVendor(false);
+    setShowSearch(false);
+    setNewName('');
+    setNewCity('');
+    setNewBank('');
+    setNewAccountNo('');
+    setNewIfsc('');
+    setNewGst('');
+    setNewPan('');
+  };
+
   return (
     <SimCard>
       <div style={{ fontWeight: 600, marginBottom: 8, color: SAP_SIM.headerBg }}>Vendor Master Display (FK03)</div>
       <SimFieldRow label="Vendor Number">
-        <SimInput value={vendorNo} onChange={(e) => setVendorNo(e.target.value)} width={120} placeholder="V1001 or name" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <SimInput value={vendorNo} onChange={(e) => setVendorNo(e.target.value)} width={120} placeholder="V1001 or name" />
+          <button
+            type="button"
+            onClick={() => setShowSearch(true)}
+            style={{ padding: '2px 6px', border: '1px solid #9ca3af', borderRadius: 2, fontSize: 10, background: '#f0f2f5', cursor: 'pointer' }}
+          >
+            F4
+          </button>
+        </div>
       </SimFieldRow>
+      {showSearch && (
+        <div style={{ marginBottom: 12, border: '1px solid #cbd5e1', borderRadius: 4, padding: 10, background: '#fff', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+          <div style={{ fontWeight: 600, fontSize: 11, marginBottom: 8 }}>Vendor search</div>
+          {!showCreateVendor ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setShowCreateVendor(true)}
+                style={{
+                  marginBottom: 8,
+                  padding: '4px 10px',
+                  background: SAP_SIM.headerBg,
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 4,
+                  fontSize: 11,
+                  cursor: 'pointer',
+                }}
+              >
+                Create New Vendor
+              </button>
+              <div style={{ maxHeight: 160, overflow: 'auto', border: '1px solid #e5e7eb', borderRadius: 4 }}>
+                {vendors.map((v) => (
+                  <div
+                    key={v.code}
+                    onClick={() => { setVendorNo(v.code); setDisplayed(v); setShowSearch(false); }}
+                    style={{ padding: '6px 8px', cursor: 'pointer', fontSize: 11, borderBottom: '1px solid #f3f4f6' }}
+                  >
+                    {v.code} — {v.name}
+                  </div>
+                ))}
+              </div>
+              <button type="button" onClick={() => setShowSearch(false)} style={{ marginTop: 6, fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer' }}>Close</button>
+            </>
+          ) : (
+            <div style={{ padding: 8, background: '#fafafa', borderRadius: 4, border: '1px solid #e5e7eb' }}>
+              <div style={{ fontWeight: 600, fontSize: 11, marginBottom: 8 }}>Create New Vendor</div>
+              <SimFieldRow label="Vendor Name" required><SimInput value={newName} onChange={(e) => setNewName(e.target.value)} width={220} /></SimFieldRow>
+              <SimFieldRow label="City"><SimInput value={newCity} onChange={(e) => setNewCity(e.target.value)} width={140} /></SimFieldRow>
+              <SimFieldRow label="Payment Terms">
+                <select value={newPaymentTerms} onChange={(e) => setNewPaymentTerms(e.target.value)} style={{ height: 22, border: `1px solid ${SAP_SIM.fieldBorder}`, borderRadius: 2, fontSize: 11, minWidth: 100, background: '#fff' }}>
+                  <option value="NT30">NT30</option>
+                  <option value="NT45">NT45</option>
+                  <option value="NT60">NT60</option>
+                </select>
+              </SimFieldRow>
+              <SimFieldRow label="Bank Name"><SimInput value={newBank} onChange={(e) => setNewBank(e.target.value)} width={160} /></SimFieldRow>
+              <SimFieldRow label="Bank Account Number"><SimInput value={newAccountNo} onChange={(e) => setNewAccountNo(e.target.value)} width={140} /></SimFieldRow>
+              <SimFieldRow label="IFSC Code"><SimInput value={newIfsc} onChange={(e) => setNewIfsc(e.target.value)} width={120} /></SimFieldRow>
+              <SimFieldRow label="GST Number"><SimInput value={newGst} onChange={(e) => setNewGst(e.target.value)} width={180} /></SimFieldRow>
+              <SimFieldRow label="PAN"><SimInput value={newPan} onChange={(e) => setNewPan(e.target.value)} width={120} /></SimFieldRow>
+              <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                <button type="button" onClick={handleSaveNewVendor} style={{ padding: '4px 12px', background: SAP_SIM.headerBg, color: '#fff', border: 'none', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Save</button>
+                <button type="button" onClick={() => { setShowCreateVendor(false); setNewName(''); setNewCity(''); setNewBank(''); setNewAccountNo(''); setNewIfsc(''); setNewGst(''); setNewPan(''); }} style={{ padding: '4px 12px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Cancel</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
       <SimFieldRow label="Company Code">
         <SimInput value={companyCode} onChange={(e) => setCompanyCode(e.target.value)} width={80} />
       </SimFieldRow>
@@ -4380,23 +4749,23 @@ function SimFK03({ state }) {
             {tab === 'general' && (
               <>
                 <div><strong>Name:</strong> {vendor.name}</div>
-                <div><strong>Address:</strong> {vendor.street}, {vendor.city}, {vendor.country}</div>
-                <div><strong>GST No:</strong> {vendor.gst}</div>
-                <div><strong>PAN:</strong> {vendor.pan}</div>
+                <div><strong>Address:</strong> {(vendor.street || '') + (vendor.street ? ', ' : '')}{vendor.city}, {vendor.country || 'IN — India'}</div>
+                <div><strong>GST No:</strong> {vendor.gst || '—'}</div>
+                <div><strong>PAN:</strong> {vendor.pan || '—'}</div>
               </>
             )}
             {tab === 'company' && (
               <>
                 <div><strong>Payment terms:</strong> {vendor.paymentTerms}</div>
-                <div><strong>Payment method:</strong> {vendor.paymentMethod}</div>
-                <div><strong>Recon account:</strong> {vendor.reconAccount}</div>
+                <div><strong>Payment method:</strong> {vendor.paymentMethod || 'T — Bank Transfer'}</div>
+                <div><strong>Recon account:</strong> {vendor.reconAccount || '200100'}</div>
               </>
             )}
             {tab === 'payment' && (
               <>
-                <div><strong>Bank:</strong> {vendor.bank}</div>
-                <div><strong>Account no:</strong> {vendor.accountNo}</div>
-                <div><strong>IFSC:</strong> {vendor.ifsc}</div>
+                <div><strong>Bank:</strong> {vendor.bank || '—'}</div>
+                <div><strong>Account no:</strong> {vendor.accountNo || '—'}</div>
+                <div><strong>IFSC:</strong> {vendor.ifsc || '—'}</div>
                 <div style={{ marginTop: 6, color: '#6b7280' }}>No payment history in demo.</div>
               </>
             )}
@@ -4408,11 +4777,19 @@ function SimFK03({ state }) {
 }
 
 // FD03 — Customer Master Display
-function SimFD03({ state }) {
+function SimFD03({ state, setState }) {
   const [customerNo, setCustomerNo] = useState('');
   const [companyCode, setCompanyCode] = useState('IN01');
   const [tab, setTab] = useState('general');
   const [displayed, setDisplayed] = useState(null);
+  const [showSearch, setShowSearch] = useState(false);
+  const [showCreateCustomer, setShowCreateCustomer] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newCity, setNewCity] = useState('');
+  const [newPaymentTerms, setNewPaymentTerms] = useState('NT30');
+  const [newCreditLimit, setNewCreditLimit] = useState('');
+  const [newGst, setNewGst] = useState('');
+  const [newPan, setNewPan] = useState('');
 
   const customers = state.customerMasters || [];
   const customer = displayed || customers.find((c) => c.code === customerNo || c.searchTerm.toLowerCase().includes((customerNo || '').toLowerCase()));
@@ -4422,12 +4799,115 @@ function SimFD03({ state }) {
     setDisplayed(c || null);
   };
 
+  const nextCustomerCode = () => {
+    const newCount = customers.filter((c) => /^C100\d{3}$/.test(c.code)).length;
+    return 'C' + (100005 + newCount);
+  };
+
+  const handleSaveNewCustomer = () => {
+    if (!newName.trim()) return;
+    const code = nextCustomerCode();
+    const searchTerm = newName.trim().split(/\s+/)[0] || newName.trim().slice(0, 8);
+    const newCustomer = {
+      code,
+      name: newName.trim(),
+      searchTerm,
+      street: '',
+      city: newCity.trim() || '—',
+      country: 'IN — India',
+      creditLimit: parseFloat(newCreditLimit) || 0,
+      paymentTerms: newPaymentTerms,
+      dunningProcedure: 'MA01',
+      gst: newGst.trim() || '—',
+      pan: newPan.trim() || '—',
+    };
+    setState((prev) => ({
+      ...prev,
+      customerMasters: [...(prev.customerMasters || []), newCustomer],
+    }));
+    setCustomerNo(code);
+    setDisplayed(newCustomer);
+    setShowCreateCustomer(false);
+    setShowSearch(false);
+    setNewName('');
+    setNewCity('');
+    setNewCreditLimit('');
+    setNewGst('');
+    setNewPan('');
+  };
+
   return (
     <SimCard>
       <div style={{ fontWeight: 600, marginBottom: 8, color: SAP_SIM.headerBg }}>Customer Master Display (FD03)</div>
       <SimFieldRow label="Customer Number">
-        <SimInput value={customerNo} onChange={(e) => setCustomerNo(e.target.value)} width={120} placeholder="C2001 or name" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <SimInput value={customerNo} onChange={(e) => setCustomerNo(e.target.value)} width={120} placeholder="C2001 or name" />
+          <button
+            type="button"
+            onClick={() => setShowSearch(true)}
+            style={{ padding: '2px 6px', border: '1px solid #9ca3af', borderRadius: 2, fontSize: 10, background: '#f0f2f5', cursor: 'pointer' }}
+          >
+            F4
+          </button>
+        </div>
       </SimFieldRow>
+      {showSearch && (
+        <div style={{ marginBottom: 12, border: '1px solid #cbd5e1', borderRadius: 4, padding: 10, background: '#fff', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+          <div style={{ fontWeight: 600, fontSize: 11, marginBottom: 8 }}>Customer search</div>
+          {!showCreateCustomer ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setShowCreateCustomer(true)}
+                style={{
+                  marginBottom: 8,
+                  padding: '4px 10px',
+                  background: SAP_SIM.headerBg,
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 4,
+                  fontSize: 11,
+                  cursor: 'pointer',
+                }}
+              >
+                Create New Customer
+              </button>
+              <div style={{ maxHeight: 160, overflow: 'auto', border: '1px solid #e5e7eb', borderRadius: 4 }}>
+                {customers.map((c) => (
+                  <div
+                    key={c.code}
+                    onClick={() => { setCustomerNo(c.code); setDisplayed(c); setShowSearch(false); }}
+                    style={{ padding: '6px 8px', cursor: 'pointer', fontSize: 11, borderBottom: '1px solid #f3f4f6' }}
+                  >
+                    {c.code} — {c.name}
+                  </div>
+                ))}
+              </div>
+              <button type="button" onClick={() => setShowSearch(false)} style={{ marginTop: 6, fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer' }}>Close</button>
+            </>
+          ) : (
+            <div style={{ padding: 8, background: '#fafafa', borderRadius: 4, border: '1px solid #e5e7eb' }}>
+              <div style={{ fontWeight: 600, fontSize: 11, marginBottom: 8 }}>Create New Customer</div>
+              <SimFieldRow label="Customer Name" required><SimInput value={newName} onChange={(e) => setNewName(e.target.value)} width={220} /></SimFieldRow>
+              <SimFieldRow label="City"><SimInput value={newCity} onChange={(e) => setNewCity(e.target.value)} width={140} /></SimFieldRow>
+              <SimFieldRow label="Payment Terms">
+                <select value={newPaymentTerms} onChange={(e) => setNewPaymentTerms(e.target.value)} style={{ height: 22, border: `1px solid ${SAP_SIM.fieldBorder}`, borderRadius: 2, fontSize: 11, minWidth: 100, background: '#fff' }}>
+                  <option value="NT30">NT30</option>
+                  <option value="NT45">NT45</option>
+                  <option value="NT60">NT60</option>
+                </select>
+              </SimFieldRow>
+              <SimFieldRow label="Credit Limit"><SimInput value={newCreditLimit} onChange={(e) => setNewCreditLimit(e.target.value)} width={120} placeholder="Number" /></SimFieldRow>
+              <SimFieldRow label="GST Number"><SimInput value={newGst} onChange={(e) => setNewGst(e.target.value)} width={180} /></SimFieldRow>
+              <SimFieldRow label="PAN"><SimInput value={newPan} onChange={(e) => setNewPan(e.target.value)} width={120} /></SimFieldRow>
+              <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                <button type="button" onClick={handleSaveNewCustomer} style={{ padding: '4px 12px', background: SAP_SIM.headerBg, color: '#fff', border: 'none', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Save</button>
+                <button type="button" onClick={() => { setShowCreateCustomer(false); setNewName(''); setNewCity(''); setNewCreditLimit(''); setNewGst(''); setNewPan(''); }} style={{ padding: '4px 12px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Cancel</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
       <SimFieldRow label="Company Code">
         <SimInput value={companyCode} onChange={(e) => setCompanyCode(e.target.value)} width={80} />
       </SimFieldRow>
@@ -4476,14 +4956,16 @@ function SimFD03({ state }) {
             {tab === 'general' && (
               <>
                 <div><strong>Name:</strong> {customer.name}</div>
-                <div><strong>Address:</strong> {customer.street}, {customer.city}, {customer.country}</div>
+                <div><strong>Address:</strong> {(customer.street || '') + (customer.street ? ', ' : '')}{customer.city}, {customer.country || 'IN — India'}</div>
+                {customer.gst && <div><strong>GST No:</strong> {customer.gst}</div>}
+                {customer.pan && <div><strong>PAN:</strong> {customer.pan}</div>}
               </>
             )}
             {tab === 'company' && (
               <>
-                <div><strong>Credit limit:</strong> ₹{Number(customer.creditLimit).toLocaleString()}</div>
+                <div><strong>Credit limit:</strong> ₹{Number(customer.creditLimit || 0).toLocaleString()}</div>
                 <div><strong>Payment terms:</strong> {customer.paymentTerms}</div>
-                <div><strong>Dunning procedure:</strong> {customer.dunningProcedure}</div>
+                <div><strong>Dunning procedure:</strong> {customer.dunningProcedure || 'MA01'}</div>
               </>
             )}
             {tab === 'payment' && (
@@ -4935,7 +5417,16 @@ function SimOB52({ state }) {
   );
 }
 
-function SimAFAB({ state }) {
+function SimAFAB({ state, setState }) {
+  const assets = state.assets || [];
+  const periodDepreciation = Math.round(assets.reduce((a, r) => a + (r.nbv || 0) * 0.1, 0));
+  const postRun = () => {
+    setState((prev) => ({
+      ...prev,
+      depreciationTotal: (prev.depreciationTotal || 0) + periodDepreciation,
+      status: { type: 'success', message: `Depreciation run posted. ₹${periodDepreciation.toLocaleString('en-IN')} added to depreciation.` },
+    }));
+  };
   return (
     <SimCard>
       <div style={{ fontWeight: 600, marginBottom: 8 }}>Depreciation Run (AFAB)</div>
@@ -4945,9 +5436,11 @@ function SimAFAB({ state }) {
           { key: 'class', label: 'Class' },
           { key: 'nbv', label: 'NBV', render: (r) => r.nbv.toFixed(2) },
         ]}
-        rows={state.assets}
+        rows={assets}
         getKey={(r) => r.id}
       />
+      <div style={{ marginTop: 8, fontSize: 11 }}>Current period depreciation (10% of NBV): ₹{periodDepreciation.toLocaleString('en-IN')}</div>
+      <button type="button" onClick={postRun} style={{ marginTop: 8, padding: '4px 12px', background: SAP_SIM.headerBg, color: '#fff', border: 'none', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Post depreciation run</button>
     </SimCard>
   );
 }
