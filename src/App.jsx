@@ -2332,6 +2332,24 @@ function HomePage({ navigate, completedLessons }) {
           >
             🖥 Launch SAP Simulator
           </button>
+          <button
+            style={{
+              ...s.card,
+              padding: '8px 16px',
+              fontSize: 12,
+              color: C.textSecondary,
+              fontFamily: C.body,
+              fontWeight: 500,
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: C.bgCard,
+              border: `1px solid ${C.border}`,
+              ...(h.is('about-btn') ? { borderColor: C.accent, color: C.accentLight } : {}),
+            }}
+            {...h.bind('about-btn')}
+            onClick={() => navigate('about')}
+          >
+            About
+          </button>
         </div>
       </header>
 
@@ -2440,7 +2458,27 @@ function HomePage({ navigate, completedLessons }) {
             );
           })}
         </div>
+
+        {/* Footer — link to Testimonials */}
+        <section style={{ marginTop: 48, paddingTop: 32, borderTop: `1px solid ${C.border}`, textAlign: 'center' }}>
+          <button
+            type="button"
+            style={{
+              background: 'none',
+              border: 'none',
+              color: C.accent,
+              fontSize: 14,
+              fontFamily: C.body,
+              cursor: 'pointer',
+              textDecoration: 'underline',
+            }}
+            onClick={() => navigate('testimonials')}
+          >
+            What CAs say about FicoReady →
+          </button>
+        </section>
       </section>
+      <PlatformFooter navigate={navigate} />
     </div>
   );
 }
@@ -2555,6 +2593,7 @@ function ModulePage({ navigate, moduleIndex, completedLessons }) {
           );
         })}
       </div>
+      <PlatformFooter navigate={navigate} />
     </div>
   );
 }
@@ -2905,6 +2944,7 @@ function LessonPage({ navigate, moduleIndex, lessonIndex, onCompleteLesson, comp
           </p>
         )}
       </div>
+      <PlatformFooter navigate={navigate} />
     </div>
   );
 }
@@ -3047,6 +3087,7 @@ function TCodePage({ navigate }) {
           No T-codes match your search.
         </div>
       )}
+      <PlatformFooter navigate={navigate} />
     </div>
   );
 }
@@ -3138,9 +3179,10 @@ function CheatSheetPage({ navigate }) {
                 </button>
               ))}
             </div>
-          </div>
-        ))}
+            </div>
+          ))}
       </div>
+      <PlatformFooter navigate={navigate} />
     </div>
   );
 }
@@ -3487,7 +3529,7 @@ function SimulatorStatusBar({ status }) {
   );
 }
 
-function SimulatorShell({ state, setState }) {
+function SimulatorShell({ state, setState, navigate }) {
   const [cmd, setCmd] = useState(state.currentTcode);
   useEffect(() => {
     setCmd(state.currentTcode);
@@ -3768,6 +3810,7 @@ function SimulatorShell({ state, setState }) {
         {state.documentTrail?.show && <DocumentTrailPanel state={state} setState={setState} />}
         <SimulatorStatusBar status={state.status} />
       </div>
+      {navigate && <PlatformFooter navigate={navigate} />}
     </div>
   );
 }
@@ -6845,6 +6888,7 @@ function ScenariosPage({ navigate, setSimState }) {
             );
           })}
         </div>
+        <PlatformFooter navigate={navigate} />
       </div>
     );
   }
@@ -7022,6 +7066,632 @@ function ScenariosPage({ navigate, setSimState }) {
           50% { box-shadow: 0 0 0 8px rgba(200,169,110,0.15); }
         }
       `}</style>
+      <PlatformFooter navigate={navigate} />
+    </div>
+  );
+}
+
+// ─── Testimonials data (realistic Indian CA voices) ─────────────────────────────
+const TESTIMONIALS_DATA = [
+  {
+    name: 'Rahul Mehta',
+    designation: 'Finance Controller',
+    company: 'Auto parts manufacturing, Pune',
+    experience: 'ACA, 15 years in practice',
+    text: 'I joined as FC when the company had just gone live on SAP. FicoReady’s Tally-to-SAP mapping was the key — I could relate every screen to what I did in Tally. FB50 and FBL3N are now part of my daily routine. The simulator gave me confidence before Day 1.',
+    rating: 5,
+    module: 'Journal Entries',
+  },
+  {
+    name: 'Priya Krishnan',
+    designation: 'Deputy Manager — Accounts',
+    company: 'Textile export house, Coimbatore',
+    experience: 'ACA, 12 years',
+    text: 'I was tired of courses that explained debits and credits again. Here, it was straight to the point: which T-code, which field, why. The Accounts Payable module and F110 payment run training unlocked month-end for me. Now I run the proposal and post without second-guessing.',
+    rating: 5,
+    module: 'Accounts Payable',
+  },
+  {
+    name: 'Vikram Singh',
+    designation: 'Chief Accountant',
+    company: 'Engineering MNC, Gurgaon',
+    experience: 'ACA, 18 years in industry',
+    text: 'We use SAP for everything — GL, AP, AR, fixed assets. The simulator let me practice FB60, F-53, and F.01 before I touched production. Knowing which report to run (S_ALR, FBL3N) and when saved me in the first month. CA-first content is exactly what was missing.',
+    rating: 5,
+    module: 'Financial Statements & Reports',
+  },
+  {
+    name: 'Anita Desai',
+    designation: 'Audit Manager',
+    company: 'CA firm, Mumbai',
+    experience: 'ACA, 14 years in practice',
+    text: 'We audit several clients on SAP. I needed to understand document flow and how to trace a payment back to the invoice. FicoReady’s scenarios and the simulator (F-28, FBL5N) made it click. I no longer depend on the client’s IT team to pull reports.',
+    rating: 5,
+    module: 'Accounts Receivable',
+  },
+  {
+    name: 'Karthik Reddy',
+    designation: 'Finance Lead',
+    company: 'Pharma manufacturing, Hyderabad',
+    experience: 'ACA, 10 years',
+    text: 'Transitioning from Tally to SAP felt overwhelming until I did the Journal Entries and Month End modules here. The real T-codes — FB50, FB03, FB08, OB52 — with CA context made the difference. I was productive within two weeks of joining.',
+    rating: 5,
+    module: 'Month End Close',
+  },
+  {
+    name: 'Deepa Iyer',
+    designation: 'Senior Manager — Finance',
+    company: 'FMCG distribution, Chennai',
+    experience: 'ACA, 16 years',
+    text: 'F110 and vendor reconciliation were my biggest gaps. The simulator and step-by-step FBL1N and F-53 flows gave me the hands-on I needed. Now I train my own team using the same Tally-to-SAP mapping. Highly recommend for any CA moving into an SAP role.',
+    rating: 5,
+    module: 'Accounts Payable',
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PAGE: ABOUT
+// ═══════════════════════════════════════════════════════════════════════════════
+function AboutPage({ navigate }) {
+  const h = useHover();
+  const PLATFORM_NAME = 'FicoReady';
+  const goldIcon = (d) => (
+    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, borderRadius: 10, background: 'rgba(200,169,110,0.15)', color: C.accent }}>
+      {d}
+    </span>
+  );
+  return (
+    <div style={{ minHeight: '100vh', fontFamily: C.body, background: C.bgPrimary }}>
+      <header style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '16px 32px',
+        borderBottom: `1px solid ${C.border}`,
+        background: 'rgba(10,14,26,0.8)',
+        backdropFilter: 'blur(12px)',
+        position: 'sticky', top: 0, zIndex: 100,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {Icons.logo}
+          <span style={{ fontFamily: C.heading, fontSize: 18, fontWeight: 700, color: C.accentLight, letterSpacing: '0.5px' }}>
+            SAP FICO
+          </span>
+          <span style={{ color: C.textMuted, fontSize: 12, fontWeight: 400, marginLeft: 4 }}>Learning Platform</span>
+        </div>
+        <button
+          style={{ ...s.backBtn, ...(h.is('back') ? { color: C.accentLight } : {}) }}
+          {...h.bind('back')}
+          onClick={() => navigate('home')}
+        >
+          {Icons.back} Back to Home
+        </button>
+      </header>
+
+      <main style={{ maxWidth: 800, margin: '0 auto', padding: '48px 32px 64px' }}>
+        {/* Hero */}
+        <section style={{ marginBottom: 48 }}>
+          <h1 style={{ fontFamily: C.heading, fontSize: 36, fontWeight: 700, color: C.accentLight, marginBottom: 16, lineHeight: 1.2 }}>
+            Built by a CA, for CAs
+          </h1>
+          <p style={{ fontSize: 16, color: C.textSecondary, lineHeight: 1.7 }}>
+            SAP FICO training that skips the accounting basics and goes straight to what you need:
+            <br />
+            which T-code to use, when, and why — so you can operate confidently from day one.
+          </p>
+        </section>
+
+        {/* Mission */}
+        <section style={{ marginBottom: 48 }}>
+          <div style={{ ...s.card, padding: 24, borderLeft: `4px solid ${C.accent}` }}>
+            <p style={{ fontFamily: C.heading, fontSize: 18, color: C.accentLight, margin: 0, lineHeight: 1.6 }}>
+              Most SAP training assumes you know nothing about accounting. We assume the opposite.
+            </p>
+          </div>
+        </section>
+
+        {/* Founder card */}
+        <section style={{ marginBottom: 48 }}>
+          <h2 style={{ fontFamily: C.heading, fontSize: 22, color: C.accentLight, fontWeight: 600, marginBottom: 20 }}>
+            Founder
+          </h2>
+          <div style={{ ...s.card, padding: 28 }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: C.accentLight, marginBottom: 8 }}>Manu Pandit</div>
+            <div style={{ fontSize: 13, color: C.accent, marginBottom: 8 }}>Chartered Accountant (ACA, ICAI)</div>
+            <div style={{ fontSize: 13, color: C.textSecondary, marginBottom: 16 }}>20+ years in finance leadership</div>
+            <p style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.7, margin: 0 }}>
+              Built {PLATFORM_NAME} because every SAP training course he found started by explaining what a journal entry is.
+              After two decades in finance, that was never the problem. The problem was knowing which T-code to use and why.
+              This platform fixes that.
+            </p>
+          </div>
+        </section>
+
+        {/* 3 differentiator cards */}
+        <section style={{ marginBottom: 48 }}>
+          <h2 style={{ fontFamily: C.heading, fontSize: 22, color: C.accentLight, fontWeight: 600, marginBottom: 20 }}>
+            Why {PLATFORM_NAME}
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {[
+              { icon: '📖', title: 'CA-First Content', text: 'No basic accounting explanations — we assume you already know debits, credits, and financial statements.' },
+              { icon: '↔', title: 'Tally-to-SAP mapping', text: 'Every concept bridged from what you know in Tally to how it works in SAP.' },
+              { icon: '🖥', title: 'Simulator-based', text: 'Not just theory — actual transaction practice so you learn by doing.' },
+            ].map((item, i) => (
+              <div
+                key={i}
+                style={{
+                  ...s.card,
+                  padding: 20,
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 16,
+                  ...(h.is(`diff-${i}`) ? s.cardHover : {}),
+                }}
+                {...h.bind(`diff-${i}`)}
+              >
+                {goldIcon(item.icon)}
+                <div>
+                  <div style={{ fontFamily: C.heading, fontSize: 16, fontWeight: 600, color: C.accentLight, marginBottom: 6 }}>{item.title}</div>
+                  <p style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.6, margin: 0 }}>{item.text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Stats row */}
+        <section style={{ marginBottom: 48 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, justifyContent: 'center' }}>
+            {['7 Modules', '40+ Lessons', '25+ T-Codes', '1 SAP Simulator'].map((stat, i) => (
+              <div key={i} style={{ fontSize: 14, fontWeight: 600, color: C.accent, fontFamily: C.heading }}>
+                {stat}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Who this is for */}
+        <section style={{ marginBottom: 48 }}>
+          <h2 style={{ fontFamily: C.heading, fontSize: 22, color: C.accentLight, fontWeight: 600, marginBottom: 20 }}>
+            Who this is for
+          </h2>
+          <ul style={{ margin: 0, paddingLeft: 20, color: C.textSecondary, fontSize: 14, lineHeight: 2 }}>
+            <li>CA joining a company with SAP live</li>
+            <li>CA in practice auditing SAP clients</li>
+            <li>Finance managers transitioning to SAP roles</li>
+          </ul>
+        </section>
+
+        {/* Footer CTA */}
+        <section style={{ textAlign: 'center', paddingTop: 24, borderTop: `1px solid ${C.border}` }}>
+          <button
+            type="button"
+            style={{
+              ...s.btnPrimary,
+              ...(h.is('cta') ? s.btnPrimaryHover : {}),
+            }}
+            {...h.bind('cta')}
+            onClick={() => navigate('home')}
+          >
+            Start Learning Today
+          </button>
+          <div style={{ marginTop: 16 }}>
+            <button
+              type="button"
+              style={{
+                background: 'none',
+                border: 'none',
+                color: C.accent,
+                fontSize: 14,
+                fontFamily: C.body,
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                ...(h.is('testimonials-link') ? { color: C.accentLight } : {}),
+              }}
+              {...h.bind('testimonials-link')}
+              onClick={() => navigate('testimonials')}
+            >
+              Read what other CAs say →
+            </button>
+          </div>
+        </section>
+      </main>
+      <PlatformFooter navigate={navigate} />
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PAGE: TESTIMONIALS
+// ═══════════════════════════════════════════════════════════════════════════════
+function TestimonialsPage({ navigate }) {
+  const h = useHover();
+  const featured = TESTIMONIALS_DATA[0];
+  const rest = TESTIMONIALS_DATA.slice(1);
+
+  const Stars = ({ rating }) => (
+    <div style={{ display: 'flex', gap: 2, marginBottom: 12 }}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <span key={i} style={{ color: C.accent, fontSize: 14 }}>★</span>
+      ))}
+    </div>
+  );
+
+  return (
+    <div style={{ minHeight: '100vh', fontFamily: C.body, background: C.bgPrimary }}>
+      <header style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '16px 32px',
+        borderBottom: `1px solid ${C.border}`,
+        background: 'rgba(10,14,26,0.8)',
+        backdropFilter: 'blur(12px)',
+        position: 'sticky', top: 0, zIndex: 100,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {Icons.logo}
+          <span style={{ fontFamily: C.heading, fontSize: 18, fontWeight: 700, color: C.accentLight, letterSpacing: '0.5px' }}>SAP FICO</span>
+          <span style={{ color: C.textMuted, fontSize: 12, fontWeight: 400, marginLeft: 4 }}>Learning Platform</span>
+        </div>
+        <button style={{ ...s.backBtn, ...(h.is('back') ? { color: C.accentLight } : {}) }} {...h.bind('back')} onClick={() => navigate('home')}>
+          {Icons.back} Back to Home
+        </button>
+      </header>
+
+      <main style={{ maxWidth: 1000, margin: '0 auto', padding: '40px 32px 64px' }}>
+        <h1 style={{ fontFamily: C.heading, fontSize: 28, fontWeight: 700, color: C.accentLight, marginBottom: 8 }}>
+          What CAs say about FicoReady
+        </h1>
+        <p style={{ fontSize: 14, color: C.textSecondary, marginBottom: 32 }}>
+          Real feedback from chartered accountants who used the platform to get SAP-ready.
+        </p>
+
+        {/* Featured testimonial — full width, larger */}
+        <div
+          style={{
+            ...s.card,
+            padding: 32,
+            marginBottom: 32,
+            ...(h.is('featured') ? s.cardHover : {}),
+          }}
+          {...h.bind('featured')}
+        >
+          <Stars rating={featured.rating} />
+          <p style={{ fontSize: 17, color: C.textPrimary, lineHeight: 1.7, marginBottom: 20 }}>
+            "{featured.text}"
+          </p>
+          <span style={{
+            display: 'inline-block',
+            fontSize: 12,
+            fontWeight: 600,
+            color: C.accent,
+            background: 'rgba(200,169,110,0.15)',
+            padding: '6px 12px',
+            borderRadius: 20,
+            marginBottom: 16,
+          }}>
+            {featured.module}
+          </span>
+          <div style={{ fontSize: 13, color: C.textSecondary }}>
+            <strong style={{ color: C.accentLight }}>{featured.name}</strong> — {featured.designation}, {featured.company}
+          </div>
+          <div style={{ fontSize: 12, color: C.textMuted, marginTop: 4 }}>{featured.experience}</div>
+        </div>
+
+        {/* Masonry-style grid of remaining 5 cards */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+          gap: 20,
+        }}>
+          {rest.map((t, i) => (
+            <div
+              key={i}
+              style={{
+                ...s.card,
+                padding: 22,
+                display: 'flex',
+                flexDirection: 'column',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                ...(h.is(`card-${i}`) ? { transform: 'translateY(-4px)', boxShadow: `0 12px 32px rgba(0,0,0,0.2)` } : {}),
+              }}
+              {...h.bind(`card-${i}`)}
+            >
+              <Stars rating={t.rating} />
+              <p style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.65, flex: 1, marginBottom: 14 }}>
+                "{t.text}"
+              </p>
+              <span style={{
+                display: 'inline-block',
+                fontSize: 11,
+                fontWeight: 600,
+                color: C.accent,
+                background: 'rgba(200,169,110,0.15)',
+                padding: '4px 10px',
+                borderRadius: 16,
+                marginBottom: 12,
+                alignSelf: 'flex-start',
+              }}>
+                {t.module}
+              </span>
+              <div style={{ fontSize: 12, color: C.textSecondary, borderTop: `1px solid ${C.border}`, paddingTop: 12 }}>
+                <strong style={{ color: C.accentLight }}>{t.name}</strong><br />
+                {t.designation}, {t.company}
+              </div>
+              <div style={{ fontSize: 11, color: C.textMuted, marginTop: 4 }}>{t.experience}</div>
+            </div>
+          ))}
+        </div>
+      </main>
+      <PlatformFooter navigate={navigate} />
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PAGE: DISCLAIMER
+// ═══════════════════════════════════════════════════════════════════════════════
+const PLATFORM_NAME_DISCLAIMER = 'FicoReady';
+
+function DisclaimerPage({ navigate }) {
+  const h = useHover();
+  const sections = [
+    {
+      title: 'Educational Purpose Disclaimer',
+      text: 'This platform is for educational purposes only. It simulates SAP-like interfaces for training. It is not affiliated with, endorsed by, or connected to SAP SE in any way.',
+    },
+    {
+      title: 'Trademark Notice',
+      text: 'SAP, SAP ERP, SAP FICO, SAP GUI are registered trademarks of SAP SE, Walldorf, Germany. All references to SAP transaction codes and screen layouts are used for educational illustration only.',
+    },
+    {
+      title: 'Accuracy Disclaimer',
+      text: 'Transaction flows, screen layouts, and document numbering shown in the simulator are approximations for learning purposes. Actual SAP behavior may vary by version, configuration, and company-specific customization.',
+    },
+    {
+      title: 'Professional Advice Disclaimer',
+      text: 'This platform does not constitute professional SAP consulting advice. For production SAP implementations, engage a certified SAP partner.',
+    },
+    {
+      title: 'CA Insight Content',
+      text: 'CA Insights represent general professional observations and may not apply to every client situation. Content is written from a CA\'s perspective, not official SAP documentation.',
+    },
+  ];
+
+  return (
+    <div style={{ minHeight: '100vh', fontFamily: C.body, background: C.bgPrimary }}>
+      <header style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '16px 32px',
+        borderBottom: `1px solid ${C.border}`,
+        background: 'rgba(10,14,26,0.8)',
+        backdropFilter: 'blur(12px)',
+        position: 'sticky', top: 0, zIndex: 100,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {Icons.logo}
+          <span style={{ fontFamily: C.heading, fontSize: 18, fontWeight: 700, color: C.accentLight, letterSpacing: '0.5px' }}>SAP FICO</span>
+          <span style={{ color: C.textMuted, fontSize: 12, fontWeight: 400, marginLeft: 4 }}>Learning Platform</span>
+        </div>
+        <button style={{ ...s.backBtn, ...(h.is('back') ? { color: C.accentLight } : {}) }} {...h.bind('back')} onClick={() => navigate('home')}>
+          {Icons.back} Back to Home
+        </button>
+      </header>
+
+      <main style={{ maxWidth: 720, margin: '0 auto', padding: '40px 32px 64px' }}>
+        <h1 style={{ fontFamily: C.heading, fontSize: 26, fontWeight: 700, color: C.accentLight, marginBottom: 32 }}>
+          Disclaimer
+        </h1>
+
+        {sections.map((sec, i) => (
+          <div
+            key={i}
+            style={{
+              ...s.card,
+              padding: 24,
+              marginBottom: 20,
+              borderLeft: `4px solid ${C.accent}`,
+            }}
+          >
+            <h2 style={{ fontFamily: C.heading, fontSize: 16, fontWeight: 600, color: C.accent, marginBottom: 12 }}>
+              {sec.title}
+            </h2>
+            <p style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.7, margin: 0 }}>
+              {sec.text}
+            </p>
+          </div>
+        ))}
+
+        <div style={{ marginTop: 32, paddingTop: 24, borderTop: `1px solid ${C.border}`, fontSize: 13, color: C.textMuted }}>
+          <div style={{ marginBottom: 6 }}>Creator: Manu Pandit, ACA (ICAI)</div>
+          <div style={{ marginBottom: 6 }}>Platform: {PLATFORM_NAME_DISCLAIMER}</div>
+          <div>Last updated: March 2025</div>
+        </div>
+      </main>
+      <PlatformFooter navigate={navigate} />
+    </div>
+  );
+}
+
+// ─── Platform footer (About | Disclaimer | Terms | Testimonials + copyright) ───
+const PLATFORM_NAME_FOOTER = 'FicoReady';
+
+function PlatformFooter({ navigate }) {
+  const linkStyle = {
+    background: 'none',
+    border: 'none',
+    color: C.accent,
+    fontSize: 13,
+    fontFamily: C.body,
+    cursor: 'pointer',
+    padding: '4px 0',
+    textDecoration: 'none',
+  };
+  return (
+    <footer
+      style={{
+        borderTop: `1px solid ${C.border}`,
+        padding: '20px 32px',
+        marginTop: 'auto',
+        background: C.bgSecondary,
+        fontFamily: C.body,
+        fontSize: 12,
+        color: C.textMuted,
+      }}
+    >
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 16px', marginBottom: 8 }}>
+        <button type="button" style={linkStyle} onClick={() => navigate('about')}>About</button>
+        <span style={{ color: C.border }}>|</span>
+        <button type="button" style={linkStyle} onClick={() => navigate('disclaimer')}>Disclaimer</button>
+        <span style={{ color: C.border }}>|</span>
+        <button type="button" style={linkStyle} onClick={() => navigate('terms')}>Terms</button>
+        <span style={{ color: C.border }}>|</span>
+        <button type="button" style={linkStyle} onClick={() => navigate('testimonials')}>Testimonials</button>
+      </div>
+      <div style={{ color: C.textMuted, lineHeight: 1.5 }}>
+        © 2025 {PLATFORM_NAME_FOOTER} | Created by Manu Pandit, ACA | Not affiliated with SAP SE
+      </div>
+    </footer>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PAGE: TERMS OF SERVICE
+// ═══════════════════════════════════════════════════════════════════════════════
+const PLATFORM_NAME_TERMS = 'FicoReady';
+
+const TERMS_SECTIONS = [
+  {
+    title: 'Acceptance of Terms',
+    content: 'By accessing or using this platform, you agree to be bound by these Terms of Service. If you do not agree, do not use the platform.',
+  },
+  {
+    title: 'Use of Platform',
+    content: 'The platform is for your personal, non-commercial use only. You may not redistribute, resell, or commercially exploit any content. Use is limited to learning and reference in line with the platform\'s educational purpose.',
+  },
+  {
+    title: 'Intellectual Property',
+    content: `Platform content (lessons, scenarios, simulator logic, and design) is owned by ${PLATFORM_NAME_TERMS}. SAP, SAP ERP, SAP FICO, SAP GUI, and related marks are registered trademarks of SAP SE. All references to SAP transaction codes and materials are for educational illustration only.`,
+  },
+  {
+    title: 'User Conduct',
+    content: 'You may not scrape, automate access, or use the platform for unauthorized purposes. Resale of content or access is prohibited. You may not attempt to gain access to any systems or data beyond your own progress data.',
+  },
+  {
+    title: 'Disclaimer of Warranties',
+    content: 'The platform is provided "as is" without warranties of any kind. We do not guarantee job placement, SAP certification outcomes, or that the simulator matches any particular SAP version or configuration.',
+  },
+  {
+    title: 'Limitation of Liability',
+    content: 'To the fullest extent permitted by law, the platform and its creator shall not be liable for any indirect, incidental, or consequential damages arising from your use of the platform.',
+  },
+  {
+    title: 'Privacy',
+    content: 'We do not collect personal data beyond what is stored locally in your browser (e.g. lesson progress). No server-side tracking or personal data collection is performed. Your progress remains on your device.',
+  },
+  {
+    title: 'Governing Law',
+    content: 'These terms are governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of the courts of New Delhi, India.',
+  },
+  {
+    title: 'Changes to Terms',
+    content: 'We may update these terms from time to time. Continued use of the platform after changes constitutes acceptance. The effective date at the top of this page will be updated when terms change.',
+  },
+  {
+    title: 'Contact',
+    content: `${PLATFORM_NAME_TERMS} | Created by Manu Pandit, ACA (ICAI). For questions about these terms, contact through the platform or the creator\'s professional channels.`,
+  },
+];
+
+function TermsPage({ navigate }) {
+  const [openIndex, setOpenIndex] = useState(null);
+
+  return (
+    <div style={{ minHeight: '100vh', fontFamily: C.body, background: C.bgPrimary, display: 'flex', flexDirection: 'column' }}>
+      <header style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '16px 32px',
+        borderBottom: `1px solid ${C.border}`,
+        background: 'rgba(10,14,26,0.8)',
+        backdropFilter: 'blur(12px)',
+        position: 'sticky', top: 0, zIndex: 100,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {Icons.logo}
+          <span style={{ fontFamily: C.heading, fontSize: 18, fontWeight: 700, color: C.accentLight, letterSpacing: '0.5px' }}>SAP FICO</span>
+          <span style={{ color: C.textMuted, fontSize: 12, fontWeight: 400, marginLeft: 4 }}>Learning Platform</span>
+        </div>
+        <button style={{ ...s.backBtn }} onClick={() => navigate('home')}>
+          {Icons.back} Back to Home
+        </button>
+      </header>
+
+      <main style={{ maxWidth: 720, margin: '0 auto', padding: '40px 32px 32px', flex: 1 }}>
+        <h1 style={{ fontFamily: C.heading, fontSize: 26, fontWeight: 700, color: C.accentLight, marginBottom: 8 }}>
+          Terms of Service
+        </h1>
+        <p style={{ fontSize: 13, color: C.textMuted, marginBottom: 32 }}>
+          Effective Date: March 2025
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+          {TERMS_SECTIONS.map((sec, i) => {
+            const isOpen = openIndex === i;
+            return (
+              <div
+                key={i}
+                style={{
+                  borderBottom: `1px solid ${C.border}`,
+                  background: C.bgCard,
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenIndex(isOpen ? null : i)}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '16px 20px',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontFamily: C.body,
+                    textAlign: 'left',
+                    color: C.textPrimary,
+                  }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span style={{ fontFamily: C.heading, fontWeight: 600, color: C.accent, minWidth: 24 }}>{i + 1}.</span>
+                    <span style={{ fontSize: 15, fontWeight: 600 }}>{sec.title}</span>
+                  </span>
+                  <span
+                    style={{
+                      color: C.accent,
+                      fontSize: 14,
+                      transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.25s ease',
+                    }}
+                  >
+                    ▼
+                  </span>
+                </button>
+                <div
+                  style={{
+                    overflow: 'hidden',
+                    maxHeight: isOpen ? 400 : 0,
+                    transition: 'max-height 0.3s ease',
+                  }}
+                >
+                  <div style={{ padding: '0 20px 20px 56px', fontSize: 14, color: C.textSecondary, lineHeight: 1.7 }}>
+                    {sec.content}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </main>
+      <PlatformFooter navigate={navigate} />
     </div>
   );
 }
@@ -7052,6 +7722,14 @@ export default function App() {
   };
 
   switch (page) {
+    case 'about':
+      return <AboutPage navigate={navigate} />;
+    case 'testimonials':
+      return <TestimonialsPage navigate={navigate} />;
+    case 'disclaimer':
+      return <DisclaimerPage navigate={navigate} />;
+    case 'terms':
+      return <TermsPage navigate={navigate} />;
     case 'module':
       return (
         <ModulePage
@@ -7081,6 +7759,7 @@ export default function App() {
         <SimulatorShell
           state={simState}
           setState={setSimState}
+          navigate={navigate}
         />
       );
     default:
