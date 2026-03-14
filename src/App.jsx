@@ -382,6 +382,116 @@ const curriculum = [
       },
     ],
   },
+  {
+    title: 'SAP Analytics & Reporting',
+    subtitle: 'Day 19 to 22',
+    lessons: [
+      {
+        title: 'Profit Centre Report — KE5Z',
+        tcodes: ['KE5Z'],
+        content: 'Type KE5Z, Enter. Select Controlling Area (your team gives this code — same as Company Code but for controlling). Enter Fiscal Year and Period range. Select Profit Centre or range. Execute F8. See division-wise or product-wise P&L instantly. Revenue and costs broken down by business unit. Export to Excel for board presentations.',
+        caInsight: 'Like getting a separate P&L for each division in Tally — except SAP generates it instantly without any manual workings. This is what CFOs look at every month end.',
+        commonMistakes: 'Wrong Controlling Area gives blank report, not selecting all periods gives partial picture',
+        quiz: {
+          question: 'What must you select correctly in KE5Z to avoid a blank report?',
+          options: ['Company Code', 'Controlling Area', 'Fiscal Year', 'Profit Centre'],
+          correctIndex: 1,
+          explanation: 'Wrong Controlling Area gives a blank report. Your team gives you the correct Controlling Area code.',
+        },
+      },
+      {
+        title: 'Cost Centre Report — KSB1',
+        tcodes: ['KSB1'],
+        content: 'Type KSB1, Enter. Enter Controlling Area, Cost Centre (department code), Fiscal Year, Period range. Execute. See every expense posted to that department — vendor invoices, salary postings, overhead allocations. Double click any line to see the original document. Filter by G/L account to see only specific expense types.',
+        caInsight: 'Like a department-wise expense ledger. Your HOD asks why his budget is overspent — open KSB1 for his cost centre and you have the answer in 30 seconds.',
+        commonMistakes: 'Not selecting the correct period range, forgetting to include all cost centres when doing company-wide review',
+        quiz: {
+          question: 'In KSB1, what can you do to see the original document for an expense line?',
+          options: ['Filter by G/L account', 'Double click the line', 'Change period range', 'Export to Excel'],
+          correctIndex: 1,
+          explanation: 'Double click any line to see the original document. This is your audit trail.',
+        },
+      },
+      {
+        title: 'Budget vs Actual Report — S_ALR_87013611',
+        tcodes: ['S_ALR_87013611'],
+        content: 'Type S_ALR_87013611, Enter. Enter Company Code, Fiscal Year, Cost Centre range. Execute. See three columns — Budget, Actual, Variance. Variance shows over or under spending. Red figures mean budget exceeded. This is the most used report in management accounting. Run this every month before presenting to management.',
+        caInsight: 'Like a budget vs actual statement you prepare manually in Excel — except SAP calculates it live from all posted transactions. No manual working needed.',
+        commonMistakes: 'Budget not loaded in SAP gives zero in budget column — check with controlling team if budget figures missing',
+        quiz: {
+          question: 'If the budget column shows zero in S_ALR_87013611, what should you do?',
+          options: ['Re-enter Company Code', 'Check with controlling team — budget may not be loaded', 'Change fiscal year', 'Run KE5Z instead'],
+          correctIndex: 1,
+          explanation: 'Budget not loaded in SAP gives zero in budget column. Check with controlling team if budget figures are missing.',
+        },
+      },
+      {
+        title: 'Accounts Receivable Ageing — S_ALR_87012178',
+        tcodes: ['S_ALR_87012178'],
+        content: 'Type S_ALR_87012178, Enter. Enter Company Code and key date (usually today or month end date). Execute. See all outstanding debtors grouped by ageing buckets — 0 to 30 days, 31 to 60, 61 to 90, and 90 plus days. Total outstanding per customer. Overdue amounts highlighted. Export to Excel for collections follow up.',
+        caInsight: 'Like the debtor ageing statement you prepare for audit or for the credit control team — except SAP generates it instantly with live data.',
+        commonMistakes: 'Wrong key date gives wrong ageing — always use the correct reporting date, not today\'s date if reporting for a past period',
+        quiz: {
+          question: 'Why is the key date important in S_ALR_87012178?',
+          options: ['It opens the period', 'Wrong key date gives wrong ageing buckets', 'It filters by company code', 'It exports to Excel'],
+          correctIndex: 1,
+          explanation: 'Wrong key date gives wrong ageing. Use the correct reporting date, not today if reporting for a past period.',
+        },
+      },
+      {
+        title: 'Cash Flow Statement — S_ALR_87012271',
+        tcodes: ['S_ALR_87012271'],
+        content: 'Type S_ALR_87012271, Enter. Enter Company Code and Fiscal Year. Execute. SAP generates the cash flow statement — operating, investing, and financing activities. Values come from posted transactions automatically. Print or export for statutory reporting.',
+        caInsight: 'Like preparing the cash flow statement you do at year end — except SAP does it automatically from all the journal entries posted during the year. You just verify and sign off.',
+        commonMistakes: 'Cash flow only works correctly if all bank entries are properly posted and reconciled — incomplete BRS will give wrong cash flow numbers',
+        quiz: {
+          question: 'What can cause wrong cash flow numbers in S_ALR_87012271?',
+          options: ['Wrong Company Code', 'Incomplete bank reconciliation and missing postings', 'Wrong fiscal year', 'Not exporting to Excel'],
+          correctIndex: 1,
+          explanation: 'Incomplete BRS or missing bank postings will give wrong cash flow numbers. Reconcile before running.',
+        },
+      },
+      {
+        title: 'Drill Down Reports — Interactive Analysis',
+        tcodes: ['FAGLB03', 'KSB5'],
+        content: 'FAGLB03 — GL Account Balance Drill Down. Type FAGLB03, Enter. Enter G/L Account and Company Code. Execute. Click any period balance to drill into individual documents. Click any document to open the original entry. This is three level drill down — Balance to GL to Document — in three clicks. KSB5 — Cost Centre Actual Line Items. Type KSB5, Enter. Enter Cost Centre and period. See every single transaction charged to that cost centre with full details. Cross reference with vendor invoices.',
+        caInsight: 'Like being able to click on any number in your trial balance and instantly see every voucher behind it. This is the most powerful audit tool in SAP — you can trace any balance to its source in seconds.',
+        commonMistakes: 'Drilling into wrong fiscal year — always check the year in the selection screen before executing',
+        quiz: {
+          question: 'What is the three-level drill down in FAGLB03?',
+          options: ['Document to GL to Balance', 'Balance to Period to Document', 'Company Code to Period to Document', 'Balance to Cost Centre to Document'],
+          correctIndex: 1,
+          explanation: 'Balance to period to document — click period balance, then click document to open the original entry.',
+        },
+      },
+      {
+        title: 'SAP Fiori Analytics Dashboard',
+        tcodes: [],
+        content: 'SAP Fiori is the modern browser-based interface for SAP analytics. No T-codes needed. Open your company\'s Fiori Launchpad URL in browser. You will see tiles — each tile is a live KPI or report. Common tiles for finance: Days Sales Outstanding, Cash Position, Overdue Payables, Budget Utilisation. Click any tile to drill into details. Charts and graphs update in real time from posted transactions. Export any chart to PDF or Excel.',
+        caInsight: 'Like a live CFO dashboard — all your key numbers on one screen updating automatically. No more month end Excel compilation. This is what modern finance teams use daily.',
+        commonMistakes: 'Fiori access is separate from SAP GUI access — your BASIS team must specifically assign Fiori roles to you',
+        quiz: {
+          question: 'Who must assign Fiori access to you?',
+          options: ['Finance Controller', 'BASIS team', 'Master data team', 'You can self-register'],
+          correctIndex: 1,
+          explanation: 'Fiori access is separate from SAP GUI. Your BASIS team must specifically assign Fiori roles to you.',
+        },
+      },
+      {
+        title: 'SAP Analytics Cloud — Overview',
+        tcodes: [],
+        content: 'SAP Analytics Cloud (SAC) is SAP\'s advanced BI tool — like Power BI but connected directly to SAP data. Your company may or may not have this. If they do: access via browser at your company\'s SAC URL. You will see Stories — these are dashboards with charts, tables, and KPIs. Finance stories typically show: Revenue trend, Cost analysis, Cash flow waterfall, Variance analysis. You can filter by company code, profit centre, period. All data comes live from SAP backend.',
+        caInsight: 'Like having a Bloomberg terminal for your own company\'s finances. Real time data, beautiful charts, drill down to any transaction. This is the future of finance reporting.',
+        commonMistakes: 'SAC is a separate licence — not all companies have it. Check with your IT team before expecting this access.',
+        quiz: {
+          question: 'Before expecting SAP Analytics Cloud access, what should you do?',
+          options: ['Run KE5Z', 'Check with IT — SAC is a separate licence', 'Install SAP GUI', 'Ask Finance Controller'],
+          correctIndex: 1,
+          explanation: 'SAC is a separate licence. Not all companies have it. Check with your IT team before expecting access.',
+        },
+      },
+    ],
+  },
 ];
 
 // ─── SAP Screen Mockups (inline HTML snippets) ───────────────────────────────────
@@ -1927,7 +2037,7 @@ const Icons = {
   ),
 };
 
-const moduleIcons = [Icons.book, Icons.chart, Icons.settings, Icons.layers, Icons.database, Icons.shield];
+const moduleIcons = [Icons.book, Icons.chart, Icons.settings, Icons.layers, Icons.database, Icons.shield, Icons.print, '📊'];
 
 // Derive total lessons and T-code list from curriculum
 const totalLessons = curriculum.reduce((acc, m) => acc + m.lessons.length, 0);
@@ -2956,6 +3066,7 @@ function createInitialSimState() {
         amount: 118000,
         open: true,
         tcode: 'FB60',
+        costCentre: 'CC001',
       },
     ],
     customerDocs: [
@@ -3003,6 +3114,23 @@ function createInitialSimState() {
       { number: '410000', name: 'Revenue from Operations', type: 'Income' },
       { number: '500100', name: 'Office Expenses', type: 'Expense' },
     ],
+    profitCentres: [
+      { code: 'PC001', name: 'North Division' },
+      { code: 'PC002', name: 'South Division' },
+      { code: 'PC003', name: 'Export Division' },
+    ],
+    profitCentrePandL: {
+      PC001: { revenue: 12500000, cogs: 7500000, overheads: 1800000 },
+      PC002: { revenue: 9800000, cogs: 5900000, overheads: 1400000 },
+      PC003: { revenue: 6200000, cogs: 3600000, overheads: 900000 },
+    },
+    costCentres: [
+      { code: 'CC001', name: 'Finance' },
+      { code: 'CC002', name: 'Sales' },
+      { code: 'CC003', name: 'Operations' },
+      { code: 'CC004', name: 'IT' },
+    ],
+    costCentreBudgets: { CC001: 1500000, CC002: 2500000, CC003: 4000000, CC004: 2000000 },
   };
 }
 
@@ -3055,6 +3183,17 @@ const simulatorSidebar = [
       { code: 'OB52', label: 'Posting Periods' },
       { code: 'AFAB', label: 'Depreciation Run' },
       { code: 'F.16', label: 'Carry Forward' },
+    ],
+  },
+  {
+    label: 'Analytics & Reporting',
+    items: [
+      { code: 'KE5Z', label: 'Profit Centre Report' },
+      { code: 'KSB1', label: 'Cost Centre Report' },
+      { code: 'S_ALR_87013611', label: 'Budget vs Actual' },
+      { code: 'S_ALR_87012178', label: 'AR Ageing' },
+      { code: 'S_ALR_87012271', label: 'Cash Flow' },
+      { code: 'FAGLB03', label: 'GL Drill Down' },
     ],
   },
 ];
@@ -3423,6 +3562,24 @@ function SimulatorScreen({ state, setState }) {
       break;
     case 'F.16':
       body = <SimF16 state={state} />;
+      break;
+    case 'KE5Z':
+      body = <SimKE5Z state={state} />;
+      break;
+    case 'KSB1':
+      body = <SimKSB1 state={state} />;
+      break;
+    case 'S_ALR_87013611':
+      body = <SimS_ALR_87013611 state={state} />;
+      break;
+    case 'S_ALR_87012178':
+      body = <SimS_ALR_87012178 state={state} />;
+      break;
+    case 'S_ALR_87012271':
+      body = <SimS_ALR_87012271 state={state} />;
+      break;
+    case 'FAGLB03':
+      body = <SimFAGLB03 state={state} />;
       break;
     default:
       body = (
@@ -3994,6 +4151,7 @@ function SimFB60({ state, setState }) {
       open: true,
       tcode: 'FB60',
       date: invDate,
+      costCentre: 'CC001',
     };
     setState((prev) => ({
       ...prev,
@@ -5494,6 +5652,454 @@ function SimF16({ state }) {
       <div style={{ fontSize: 11 }}>
         Last simulated carry forward from FY {state.periods.year} would appear here.
       </div>
+    </SimCard>
+  );
+}
+
+const ANA_HEADER = '#1a3a5c';
+const anaFmt = (n) => (n ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+function SimKE5Z({ state }) {
+  const [controllingArea, setControllingArea] = useState('CO01');
+  const [fiscalYear, setFiscalYear] = useState('2024');
+  const [periodFrom, setPeriodFrom] = useState('1');
+  const [periodTo, setPeriodTo] = useState('12');
+  const [profitCentre, setProfitCentre] = useState('PC001');
+  const [executed, setExecuted] = useState(false);
+  const [exportMsg, setExportMsg] = useState(false);
+  const pcs = state.profitCentres || [];
+  const pandL = state.profitCentrePandL || {};
+  const rows = pcs.map((pc) => {
+    const d = pandL[pc.code] || { revenue: 0, cogs: 0, overheads: 0 };
+    const gross = d.revenue - d.cogs;
+    const net = gross - d.overheads;
+    const margin = d.revenue ? ((net / d.revenue) * 100) : 0;
+    return { ...pc, ...d, grossProfit: gross, netProfit: net, margin };
+  });
+  const totals = rows.reduce((a, r) => ({
+    revenue: a.revenue + r.revenue,
+    cogs: a.cogs + r.cogs,
+    grossProfit: a.grossProfit + r.grossProfit,
+    overheads: a.overheads + r.overheads,
+    netProfit: a.netProfit + r.netProfit,
+  }), { revenue: 0, cogs: 0, grossProfit: 0, overheads: 0, netProfit: 0 });
+  const totalMargin = totals.revenue ? ((totals.netProfit / totals.revenue) * 100) : 0;
+  return (
+    <SimCard>
+      <div style={{ fontWeight: 600, marginBottom: 8, color: ANA_HEADER }}>Profit Centre Report (KE5Z)</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginBottom: 12 }}>
+        <SimFieldRow label="Controlling Area"><SimInput value={controllingArea} onChange={(e) => setControllingArea(e.target.value)} width={80} /></SimFieldRow>
+        <SimFieldRow label="Fiscal Year"><SimInput value={fiscalYear} onChange={(e) => setFiscalYear(e.target.value)} width={70} /></SimFieldRow>
+        <SimFieldRow label="Period From"><SimInput value={periodFrom} onChange={(e) => setPeriodFrom(e.target.value)} width={50} /></SimFieldRow>
+        <SimFieldRow label="Period To"><SimInput value={periodTo} onChange={(e) => setPeriodTo(e.target.value)} width={50} /></SimFieldRow>
+        <SimFieldRow label="Profit Centre">
+          <select value={profitCentre} onChange={(e) => setProfitCentre(e.target.value)} style={{ height: 22, border: `1px solid ${SAP_SIM.fieldBorder}`, borderRadius: 2, fontSize: 11, minWidth: 160, background: '#fff' }}>
+            {pcs.map((pc) => <option key={pc.code} value={pc.code}>{pc.code} — {pc.name}</option>)}
+          </select>
+        </SimFieldRow>
+        <button type="button" onClick={() => setExecuted(true)} style={{ padding: '4px 12px', background: ANA_HEADER, color: '#fff', border: 'none', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Execute</button>
+        {executed && <><button type="button" onClick={() => window.print()} style={{ padding: '4px 12px', background: '#f0f2f5', border: '1px solid #9ca3af', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Print</button><button type="button" onClick={() => setExportMsg(true)} style={{ padding: '4px 12px', background: '#f0f2f5', border: '1px solid #9ca3af', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Export</button></>}
+        {exportMsg && <span style={{ fontSize: 11, color: '#059669' }}>Export completed.</span>}
+      </div>
+      {executed && (
+        <>
+          <div style={{ background: '#f0f2f5', padding: '8px 12px', borderRadius: 4, marginBottom: 8, fontSize: 11, display: 'flex', gap: 24 }}>
+            <span><strong>Total Revenue:</strong> ₹{anaFmt(totals.revenue)}</span>
+            <span><strong>Total Net Profit:</strong> ₹{anaFmt(totals.netProfit)}</span>
+            <span><strong>Margin:</strong> {totalMargin.toFixed(1)}%</span>
+          </div>
+          <SimTable
+            columns={[
+              { key: 'name', label: 'Profit Centre' },
+              { key: 'revenue', label: 'Revenue', render: (r) => anaFmt(r.revenue) },
+              { key: 'cogs', label: 'COGS', render: (r) => anaFmt(r.cogs) },
+              { key: 'grossProfit', label: 'Gross Profit', render: (r) => anaFmt(r.grossProfit) },
+              { key: 'overheads', label: 'Overheads', render: (r) => anaFmt(r.overheads) },
+              { key: 'netProfit', label: 'Net Profit', render: (r) => anaFmt(r.netProfit) },
+              { key: 'margin', label: 'Margin %', render: (r) => r.margin.toFixed(1) + '%' },
+            ]}
+            rows={rows}
+            getKey={(r) => r.code}
+          />
+          <div style={{ padding: '6px 8px', fontWeight: 600, background: '#e0e7ff', border: '1px solid #cbd5e1', borderTop: 'none', fontSize: 11 }}>
+            Total — Revenue: ₹{anaFmt(totals.revenue)} | COGS: ₹{anaFmt(totals.cogs)} | Gross: ₹{anaFmt(totals.grossProfit)} | Overheads: ₹{anaFmt(totals.overheads)} | Net: ₹{anaFmt(totals.netProfit)} | Margin: {totalMargin.toFixed(1)}%
+          </div>
+        </>
+      )}
+    </SimCard>
+  );
+}
+
+function SimKSB1({ state }) {
+  const [controllingArea, setControllingArea] = useState('CO01');
+  const [costCentre, setCostCentre] = useState('CC001');
+  const [periodFrom, setPeriodFrom] = useState('1');
+  const [periodTo, setPeriodTo] = useState('12');
+  const [executed, setExecuted] = useState(false);
+  const [docPopup, setDocPopup] = useState(null);
+  const ccs = state.costCentres || [];
+  const journalItems = (state.journalDocs || []).flatMap((d) => (d.items || []).map((i) => ({ ...i, text: i.text || `G/L ${i.gl}`, docNo: d.docNo, date: d.date, doc: d })).filter((i) => (i.costCenter || '').toString().trim() === costCentre));
+  const vendorItems = (state.vendorDocs || []).filter((d) => (d.costCentre || 'CC001') === costCentre).map((d) => ({ docNo: d.docNo, date: d.date || '', gl: '200100', amount: d.amount, text: d.name || 'Vendor invoice', doc: d }));
+  const lineItems = [...journalItems.filter((i) => i.dc === 'D'), ...vendorItems].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  const runningTotal = lineItems.reduce((s, i) => s + (i.amount || 0), 0);
+  return (
+    <SimCard>
+      <div style={{ fontWeight: 600, marginBottom: 8, color: ANA_HEADER }}>Cost Centre Line Items (KSB1)</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginBottom: 12 }}>
+        <SimFieldRow label="Controlling Area"><SimInput value={controllingArea} onChange={(e) => setControllingArea(e.target.value)} width={80} /></SimFieldRow>
+        <SimFieldRow label="Cost Centre">
+          <select value={costCentre} onChange={(e) => setCostCentre(e.target.value)} style={{ height: 22, border: `1px solid ${SAP_SIM.fieldBorder}`, borderRadius: 2, fontSize: 11, minWidth: 140, background: '#fff' }}>
+            {ccs.map((c) => <option key={c.code} value={c.code}>{c.code} — {c.name}</option>)}
+          </select>
+        </SimFieldRow>
+        <SimFieldRow label="Period From"><SimInput value={periodFrom} onChange={(e) => setPeriodFrom(e.target.value)} width={50} /></SimFieldRow>
+        <SimFieldRow label="Period To"><SimInput value={periodTo} onChange={(e) => setPeriodTo(e.target.value)} width={50} /></SimFieldRow>
+        <button type="button" onClick={() => setExecuted(true)} style={{ padding: '4px 12px', background: ANA_HEADER, color: '#fff', border: 'none', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Execute</button>
+        {executed && <><button type="button" onClick={() => window.print()} style={{ padding: '4px 12px', background: '#f0f2f5', border: '1px solid #9ca3af', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Print</button><button type="button" onClick={() => {}} style={{ padding: '4px 12px', background: '#f0f2f5', border: '1px solid #9ca3af', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Export</button></>}
+      </div>
+      {executed && (
+        <>
+          <div style={{ background: '#f0f2f5', padding: '8px 12px', borderRadius: 4, marginBottom: 8, fontSize: 11 }}><strong>Running total:</strong> ₹{anaFmt(runningTotal)}</div>
+          <SimTable
+            columns={[
+              { key: 'docNo', label: 'Doc No' },
+              { key: 'date', label: 'Date' },
+              { key: 'text', label: 'Vendor/Description', render: (r) => r.text || r.gl || '—' },
+              { key: 'gl', label: 'G/L Account', render: (r) => r.gl || '—' },
+              { key: 'amount', label: 'Amount', render: (r) => anaFmt(r.amount) },
+              { key: 'action', label: '', render: (r) => <button type="button" onClick={() => setDocPopup(r.doc)} style={{ fontSize: 10, padding: '2px 6px', background: ANA_HEADER, color: '#fff', border: 'none', borderRadius: 2, cursor: 'pointer' }}>Doc</button> },
+            ]}
+            rows={lineItems}
+            getKey={(r, i) => r.docNo + String(i)}
+          />
+          <div style={{ padding: '6px 8px', fontWeight: 600, background: '#e0e7ff', fontSize: 11 }}>Total: ₹{anaFmt(runningTotal)}</div>
+        </>
+      )}
+      {docPopup && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setDocPopup(null)}>
+          <div style={{ background: '#fff', padding: 16, borderRadius: 8, maxWidth: 400, border: '1px solid #e5e7eb' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ fontWeight: 600, marginBottom: 8 }}>Document {docPopup.docNo}</div>
+            <div style={{ fontSize: 11 }}>Date: {docPopup.date} · Amount: ₹{anaFmt(docPopup.amount)}</div>
+            {docPopup.items && <div style={{ marginTop: 8, fontSize: 11 }}>Line items: {docPopup.items.length}</div>}
+            <button type="button" onClick={() => setDocPopup(null)} style={{ marginTop: 12, padding: '4px 12px', background: ANA_HEADER, color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>Close</button>
+          </div>
+        </div>
+      )}
+    </SimCard>
+  );
+}
+
+function SimS_ALR_87013611({ state }) {
+  const [companyCode, setCompanyCode] = useState('IN01');
+  const [fiscalYear, setFiscalYear] = useState('2024');
+  const [executed, setExecuted] = useState(false);
+  const budgets = state.costCentreBudgets || {};
+  const ccs = state.costCentres || [];
+  const actualByCC = {};
+  ccs.forEach((c) => { actualByCC[c.code] = 0; });
+  (state.journalDocs || []).forEach((d) => {
+    (d.items || []).filter((i) => i.dc === 'D').forEach((i) => {
+      const cc = (i.costCenter || '').toString().trim();
+      if (cc && actualByCC[cc] !== undefined) actualByCC[cc] += i.amount || 0;
+    });
+  });
+  (state.vendorDocs || []).forEach((d) => {
+    const cc = d.costCentre || 'CC001';
+    if (actualByCC[cc] !== undefined) actualByCC[cc] += d.amount || 0;
+  });
+  const rows = ccs.map((c) => {
+    const budget = budgets[c.code] || 0;
+    const actual = actualByCC[c.code] || 0;
+    const variance = budget - actual;
+    const pct = budget ? (actual / budget) * 100 : 0;
+    return { ...c, budget, actual, variance, pct };
+  });
+  const grandBudget = rows.reduce((s, r) => s + r.budget, 0);
+  const grandActual = rows.reduce((s, r) => s + r.actual, 0);
+  const grandVar = grandBudget - grandActual;
+  return (
+    <SimCard>
+      <div style={{ fontWeight: 600, marginBottom: 8, color: ANA_HEADER }}>Budget vs Actual (S_ALR_87013611)</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginBottom: 12 }}>
+        <SimFieldRow label="Company Code"><SimInput value={companyCode} onChange={(e) => setCompanyCode(e.target.value)} width={80} /></SimFieldRow>
+        <SimFieldRow label="Fiscal Year"><SimInput value={fiscalYear} onChange={(e) => setFiscalYear(e.target.value)} width={80} /></SimFieldRow>
+        <button type="button" onClick={() => setExecuted(true)} style={{ padding: '4px 12px', background: ANA_HEADER, color: '#fff', border: 'none', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Execute</button>
+        {executed && <><button type="button" onClick={() => window.print()} style={{ padding: '4px 12px', background: '#f0f2f5', border: '1px solid #9ca3af', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Print</button><button type="button" style={{ padding: '4px 12px', background: '#f0f2f5', border: '1px solid #9ca3af', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Export</button></>}
+      </div>
+      {executed && (
+        <>
+          <table style={{ width: '100%', fontSize: 11, borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: ANA_HEADER, color: '#fff' }}>
+                <th style={{ padding: '6px 8px', textAlign: 'left' }}>Cost Centre</th>
+                <th style={{ padding: '6px 8px', textAlign: 'right' }}>Budget</th>
+                <th style={{ padding: '6px 8px', textAlign: 'right' }}>Actual</th>
+                <th style={{ padding: '6px 8px', textAlign: 'right' }}>Variance</th>
+                <th style={{ padding: '6px 8px', textAlign: 'right' }}>%</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.code} style={{ background: r.variance < 0 ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.08)' }}>
+                  <td style={{ padding: '4px 8px', border: '1px solid #e5e7eb' }}>{r.code} {r.name}</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #e5e7eb', textAlign: 'right' }}>₹{anaFmt(r.budget)}</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #e5e7eb', textAlign: 'right' }}>₹{anaFmt(r.actual)}</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #e5e7eb', textAlign: 'right', color: r.variance >= 0 ? '#059669' : '#dc2626' }}>{(r.variance >= 0 ? '+' : '')}₹{anaFmt(r.variance)}</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #e5e7eb', textAlign: 'right' }}>{r.pct.toFixed(0)}%</td>
+                </tr>
+              ))}
+              <tr style={{ fontWeight: 600, background: '#e0e7ff' }}>
+                <td style={{ padding: '6px 8px', border: '1px solid #e5e7eb' }}>Grand Total</td>
+                <td style={{ padding: '6px 8px', border: '1px solid #e5e7eb', textAlign: 'right' }}>₹{anaFmt(grandBudget)}</td>
+                <td style={{ padding: '6px 8px', border: '1px solid #e5e7eb', textAlign: 'right' }}>₹{anaFmt(grandActual)}</td>
+                <td style={{ padding: '6px 8px', border: '1px solid #e5e7eb', textAlign: 'right' }}>{(grandVar >= 0 ? '+' : '')}₹{anaFmt(grandVar)}</td>
+                <td style={{ padding: '6px 8px', border: '1px solid #e5e7eb' }}>—</td>
+              </tr>
+            </tbody>
+          </table>
+        </>
+      )}
+    </SimCard>
+  );
+}
+
+function SimS_ALR_87012178({ state }) {
+  const [companyCode, setCompanyCode] = useState('IN01');
+  const [keyDate, setKeyDate] = useState('2024-04-30');
+  const [executed, setExecuted] = useState(false);
+  const [exportMsg, setExportMsg] = useState(false);
+  const openInvoices = (state.customerDocs || []).filter((d) => d.open === true);
+  const key = new Date(keyDate);
+  const bucket = (doc) => {
+    const docDate = new Date(doc.date || key);
+    const days = Math.floor((key - docDate) / (24 * 60 * 60 * 1000));
+    if (days <= 30) return '0-30';
+    if (days <= 60) return '31-60';
+    if (days <= 90) return '61-90';
+    return '90+';
+  };
+  const byCustomer = {};
+  openInvoices.forEach((d) => {
+    const name = d.customer || d.customerCode || 'Unknown';
+    if (!byCustomer[name]) byCustomer[name] = { name, total: 0, '0-30': 0, '31-60': 0, '61-90': 0, '90+': 0 };
+    byCustomer[name].total += d.amount || 0;
+    const b = bucket(d);
+    byCustomer[name][b] += d.amount || 0;
+  });
+  const rows = Object.values(byCustomer);
+  const gt = rows.reduce((a, r) => ({ total: a.total + r.total, '0-30': a['0-30'] + r['0-30'], '31-60': a['31-60'] + r['31-60'], '61-90': a['61-90'] + r['61-90'], '90+': a['90+'] + r['90+'] }), { total: 0, '0-30': 0, '31-60': 0, '61-90': 0, '90+': 0 });
+  return (
+    <SimCard>
+      <div style={{ fontWeight: 600, marginBottom: 8, color: ANA_HEADER }}>AR Ageing (S_ALR_87012178)</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginBottom: 12 }}>
+        <SimFieldRow label="Company Code"><SimInput value={companyCode} onChange={(e) => setCompanyCode(e.target.value)} width={80} /></SimFieldRow>
+        <SimFieldRow label="Key Date"><SimInput value={keyDate} onChange={(e) => setKeyDate(e.target.value)} width={120} /></SimFieldRow>
+        <button type="button" onClick={() => setExecuted(true)} style={{ padding: '4px 12px', background: ANA_HEADER, color: '#fff', border: 'none', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Execute</button>
+        {executed && <><button type="button" onClick={() => window.print()} style={{ padding: '4px 12px', background: '#f0f2f5', border: '1px solid #9ca3af', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Print</button><button type="button" onClick={() => setExportMsg(true)} style={{ padding: '4px 12px', background: '#f0f2f5', border: '1px solid #9ca3af', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Export</button></>}
+        {exportMsg && <span style={{ fontSize: 11, color: '#059669' }}>Export completed.</span>}
+      </div>
+      {executed && (
+        <>
+          <table style={{ width: '100%', fontSize: 11, borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: ANA_HEADER, color: '#fff' }}>
+                <th style={{ padding: '6px 8px', textAlign: 'left' }}>Customer</th>
+                <th style={{ padding: '6px 8px', textAlign: 'right' }}>Total Outstanding</th>
+                <th style={{ padding: '6px 8px', textAlign: 'right' }}>0-30 days</th>
+                <th style={{ padding: '6px 8px', textAlign: 'right' }}>31-60 days</th>
+                <th style={{ padding: '6px 8px', textAlign: 'right' }}>61-90 days</th>
+                <th style={{ padding: '6px 8px', textAlign: 'right', background: 'rgba(220,38,38,0.3)' }}>90+ days</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.name} style={{ background: rows.indexOf(r) % 2 ? '#f8fafc' : '#fff' }}>
+                  <td style={{ padding: '4px 8px', border: '1px solid #e5e7eb' }}>{r.name}</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #e5e7eb', textAlign: 'right' }}>₹{anaFmt(r.total)}</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #e5e7eb', textAlign: 'right' }}>₹{anaFmt(r['0-30'])}</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #e5e7eb', textAlign: 'right' }}>₹{anaFmt(r['31-60'])}</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #e5e7eb', textAlign: 'right' }}>₹{anaFmt(r['61-90'])}</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #e5e7eb', textAlign: 'right', color: '#dc2626', fontWeight: 600 }}>₹{anaFmt(r['90+'])}</td>
+                </tr>
+              ))}
+              <tr style={{ fontWeight: 600, background: '#e0e7ff' }}>
+                <td style={{ padding: '6px 8px', border: '1px solid #e5e7eb' }}>Grand Total</td>
+                <td style={{ padding: '6px 8px', border: '1px solid #e5e7eb', textAlign: 'right' }}>₹{anaFmt(gt.total)}</td>
+                <td style={{ padding: '6px 8px', border: '1px solid #e5e7eb', textAlign: 'right' }}>₹{anaFmt(gt['0-30'])}</td>
+                <td style={{ padding: '6px 8px', border: '1px solid #e5e7eb', textAlign: 'right' }}>₹{anaFmt(gt['31-60'])}</td>
+                <td style={{ padding: '6px 8px', border: '1px solid #e5e7eb', textAlign: 'right' }}>₹{anaFmt(gt['61-90'])}</td>
+                <td style={{ padding: '6px 8px', border: '1px solid #e5e7eb', textAlign: 'right' }}>₹{anaFmt(gt['90+'])}</td>
+              </tr>
+            </tbody>
+          </table>
+        </>
+      )}
+    </SimCard>
+  );
+}
+
+function SimS_ALR_87012271({ state }) {
+  const [companyCode, setCompanyCode] = useState('IN01');
+  const [fiscalYear, setFiscalYear] = useState('2024');
+  const [executed, setExecuted] = useState(false);
+  const revenue = (state.customerDocs || []).reduce((a, d) => a + (d.amount || 0), 0);
+  const expenseFromJournal = (state.journalDocs || []).flatMap((d) => d.items || []).filter((i) => i.dc === 'D').reduce((a, i) => a + (i.amount || 0), 0);
+  const glMasters = state.glMasters || [];
+  const expenseGLs = new Set(glMasters.filter((g) => g.type === 'Expense').map((g) => g.number));
+  const expenses = (state.journalDocs || []).flatMap((d) => d.items || []).filter((i) => i.dc === 'D' && expenseGLs.has(i.gl)).reduce((a, i) => a + (i.amount || 0), 0);
+  const depreciation = state.depreciationTotal || 0;
+  const totalExpenses = expenses + depreciation;
+  const profitBeforeTax = revenue - totalExpenses;
+  const tax = Math.max(0, profitBeforeTax * 0.25);
+  const netProfit = profitBeforeTax - tax;
+  const debtors = (state.customerDocs || []).filter((d) => d.open).reduce((a, d) => a + (d.amount || 0), 0);
+  const creditors = (state.vendorDocs || []).filter((d) => d.open).reduce((a, d) => a + (d.amount || 0), 0);
+  const bankBalance = (state.bankLines || []).reduce((a, l) => a + (l.amount || 0), 0);
+  const netCashOps = netProfit + depreciation - debtors + creditors;
+  const invCash = -1200000;
+  const finCash = -500000;
+  const netIncrease = netCashOps + invCash + finCash;
+  const openingCash = 3570956;
+  const closingCash = bankBalance;
+  return (
+    <SimCard>
+      <div style={{ fontWeight: 600, marginBottom: 8, color: ANA_HEADER }}>Cash Flow Statement (S_ALR_87012271)</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginBottom: 12 }}>
+        <SimFieldRow label="Company Code"><SimInput value={companyCode} onChange={(e) => setCompanyCode(e.target.value)} width={80} /></SimFieldRow>
+        <SimFieldRow label="Fiscal Year"><SimInput value={fiscalYear} onChange={(e) => setFiscalYear(e.target.value)} width={80} /></SimFieldRow>
+        <button type="button" onClick={() => setExecuted(true)} style={{ padding: '4px 12px', background: ANA_HEADER, color: '#fff', border: 'none', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Execute</button>
+        <button type="button" style={{ padding: '4px 12px', background: '#f0f2f5', border: '1px solid #9ca3af', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Print</button>
+      </div>
+      {executed && (
+        <div style={{ fontSize: 11, border: '1px solid #e5e7eb', borderRadius: 4, overflow: 'hidden' }}>
+          <div style={{ background: ANA_HEADER, color: '#fff', padding: '6px 10px', fontWeight: 600 }}>OPERATING ACTIVITIES</div>
+          <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e5e7eb' }}><span>Net Profit</span><span>₹ {anaFmt(netProfit)}</span></div>
+          <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e5e7eb' }}><span>Add: Depreciation</span><span>₹ {anaFmt(depreciation)}</span></div>
+          <div style={{ padding: '6px 12px', fontSize: 10, color: '#64748b' }}>Changes in Working Capital</div>
+          <div style={{ padding: '6px 12px 6px 24px', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e5e7eb' }}><span>Increase in Debtors</span><span>₹ ({anaFmt(debtors)})</span></div>
+          <div style={{ padding: '6px 12px 6px 24px', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e5e7eb' }}><span>Increase in Creditors</span><span>₹ {anaFmt(creditors)}</span></div>
+          <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'space-between', fontWeight: 600, background: '#f0f2f5' }}><span>Net Cash from Operations</span><span>₹ {anaFmt(netCashOps)}</span></div>
+          <div style={{ background: ANA_HEADER, color: '#fff', padding: '6px 10px', fontWeight: 600 }}>INVESTING ACTIVITIES</div>
+          <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e5e7eb' }}><span>Purchase of Fixed Assets</span><span>₹ ({anaFmt(-invCash)})</span></div>
+          <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'space-between', fontWeight: 600, background: '#f0f2f5' }}><span>Net Cash from Investing</span><span>₹ {anaFmt(invCash)}</span></div>
+          <div style={{ background: ANA_HEADER, color: '#fff', padding: '6px 10px', fontWeight: 600 }}>FINANCING ACTIVITIES</div>
+          <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e5e7eb' }}><span>Loan Repayment</span><span>₹ ({anaFmt(-finCash)})</span></div>
+          <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'space-between', fontWeight: 600, background: '#f0f2f5' }}><span>Net Cash from Financing</span><span>₹ {anaFmt(finCash)}</span></div>
+          <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'space-between', fontWeight: 600, background: '#e0e7ff' }}><span>NET INCREASE IN CASH</span><span>₹ {anaFmt(netIncrease)}</span></div>
+          <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e5e7eb' }}><span>Opening Cash Balance</span><span>₹ {anaFmt(openingCash)}</span></div>
+          <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}><span>CLOSING CASH BALANCE</span><span>₹ {anaFmt(closingCash)}</span></div>
+        </div>
+      )}
+    </SimCard>
+  );
+}
+
+function SimFAGLB03({ state }) {
+  const [glAccount, setGlAccount] = useState('');
+  const [companyCode, setCompanyCode] = useState('IN01');
+  const [fiscalYear, setFiscalYear] = useState('2024');
+  const [executed, setExecuted] = useState(false);
+  const [drillPeriod, setDrillPeriod] = useState(null);
+  const [docPopup, setDocPopup] = useState(null);
+  const [showGlSearch, setShowGlSearch] = useState(false);
+  const glMasters = state.glMasters || [];
+  const journalDocs = state.journalDocs || [];
+  const byPeriod = {};
+  journalDocs.forEach((d) => {
+    const period = (d.date || '').slice(5, 7) || '01';
+    if (!byPeriod[period]) byPeriod[period] = { period, debit: 0, credit: 0, docs: [] };
+    (d.items || []).filter((i) => i.gl === glAccount).forEach((i) => {
+      if (i.dc === 'D') byPeriod[period].debit += i.amount || 0;
+      else byPeriod[period].credit += i.amount || 0;
+      byPeriod[period].docs.push({ ...i, docNo: d.docNo, date: d.date, doc: d });
+    });
+  });
+  const sortedPeriods = Object.keys(byPeriod).sort();
+  let runningOpen = 0;
+  const periodRows = sortedPeriods.map((p) => {
+    const row = byPeriod[p];
+    const close = runningOpen + row.debit - row.credit;
+    const out = { period: p, opening: runningOpen, debit: row.debit, credit: row.credit, closing: close, docs: row.docs };
+    runningOpen = close;
+    return out;
+  });
+  const lineItems = drillPeriod ? (byPeriod[drillPeriod]?.docs || []) : [];
+  return (
+    <SimCard>
+      <div style={{ fontWeight: 600, marginBottom: 8, color: ANA_HEADER }}>GL Drill Down (FAGLB03)</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginBottom: 12 }}>
+        <SimFieldRow label="G/L Account">
+          <div style={{ display: 'flex', gap: 4 }}>
+            <SimInput value={glAccount} onChange={(e) => setGlAccount(e.target.value)} width={100} />
+            <button type="button" onClick={() => setShowGlSearch(true)} style={{ padding: '2px 6px', fontSize: 10, background: '#f0f2f5', border: '1px solid #9ca3af', borderRadius: 2, cursor: 'pointer' }}>F4</button>
+          </div>
+        </SimFieldRow>
+        {showGlSearch && (
+          <div style={{ position: 'absolute', marginTop: 4, border: '1px solid #e5e7eb', borderRadius: 4, padding: 8, background: '#fff', zIndex: 10, maxHeight: 120, overflow: 'auto' }}>
+            {glMasters.map((g) => (
+              <div key={g.number} onClick={() => { setGlAccount(g.number); setShowGlSearch(false); }} style={{ padding: '4px 8px', cursor: 'pointer', fontSize: 11 }}>{g.number} — {g.name}</div>
+            ))}
+          </div>
+        )}
+        <SimFieldRow label="Company Code"><SimInput value={companyCode} onChange={(e) => setCompanyCode(e.target.value)} width={80} /></SimFieldRow>
+        <SimFieldRow label="Fiscal Year"><SimInput value={fiscalYear} onChange={(e) => setFiscalYear(e.target.value)} width={80} /></SimFieldRow>
+        <button type="button" onClick={() => { setExecuted(true); setDrillPeriod(null); }} style={{ padding: '4px 12px', background: ANA_HEADER, color: '#fff', border: 'none', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Execute</button>
+        {executed && <><button type="button" onClick={() => window.print()} style={{ padding: '4px 12px', background: '#f0f2f5', border: '1px solid #9ca3af', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Print</button><button type="button" style={{ padding: '4px 12px', background: '#f0f2f5', border: '1px solid #9ca3af', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Export</button></>}
+      </div>
+      {executed && !drillPeriod && (
+        <>
+          <table style={{ width: '100%', fontSize: 11, borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: ANA_HEADER, color: '#fff' }}>
+                <th style={{ padding: '6px 8px' }}>Period</th>
+                <th style={{ padding: '6px 8px', textAlign: 'right' }}>Opening</th>
+                <th style={{ padding: '6px 8px', textAlign: 'right' }}>Debit</th>
+                <th style={{ padding: '6px 8px', textAlign: 'right' }}>Credit</th>
+                <th style={{ padding: '6px 8px', textAlign: 'right' }}>Closing</th>
+                <th style={{ padding: '6px 8px' }}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {periodRows.map((r) => (
+                <tr key={r.period} style={{ background: periodRows.indexOf(r) % 2 ? '#f8fafc' : '#fff' }}>
+                  <td style={{ padding: '4px 8px', border: '1px solid #e5e7eb' }}>{r.period}</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #e5e7eb', textAlign: 'right' }}>₹{anaFmt(r.opening)}</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #e5e7eb', textAlign: 'right' }}>₹{anaFmt(r.debit)}</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #e5e7eb', textAlign: 'right' }}>₹{anaFmt(r.credit)}</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #e5e7eb', textAlign: 'right' }}>₹{anaFmt(r.closing)}</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #e5e7eb' }}><button type="button" onClick={() => setDrillPeriod(r.period)} style={{ fontSize: 10, padding: '2px 6px', background: ANA_HEADER, color: '#fff', border: 'none', borderRadius: 2, cursor: 'pointer' }}>Drill</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
+      {executed && drillPeriod && (
+        <>
+          <button type="button" onClick={() => setDrillPeriod(null)} style={{ marginBottom: 8, fontSize: 11, background: '#f0f2f5', border: '1px solid #9ca3af', borderRadius: 4, padding: '4px 8px', cursor: 'pointer' }}>← Back to periods</button>
+          <SimTable
+            columns={[
+              { key: 'docNo', label: 'Document' },
+              { key: 'date', label: 'Date' },
+              { key: 'dc', label: 'D/C' },
+              { key: 'amount', label: 'Amount', render: (r) => anaFmt(r.amount) },
+              { key: 'action', label: '', render: (r) => <button type="button" onClick={() => setDocPopup(r.doc)} style={{ fontSize: 10, padding: '2px 6px', background: ANA_HEADER, color: '#fff', border: 'none', borderRadius: 2, cursor: 'pointer' }}>View</button> },
+            ]}
+            rows={lineItems}
+            getKey={(r, i) => r.docNo + String(i)}
+          />
+        </>
+      )}
+      {docPopup && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setDocPopup(null)}>
+          <div style={{ background: '#fff', padding: 16, borderRadius: 8, maxWidth: 420, border: '1px solid #e5e7eb' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ fontWeight: 600, marginBottom: 8 }}>Document {docPopup.docNo}</div>
+            <div style={{ fontSize: 11, marginBottom: 8 }}>Date: {docPopup.date} · Company Code: {docPopup.companyCode || 'IN01'}</div>
+            {docPopup.items && <table style={{ width: '100%', fontSize: 10 }}><tbody>{docPopup.items.map((i, idx) => <tr key={idx}><td>{i.gl}</td><td>{i.dc}</td><td style={{ textAlign: 'right' }}>₹{anaFmt(i.amount)}</td></tr>)}</tbody></table>}
+            <button type="button" onClick={() => setDocPopup(null)} style={{ marginTop: 12, padding: '4px 12px', background: ANA_HEADER, color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>Close</button>
+          </div>
+        </div>
+      )}
     </SimCard>
   );
 }
