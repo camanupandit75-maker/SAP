@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 // ─── Curriculum (CA-focused: where to click, what to type; no accounting theory) ─
 const curriculum = [
@@ -2552,6 +2552,50 @@ function LessonPage({ navigate, moduleIndex, lessonIndex, onCompleteLesson, comp
         </div>
       </div>
 
+      {/* Video — FBL3N lesson only (first thing user sees) */}
+      {tcodes.includes('FBL3N') && (
+        <div style={{ marginBottom: 24 }}>
+          <div style={{
+            fontSize: 12,
+            fontWeight: 700,
+            color: '#c8a96e',
+            letterSpacing: '2px',
+            textTransform: 'uppercase',
+            marginBottom: 8,
+          }}>
+            📹 Watch First — Then Read
+          </div>
+          <div
+            style={{
+              width: '100%',
+              borderRadius: 12,
+              border: '1px solid #c8a96e',
+              overflow: 'hidden',
+              background: '#000',
+              position: 'relative',
+              paddingBottom: '56.25%',
+              height: 0,
+            }}
+          >
+            <iframe
+              title="FBL3N — G/L Line Items"
+              src="https://www.youtube.com/embed/iltcY_mAUWc"
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                border: 'none',
+              }}
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      )}
+
       {/* Video — FB50 lesson only */}
       {tcodes.includes('FB50') && (
         <div style={{ marginBottom: 24 }}>
@@ -3131,6 +3175,8 @@ function createInitialSimState() {
       { code: 'CC004', name: 'IT' },
     ],
     costCentreBudgets: { CC001: 1500000, CC002: 2500000, CC003: 4000000, CC004: 2000000 },
+    documentTrail: { show: false, docNo: null, postedFrom: null },
+    simulatorPrefill: null,
   };
 }
 
@@ -3198,6 +3244,117 @@ const simulatorSidebar = [
   },
 ];
 
+const DOCUMENT_TRAIL_LINKS = {
+  FB50: [
+    { tcode: 'FBL3N', label: 'G/L Line Items', sub: 'Open FBL3N →' },
+    { tcode: 'FB03', label: 'Display this Document', sub: 'Open FB03 →' },
+    { tcode: 'FB08', label: 'Reverse if needed', sub: 'Open FB08 →' },
+    { tcode: 'F.01', label: 'Reflected in P&L', sub: 'Open F.01 →' },
+    { tcode: 'S_ALR_87012284', label: 'Balance Sheet', sub: 'Open →' },
+  ],
+  FB60: [
+    { tcode: 'FBL1N', label: 'Vendor Report', sub: 'Open FBL1N →' },
+    { tcode: 'FB03', label: 'Display this Document', sub: 'Open FB03 →' },
+    { tcode: 'F-53', label: 'Manual Payment', sub: 'Open F-53 →' },
+    { tcode: 'F.01', label: 'Reflected in P&L', sub: 'Open F.01 →' },
+    { tcode: 'S_ALR_87012284', label: 'Balance Sheet', sub: 'Open →' },
+  ],
+  FB70: [
+    { tcode: 'FBL5N', label: 'Customer Report', sub: 'Open FBL5N →' },
+    { tcode: 'FB03', label: 'Display this Document', sub: 'Open FB03 →' },
+    { tcode: 'F-28', label: 'Incoming Payment', sub: 'Open F-28 →' },
+    { tcode: 'F.01', label: 'Reflected in P&L', sub: 'Open F.01 →' },
+    { tcode: 'S_ALR_87012284', label: 'Balance Sheet', sub: 'Open →' },
+  ],
+  'F-53': [
+    { tcode: 'FBL1N', label: 'Vendor Report', sub: 'Open FBL1N →' },
+    { tcode: 'FB03', label: 'Display this Document', sub: 'Open FB03 →' },
+    { tcode: 'F.01', label: 'Reflected in P&L', sub: 'Open F.01 →' },
+  ],
+  'F-28': [
+    { tcode: 'FBL5N', label: 'Customer Report', sub: 'Open FBL5N →' },
+    { tcode: 'FB03', label: 'Display this Document', sub: 'Open FB03 →' },
+    { tcode: 'F.01', label: 'Reflected in P&L', sub: 'Open F.01 →' },
+    { tcode: 'S_ALR_87012178', label: 'AR Ageing', sub: 'Open →' },
+  ],
+  F110: [
+    { tcode: 'FBL1N', label: 'Vendor Report', sub: 'Open FBL1N →' },
+    { tcode: 'FB03', label: 'Display this Document', sub: 'Open FB03 →' },
+    { tcode: 'F.01', label: 'Reflected in P&L', sub: 'Open F.01 →' },
+  ],
+  FF67: [
+    { tcode: 'FEBAN', label: 'Bank Processing', sub: 'Open FEBAN →' },
+    { tcode: 'F.01', label: 'Reflected in P&L', sub: 'Open F.01 →' },
+    { tcode: 'S_ALR_87012271', label: 'Cash Flow', sub: 'Open →' },
+  ],
+  AFAB: [
+    { tcode: 'F.01', label: 'Reflected in P&L', sub: 'Open F.01 →' },
+    { tcode: 'S_ALR_87012284', label: 'Balance Sheet', sub: 'Open →' },
+  ],
+};
+
+function DocumentTrailPanel({ state, setState }) {
+  const trail = state.documentTrail || {};
+  if (!trail.show) return null;
+  const docNo = trail.docNo;
+  const postedFrom = trail.postedFrom || '';
+  const links = DOCUMENT_TRAIL_LINKS[postedFrom] || [];
+  const companyCode = 'IN01';
+
+  const openTcode = (item) => {
+    const prefill = { tcode: item.tcode, docNo: docNo || undefined };
+    if (item.tcode === 'FBL3N' && docNo && state.journalDocs) {
+          const doc = state.journalDocs.find((d) => d.docNo === docNo);
+          if (doc?.items?.[0]) prefill.glAccount = doc.items[0].gl;
+        }
+    if (item.tcode === 'F.01' || item.tcode === 'S_ALR_87012284' || item.tcode === 'S_ALR_87012178' || item.tcode === 'S_ALR_87012271') prefill.autoExecute = true;
+    setState((prev) => ({
+      ...prev,
+      currentTcode: item.tcode,
+      documentTrail: { ...prev.documentTrail, show: false },
+      simulatorPrefill: prefill,
+    }));
+  };
+
+  const close = () =>
+    setState((prev) => ({ ...prev, documentTrail: { ...prev.documentTrail, show: false } }));
+
+  return (
+    <div
+      style={{
+        background: 'white',
+        borderTop: '3px solid #1a3a5c',
+        boxShadow: '0 -4px 20px rgba(0,0,0,0.15)',
+        padding: '16px 20px',
+        fontSize: 12,
+        animation: 'documentTrailSlideUp 0.3s ease-out',
+      }}
+    >
+      <style>{`@keyframes documentTrailSlideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+        <div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#1a3a5c', marginBottom: 4 }}>
+            ✅ {docNo ? `Document ${docNo} posted in Company Code ${companyCode}` : 'Operation completed successfully'}
+          </div>
+          <div style={{ fontSize: 11, color: '#64748b', marginBottom: 10 }}>📍 This document now appears in:</div>
+        </div>
+        <button type="button" onClick={close} style={{ background: 'none', border: 'none', fontSize: 14, cursor: 'pointer', color: '#64748b', padding: '2px 6px' }}>Close Panel ✕</button>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
+        {links.map((item) => (
+          <div key={item.tcode} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 11 }}>→ {item.tcode} {item.label}</span>
+            <button type="button" onClick={() => openTcode(item)} style={{ padding: '4px 10px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>{item.sub}</button>
+          </div>
+        ))}
+      </div>
+      <div style={{ background: 'rgba(74,170,122,0.12)', border: '1px solid rgba(74,170,122,0.3)', borderRadius: 8, padding: '10px 14px', fontSize: 11, color: '#166534' }}>
+        📘 CA Insight: In Tally a voucher disappears into the ledger. In SAP every document has a permanent number that connects everything. This number is your audit trail.
+      </div>
+    </div>
+  );
+}
+
 function SimulatorStatusBar({ status }) {
   const color =
     status.type === 'success'
@@ -3225,9 +3382,17 @@ function SimulatorStatusBar({ status }) {
 
 function SimulatorShell({ state, setState }) {
   const [cmd, setCmd] = useState(state.currentTcode);
+  useEffect(() => {
+    setCmd(state.currentTcode);
+  }, [state.currentTcode]);
 
   const navigateTcode = (code) => {
-    setState((prev) => ({ ...prev, currentTcode: code, status: prev.status }));
+    setState((prev) => ({
+      ...prev,
+      currentTcode: code,
+      status: prev.status,
+      documentTrail: prev.documentTrail ? { ...prev.documentTrail, show: false } : prev.documentTrail,
+    }));
     setCmd(code);
   };
 
@@ -3268,17 +3433,18 @@ function SimulatorShell({ state, setState }) {
       }}
     >
       {/* SAP shell frame */}
-      <div
-        style={{
-          borderRadius: 8,
-          border: '1px solid #cbd5e1',
-          overflow: 'hidden',
-          boxShadow: '0 18px 45px rgba(15,23,42,0.25)',
-          background: '#ffffff',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
+        <div
+          style={{
+            position: 'relative',
+            borderRadius: 8,
+            border: '1px solid #cbd5e1',
+            overflow: 'hidden',
+            boxShadow: '0 18px 45px rgba(15,23,42,0.25)',
+            background: '#ffffff',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
         {/* Top bar */}
         <div
           style={{
@@ -3470,6 +3636,7 @@ function SimulatorShell({ state, setState }) {
           </div>
         </div>
 
+        {state.documentTrail?.show && <DocumentTrailPanel state={state} setState={setState} />}
         <SimulatorStatusBar status={state.status} />
       </div>
     </div>
@@ -3507,10 +3674,10 @@ function SimulatorScreen({ state, setState }) {
       body = <SimFB50 state={state} setState={setState} />;
       break;
     case 'FB03':
-      body = <SimFB03 state={state} />;
+      body = <SimFB03 state={state} setState={setState} />;
       break;
     case 'FBL3N':
-      body = <SimFBL3N state={state} />;
+      body = <SimFBL3N state={state} setState={setState} />;
       break;
     case 'FB08':
       body = <SimFB08 state={state} setState={setState} />;
@@ -3528,7 +3695,7 @@ function SimulatorScreen({ state, setState }) {
       body = <SimF28 state={state} setState={setState} />;
       break;
     case 'S_ALR_87012284':
-      body = <SimS_ALR_87012284 state={state} />;
+      body = <SimS_ALR_87012284 state={state} setState={setState} />;
       break;
     case 'FB60':
       body = <SimFB60 state={state} setState={setState} />;
@@ -3573,10 +3740,10 @@ function SimulatorScreen({ state, setState }) {
       body = <SimS_ALR_87013611 state={state} />;
       break;
     case 'S_ALR_87012178':
-      body = <SimS_ALR_87012178 state={state} />;
+      body = <SimS_ALR_87012178 state={state} setState={setState} />;
       break;
     case 'S_ALR_87012271':
-      body = <SimS_ALR_87012271 state={state} />;
+      body = <SimS_ALR_87012271 state={state} setState={setState} />;
       break;
     case 'FAGLB03':
       body = <SimFAGLB03 state={state} />;
@@ -3827,6 +3994,7 @@ function SimFB50({ state, setState }) {
         type: 'success',
         message: `Document ${docNo} posted in company code IN01`,
       },
+      documentTrail: { show: true, docNo, postedFrom: 'FB50' },
     }));
   };
 
@@ -4056,41 +4224,85 @@ function SimFB50({ state, setState }) {
   );
 }
 
-// FB03 — simple display of journalDocs
-function SimFB03({ state }) {
+// FB03 — display of journalDocs with optional doc number filter
+function SimFB03({ state, setState }) {
+  const [docNo, setDocNo] = useState('');
+  const [displayedDoc, setDisplayedDoc] = useState(null);
+  const prefill = state.simulatorPrefill;
+
+  useEffect(() => {
+    if (prefill?.tcode === 'FB03' && prefill.docNo) {
+      setDocNo(prefill.docNo);
+      const doc = (state.journalDocs || []).find((d) => String(d.docNo) === String(prefill.docNo));
+      setDisplayedDoc(doc || null);
+      setState((prev) => ({ ...prev, simulatorPrefill: null }));
+    }
+  }, [prefill?.tcode, prefill?.docNo]);
+
+  const handleDisplay = () => {
+    const doc = (state.journalDocs || []).find((d) => String(d.docNo) === String(docNo) || String(d.docNo).endsWith(String(docNo).replace(/^18/, '')));
+    setDisplayedDoc(doc || null);
+  };
+
+  const rows = displayedDoc ? [displayedDoc] : (state.journalDocs || []);
+  const showTable = rows.length > 0;
   return (
     <SimCard>
       <div style={{ fontWeight: 600, marginBottom: 8 }}>Display Document</div>
-      <div style={{ fontSize: 11, color: '#4b5563', marginBottom: 8 }}>
-        Below are sample documents posted in this training client.
+      <SimFieldRow label="Document Number">
+        <SimInput value={docNo} onChange={(e) => setDocNo(e.target.value)} width={140} placeholder="e.g. 1800000001" />
+      </SimFieldRow>
+      <div style={{ marginBottom: 8 }}>
+        <button type="button" onClick={handleDisplay} style={{ padding: '4px 12px', background: SAP_SIM.headerBg, color: '#fff', border: 'none', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Display</button>
       </div>
-      <SimTable
-        columns={[
-          { key: 'docNo', label: 'Document' },
-          { key: 'date', label: 'Doc Date' },
-          { key: 'companyCode', label: 'Company Code' },
-          {
-            key: 'amount',
-            label: 'Amount',
-            render: (r) =>
-              r.items
-                .filter((i) => i.dc === 'D')
-                .reduce((a, i) => a + i.amount, 0)
-                .toFixed(2),
-          },
-        ]}
-        rows={state.journalDocs}
-        getKey={(r) => r.docNo}
-      />
+      {displayedDoc && (
+        <div style={{ fontSize: 11, color: '#059669', marginBottom: 8 }}>Showing document {displayedDoc.docNo}</div>
+      )}
+      <div style={{ fontSize: 11, color: '#4b5563', marginBottom: 8 }}>
+        {showTable ? (displayedDoc ? 'Document details below.' : 'All documents posted in this client.') : 'Enter document number and press Display.'}
+      </div>
+      {showTable && (
+        <SimTable
+          columns={[
+            { key: 'docNo', label: 'Document' },
+            { key: 'date', label: 'Doc Date' },
+            { key: 'companyCode', label: 'Company Code', render: (r) => r.companyCode || 'IN01' },
+            {
+              key: 'amount',
+              label: 'Amount',
+              render: (r) =>
+                (r.items || [])
+                  .filter((i) => i.dc === 'D')
+                  .reduce((a, i) => a + i.amount, 0)
+                  .toFixed(2),
+            },
+          ]}
+          rows={rows}
+          getKey={(r) => r.docNo}
+        />
+      )}
     </SimCard>
   );
 }
 
-// FBL3N — flatten journalDocs
-function SimFBL3N({ state }) {
-  const rows = state.journalDocs.flatMap((doc) =>
-    doc.items.map((it, idx) => ({
+// FBL3N — flatten journalDocs with optional G/L filter
+function SimFBL3N({ state, setState }) {
+  const [glAccount, setGlAccount] = useState('');
+  const [executed, setExecuted] = useState(false);
+  const prefill = state.simulatorPrefill;
+
+  useEffect(() => {
+    if (prefill?.tcode === 'FBL3N') {
+      if (prefill.glAccount) setGlAccount(prefill.glAccount);
+      setExecuted(true);
+      setState((prev) => ({ ...prev, simulatorPrefill: null }));
+    }
+  }, [prefill?.tcode]);
+
+  const allRows = (state.journalDocs || []).flatMap((doc) =>
+    (doc.items || []).map((it, idx) => ({
       docNo: doc.docNo,
+      gl: it.gl,
       type: 'SA',
       date: doc.date,
       ref: `Item ${idx + 1}`,
@@ -4098,28 +4310,40 @@ function SimFBL3N({ state }) {
       amount: (it.dc === 'D' ? 1 : -1) * it.amount,
     })),
   );
+  const rows = glAccount.trim() ? allRows.filter((r) => String(r.gl) === String(glAccount.trim())) : allRows;
   const total = rows.reduce((a, r) => a + r.amount, 0);
   return (
     <SimCard>
       <div style={{ fontWeight: 600, marginBottom: 8 }}>G/L Account Line Items</div>
-      <SimTable
-        columns={[
-          { key: 'docNo', label: 'Document' },
-          { key: 'type', label: 'Type', render: () => 'SA' },
-          { key: 'date', label: 'Date' },
-          { key: 'ref', label: 'Reference' },
-          { key: 'text', label: 'Text' },
-          {
-            key: 'amount',
-            label: 'Amount',
-            render: (r) => r.amount.toFixed(2),
-          },
-        ]}
-        rows={rows}
-      />
-      <div style={{ marginTop: 8, fontSize: 11, fontWeight: 600 }}>
-        Total: ₹{total.toFixed(2)}
+      <SimFieldRow label="G/L Account">
+        <SimInput value={glAccount} onChange={(e) => setGlAccount(e.target.value)} width={120} placeholder="e.g. 400100" />
+      </SimFieldRow>
+      <div style={{ marginBottom: 8 }}>
+        <button type="button" onClick={() => setExecuted(true)} style={{ padding: '4px 12px', background: SAP_SIM.headerBg, color: '#fff', border: 'none', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Execute</button>
       </div>
+      {executed && (
+        <>
+          <SimTable
+            columns={[
+              { key: 'docNo', label: 'Document' },
+              { key: 'type', label: 'Type', render: () => 'SA' },
+              { key: 'date', label: 'Date' },
+              { key: 'ref', label: 'Reference' },
+              { key: 'text', label: 'Text' },
+              {
+                key: 'amount',
+                label: 'Amount',
+                render: (r) => r.amount.toFixed(2),
+              },
+            ]}
+            rows={rows}
+            getKey={(r, i) => r.docNo + i}
+          />
+          <div style={{ marginTop: 8, fontSize: 11, fontWeight: 600 }}>
+            Total: ₹{total.toFixed(2)}
+          </div>
+        </>
+      )}
     </SimCard>
   );
 }
@@ -4160,6 +4384,7 @@ function SimFB60({ state, setState }) {
         type: 'success',
         message: `Document ${docNo} posted`,
       },
+      documentTrail: { show: true, docNo, postedFrom: 'FB60' },
     }));
   };
 
@@ -4291,6 +4516,7 @@ function SimF53({ state, setState }) {
       }));
       return;
     }
+    const payDocNo = '19' + String(Math.floor(10000000 + Math.random() * 90000000)).slice(0, 8);
     setState((prev) => ({
       ...prev,
       vendorDocs: prev.vendorDocs.map((d) =>
@@ -4302,6 +4528,7 @@ function SimF53({ state, setState }) {
         type: 'success',
         message: `Payment document posted. ${docsToClear.length} item(s) cleared.`,
       },
+      documentTrail: { show: true, docNo: payDocNo, postedFrom: 'F-53' },
     }));
   };
 
@@ -4374,6 +4601,7 @@ function SimF110({ state, setState }) {
       }));
       return;
     }
+    const runId = 'F110-' + String(Date.now()).slice(-8);
     setState((prev) => ({
       ...prev,
       vendorDocs: prev.vendorDocs.map((d) =>
@@ -4385,6 +4613,7 @@ function SimF110({ state, setState }) {
           2,
         )}`,
       },
+      documentTrail: { show: true, docNo: runId, postedFrom: 'F110' },
     }));
   };
 
@@ -4443,6 +4672,14 @@ function SimF01({ state, setState }) {
   const [executed, setExecuted] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [exportMsg, setExportMsg] = useState(null);
+  const prefill = state.simulatorPrefill;
+  useEffect(() => {
+    if (prefill?.tcode === 'F.01' && prefill.autoExecute) {
+      setExecuted(true);
+      setLastUpdated(new Date());
+      setState((prev) => ({ ...prev, simulatorPrefill: null }));
+    }
+  }, [prefill?.tcode, prefill?.autoExecute]);
 
   const glMasters = state.glMasters || [];
   const expenseGLs = new Set(glMasters.filter((g) => g.type === 'Expense').map((g) => g.number));
@@ -4669,6 +4906,13 @@ function SimFB08({ state, setState }) {
   const [fiscalYear, setFiscalYear] = useState('2024');
   const [reversalReason, setReversalReason] = useState('01');
   const [reversalDate, setReversalDate] = useState('2024-04-30');
+  const prefill = state.simulatorPrefill;
+  useEffect(() => {
+    if (prefill?.tcode === 'FB08' && prefill.docNo) {
+      setDocNo(prefill.docNo);
+      setState((prev) => ({ ...prev, simulatorPrefill: null }));
+    }
+  }, [prefill?.tcode, prefill?.docNo]);
 
   const reversalReasons = [
     { value: '01', text: '01 — Incorrect posting' },
@@ -4702,6 +4946,7 @@ function SimFB08({ state, setState }) {
         { docNo: revNo, date: doc.date, companyCode: doc.companyCode || prev.companyCode, items: mirrorItems, reversalOf: doc.docNo },
       ],
       status: { type: 'success', message: `Reversal document ${revNo} created` },
+      documentTrail: { show: true, docNo: revNo, postedFrom: 'FB08' },
     }));
   };
 
@@ -5214,6 +5459,7 @@ function SimFB70({ state, setState }) {
         },
       ],
       status: { type: 'success', message: `Document ${docNo} posted` },
+      documentTrail: { show: true, docNo, postedFrom: 'FB70' },
     }));
   };
 
@@ -5342,6 +5588,7 @@ function SimF28({ state, setState }) {
         type: 'success',
         message: `Payment document ${payDoc} posted. Invoices cleared.`,
       },
+      documentTrail: { show: true, docNo: payDoc, postedFrom: 'F-28' },
     }));
     setSelectedIds(new Set());
     setShowOpenItems(false);
@@ -5436,13 +5683,20 @@ function SimF28({ state, setState }) {
 }
 
 // S_ALR_87012284 — Balance Sheet / P&L Report
-function SimS_ALR_87012284({ state }) {
+function SimS_ALR_87012284({ state, setState }) {
   const [companyCode, setCompanyCode] = useState('IN01');
   const [fiscalYear, setFiscalYear] = useState('2024');
   const [periodFrom, setPeriodFrom] = useState('1');
   const [periodTo, setPeriodTo] = useState('12');
   const [executed, setExecuted] = useState(false);
   const [exportMsg, setExportMsg] = useState(null);
+  const prefill = state.simulatorPrefill;
+  useEffect(() => {
+    if (prefill?.tcode === 'S_ALR_87012284' && prefill.autoExecute) {
+      setExecuted(true);
+      setState((prev) => ({ ...prev, simulatorPrefill: null }));
+    }
+  }, [prefill?.tcode, prefill?.autoExecute]);
 
   const revenue = (state.customerDocs || []).reduce((a, d) => a + d.amount, 0);
   const expenses = (state.journalDocs || []).flatMap((d) => d.items || []).reduce((a, i) => (i.dc === 'D' ? a + i.amount : a), 0);
@@ -5625,6 +5879,7 @@ function SimAFAB({ state, setState }) {
       ...prev,
       depreciationTotal: (prev.depreciationTotal || 0) + periodDepreciation,
       status: { type: 'success', message: `Depreciation run posted. ₹${periodDepreciation.toLocaleString('en-IN')} added to depreciation.` },
+      documentTrail: { show: true, docNo: null, postedFrom: 'AFAB' },
     }));
   };
   return (
@@ -5863,11 +6118,18 @@ function SimS_ALR_87013611({ state }) {
   );
 }
 
-function SimS_ALR_87012178({ state }) {
+function SimS_ALR_87012178({ state, setState }) {
   const [companyCode, setCompanyCode] = useState('IN01');
   const [keyDate, setKeyDate] = useState('2024-04-30');
   const [executed, setExecuted] = useState(false);
   const [exportMsg, setExportMsg] = useState(false);
+  const prefill = state.simulatorPrefill;
+  useEffect(() => {
+    if (prefill?.tcode === 'S_ALR_87012178' && prefill.autoExecute) {
+      setExecuted(true);
+      setState((prev) => ({ ...prev, simulatorPrefill: null }));
+    }
+  }, [prefill?.tcode, prefill?.autoExecute]);
   const openInvoices = (state.customerDocs || []).filter((d) => d.open === true);
   const key = new Date(keyDate);
   const bucket = (doc) => {
@@ -5938,10 +6200,17 @@ function SimS_ALR_87012178({ state }) {
   );
 }
 
-function SimS_ALR_87012271({ state }) {
+function SimS_ALR_87012271({ state, setState }) {
   const [companyCode, setCompanyCode] = useState('IN01');
   const [fiscalYear, setFiscalYear] = useState('2024');
   const [executed, setExecuted] = useState(false);
+  const prefill = state.simulatorPrefill;
+  useEffect(() => {
+    if (prefill?.tcode === 'S_ALR_87012271' && prefill.autoExecute) {
+      setExecuted(true);
+      setState((prev) => ({ ...prev, simulatorPrefill: null }));
+    }
+  }, [prefill?.tcode, prefill?.autoExecute]);
   const revenue = (state.customerDocs || []).reduce((a, d) => a + (d.amount || 0), 0);
   const expenseFromJournal = (state.journalDocs || []).flatMap((d) => d.items || []).filter((i) => i.dc === 'D').reduce((a, i) => a + (i.amount || 0), 0);
   const glMasters = state.glMasters || [];
