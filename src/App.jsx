@@ -2442,6 +2442,48 @@ function LessonPage({ navigate, moduleIndex, lessonIndex, onCompleteLesson, comp
         </div>
       </div>
 
+      {/* Video — FB50 lesson only */}
+      {tcodes.includes('FB50') && (
+        <div style={{ marginBottom: 24 }}>
+          <div style={{
+            fontSize: 11,
+            fontWeight: 700,
+            color: C.accentLight,
+            textTransform: 'uppercase',
+            letterSpacing: '1.5px',
+            marginBottom: 10,
+          }}>
+            📹 Watch before you read
+          </div>
+          <div
+            style={{
+              width: '100%',
+              borderRadius: 12,
+              border: '1px solid rgba(200,169,110,0.5)',
+              overflow: 'hidden',
+              background: '#000',
+              position: 'relative',
+              aspectRatio: '16 / 9',
+            }}
+          >
+            <iframe
+              title="FB50 — Post Journal Entry"
+              src="https://www.youtube.com/embed/Jx5d5PW6xwQ"
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                border: 'none',
+              }}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      )}
+
       {/* What you will see in SAP */}
       {sapScreenHtml && (
         <div style={{ marginBottom: 24 }}>
