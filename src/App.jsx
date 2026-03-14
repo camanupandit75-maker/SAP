@@ -4595,6 +4595,7 @@ function SimF53({ state, setState }) {
       return;
     }
     const payDocNo = '19' + String(Math.floor(10000000 + Math.random() * 90000000)).slice(0, 8);
+    const payAmount = docsToClear.reduce((a, d) => a + (d.amount || 0), 0);
     setState((prev) => ({
       ...prev,
       vendorDocs: prev.vendorDocs.map((d) =>
@@ -4602,6 +4603,15 @@ function SimF53({ state, setState }) {
           ? { ...d, open: false }
           : d,
       ),
+      bankLines: [
+        ...(prev.bankLines || []),
+        {
+          id: (prev.bankLines?.length || 0) + 1,
+          date: new Date().toISOString().slice(0, 10),
+          text: `F-53 Payment ${payDocNo}`,
+          amount: -payAmount,
+        },
+      ],
       status: {
         type: 'success',
         message: `Payment document posted. ${docsToClear.length} item(s) cleared.`,
@@ -4685,6 +4695,15 @@ function SimF110({ state, setState }) {
       vendorDocs: prev.vendorDocs.map((d) =>
         openDocs.some((x) => x.docNo === d.docNo) ? { ...d, open: false } : d,
       ),
+      bankLines: [
+        ...(prev.bankLines || []),
+        {
+          id: (prev.bankLines?.length || 0) + 1,
+          date: new Date().toISOString().slice(0, 10),
+          text: `F110 Payment Run ${runId}`,
+          amount: -total,
+        },
+      ],
       status: {
         type: 'success',
         message: `Payment run completed. ${openDocs.length} payments posted. Total: ₹${total.toFixed(
@@ -5657,17 +5676,30 @@ function SimF28({ state, setState }) {
       return;
     }
     const payDoc = '20' + String(Math.floor(10000000 + Math.random() * 90000000)).slice(0, 8);
-    setState((prev) => ({
-      ...prev,
-      customerDocs: (prev.customerDocs || []).map((d) =>
-        selectedIds.has(d.docNo) ? { ...d, open: false } : d
-      ),
-      status: {
-        type: 'success',
-        message: `Payment document ${payDoc} posted. Invoices cleared.`,
-      },
-      documentTrail: { show: true, docNo: payDoc, postedFrom: 'F-28' },
-    }));
+    setState((prev) => {
+      const clearedDocs = (prev.customerDocs || []).filter((d) => selectedIds.has(d.docNo));
+      const receiptAmount = clearedDocs.reduce((a, d) => a + (d.amount || 0), 0);
+      return {
+        ...prev,
+        customerDocs: (prev.customerDocs || []).map((d) =>
+          selectedIds.has(d.docNo) ? { ...d, open: false } : d
+        ),
+        bankLines: [
+          ...(prev.bankLines || []),
+          {
+            id: (prev.bankLines?.length || 0) + 1,
+            date: new Date().toISOString().slice(0, 10),
+            text: `F-28 Receipt ${payDoc}`,
+            amount: receiptAmount,
+          },
+        ],
+        status: {
+          type: 'success',
+          message: `Payment document ${payDoc} posted. Invoices cleared.`,
+        },
+        documentTrail: { show: true, docNo: payDoc, postedFrom: 'F-28' },
+      };
+    });
     setSelectedIds(new Set());
     setShowOpenItems(false);
   };
@@ -5760,7 +5792,7 @@ function SimF28({ state, setState }) {
   );
 }
 
-// S_ALR_87012284 — Balance Sheet / P&L Report
+// S_ALR_87012284 — Balance Sheet / P&L Report (same aggregation as F.01: debtors, creditors, bank from state; reserves as plug)
 function SimS_ALR_87012284({ state, setState }) {
   const [companyCode, setCompanyCode] = useState('IN01');
   const [fiscalYear, setFiscalYear] = useState('2024');
@@ -5776,11 +5808,31 @@ function SimS_ALR_87012284({ state, setState }) {
     }
   }, [prefill?.tcode, prefill?.autoExecute]);
 
-  const revenue = (state.customerDocs || []).reduce((a, d) => a + d.amount, 0);
-  const expenses = (state.journalDocs || []).flatMap((d) => d.items || []).reduce((a, i) => (i.dc === 'D' ? a + i.amount : a), 0);
-  const profit = revenue - expenses;
+  const glMasters = state.glMasters || [];
+  const expenseGLs = new Set(glMasters.filter((g) => g.type === 'Expense').map((g) => g.number));
+  const debtors = (state.customerDocs || []).filter((d) => d.open === true).reduce((a, d) => a + (d.amount || 0), 0);
+  const creditors = (state.vendorDocs || []).filter((d) => d.open === true).reduce((a, d) => a + (d.amount || 0), 0);
+  const bankBalance = (state.bankLines || []).reduce((a, l) => a + (l.amount || 0), 0);
+  const revenue = (state.customerDocs || []).reduce((a, d) => a + (d.amount || 0), 0);
+  const expenseFromJournal = (state.journalDocs || []).flatMap((d) => d.items || []).filter((i) => i.dc === 'D' && expenseGLs.has(i.gl)).reduce((a, i) => a + (i.amount || 0), 0);
+  const depreciation = state.depreciationTotal ?? 0;
+  const PLANT_MACHINERY = 25000000;
+  const SHARE_CAPITAL = 20000000;
+  const LONG_TERM_LOANS = 5000000;
+  const CLOSING_STOCK = 3500000;
+  const CASH = 200000;
+  const GST_PAYABLE = 0;
+  const netBlock = PLANT_MACHINERY - depreciation;
+  const totalCurrentAssets = debtors + bankBalance + CASH + CLOSING_STOCK;
+  const totalAssets = netBlock + totalCurrentAssets;
+  const totalExpenses = depreciation + Math.max(0, expenseFromJournal - depreciation);
+  const profit = revenue - totalExpenses;
+  const tax = Math.max(0, profit * 0.25);
+  const netProfit = profit - tax;
+  const reservesAndSurplus = totalAssets - SHARE_CAPITAL - LONG_TERM_LOANS - creditors - GST_PAYABLE - netProfit;
+  const totalLiabilitiesEquity = SHARE_CAPITAL + reservesAndSurplus + LONG_TERM_LOANS + creditors + GST_PAYABLE + netProfit;
   const prevYearRevenue = revenue * 0.92;
-  const prevYearExpenses = expenses * 0.95;
+  const prevYearExpenses = totalExpenses * 0.95;
   const prevYearProfit = prevYearRevenue - prevYearExpenses;
 
   const handleExecute = () => setExecuted(true);
@@ -5835,9 +5887,9 @@ function SimS_ALR_87012284({ state, setState }) {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr><td style={{ padding: '4px 6px' }}>Assets</td><td style={{ textAlign: 'right', padding: '4px 6px' }}>₹{(revenue + 500000).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td><td style={{ textAlign: 'right', padding: '4px 6px' }}>₹{(prevYearRevenue + 450000).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
-                  <tr><td style={{ padding: '4px 6px' }}>Liabilities</td><td style={{ textAlign: 'right', padding: '4px 6px' }}>₹{(expenses + 200000).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td><td style={{ textAlign: 'right', padding: '4px 6px' }}>₹{(prevYearExpenses + 180000).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
-                  <tr><td style={{ padding: '4px 6px' }}>Equity</td><td style={{ textAlign: 'right', padding: '4px 6px' }}>₹{(profit + 300000).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td><td style={{ textAlign: 'right', padding: '4px 6px' }}>₹{(prevYearProfit + 270000).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
+                  <tr><td style={{ padding: '4px 6px' }}>Assets</td><td style={{ textAlign: 'right', padding: '4px 6px' }}>₹{totalAssets.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td><td style={{ textAlign: 'right', padding: '4px 6px' }}>₹{(totalAssets * 0.96).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
+                  <tr><td style={{ padding: '4px 6px' }}>Liabilities</td><td style={{ textAlign: 'right', padding: '4px 6px' }}>₹{(creditors + LONG_TERM_LOANS + GST_PAYABLE).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td><td style={{ textAlign: 'right', padding: '4px 6px' }}>₹{((creditors + LONG_TERM_LOANS + GST_PAYABLE) * 0.97).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
+                  <tr><td style={{ padding: '4px 6px' }}>Equity (incl. Reserves)</td><td style={{ textAlign: 'right', padding: '4px 6px' }}>₹{(SHARE_CAPITAL + reservesAndSurplus + netProfit).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td><td style={{ textAlign: 'right', padding: '4px 6px' }}>₹{((SHARE_CAPITAL + reservesAndSurplus + netProfit) * 0.98).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
                 </tbody>
               </table>
             </div>
@@ -5853,8 +5905,8 @@ function SimS_ALR_87012284({ state, setState }) {
                 </thead>
                 <tbody>
                   <tr><td style={{ padding: '4px 6px' }}>Revenue</td><td style={{ textAlign: 'right', padding: '4px 6px' }}>₹{revenue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td><td style={{ textAlign: 'right', padding: '4px 6px' }}>₹{prevYearRevenue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
-                  <tr><td style={{ padding: '4px 6px' }}>Expenses</td><td style={{ textAlign: 'right', padding: '4px 6px' }}>₹{expenses.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td><td style={{ textAlign: 'right', padding: '4px 6px' }}>₹{prevYearExpenses.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
-                  <tr><td style={{ padding: '4px 6px', fontWeight: 600 }}>Net Profit</td><td style={{ textAlign: 'right', padding: '4px 6px', fontWeight: 600 }}>₹{profit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td><td style={{ textAlign: 'right', padding: '4px 6px', fontWeight: 600 }}>₹{prevYearProfit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
+                  <tr><td style={{ padding: '4px 6px' }}>Expenses</td><td style={{ textAlign: 'right', padding: '4px 6px' }}>₹{totalExpenses.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td><td style={{ textAlign: 'right', padding: '4px 6px' }}>₹{prevYearExpenses.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
+                  <tr><td style={{ padding: '4px 6px', fontWeight: 600 }}>Net Profit</td><td style={{ textAlign: 'right', padding: '4px 6px', fontWeight: 600 }}>₹{netProfit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td><td style={{ textAlign: 'right', padding: '4px 6px', fontWeight: 600 }}>₹{prevYearProfit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
                 </tbody>
               </table>
             </div>
