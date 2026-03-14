@@ -808,7 +808,7 @@ const sapScreenByModule = {
       <div class="sap-section-header">G/L Line Items</div>
       <table class="sap-table">
         <tr><th>G/L Acct</th><th>D/C</th><th>Amount</th><th>Cost Ctr</th><th>Text</th></tr>
-        <tr><td class="editable">400100</td><td class="editable">D</td><td class="editable" style="text-align:right;">50,000.00</td><td class="editable">CC001</td><td class="editable">Audit fee provision</td></tr>
+        <tr><td class="editable">450000</td><td class="editable">D</td><td class="editable" style="text-align:right;">50,000.00</td><td class="editable">CC001</td><td class="editable">Audit fee provision</td></tr>
         <tr><td class="editable">200300</td><td class="editable">C</td><td class="editable" style="text-align:right;">50,000.00</td><td class="editable"></td><td class="editable">Provision - audit fees</td></tr>
       </table>
       <div style="margin-top:8px;text-align:right;font-family:'Segoe UI',sans-serif;font-size:11px;">
@@ -1203,8 +1203,8 @@ const sapScreenByLesson = {
       </div>
       <table class="sap-table">
         <tr><th>Itm</th><th>PK</th><th>Account</th><th>Description</th><th>Amount</th></tr>
-        <tr><td>1</td><td>40</td><td>400100</td><td>Audit Expenses</td><td style="text-align:right;">50,000.00</td></tr>
-        <tr><td>2</td><td>50</td><td>200300</td><td>Provisions A/c</td><td style="text-align:right;">50,000.00-</td></tr>
+        <tr><td>1</td><td>40</td><td>450000</td><td>Audit and Professional Fees</td><td style="text-align:right;">50,000.00</td></tr>
+        <tr><td>2</td><td>50</td><td>200300</td><td>Provisions Account</td><td style="text-align:right;">50,000.00-</td></tr>
       </table>
       <div style="margin-top:6px;font-size:10px;font-family:'Segoe UI',sans-serif;color:#006600;">
         Document posted successfully. Double-click any line for details.
@@ -1777,8 +1777,8 @@ const sapScreenByLesson = {
           <td style="text-align:right;font-weight:bold;">25,90,000</td>
         </tr>
         <tr>
-          <td style="color:#0054a6;cursor:pointer;font-family:monospace;">400100</td>
-          <td>Audit Expenses</td>
+          <td style="color:#0054a6;cursor:pointer;font-family:monospace;">450000</td>
+          <td>Audit and Professional Fees</td>
           <td style="text-align:right;">0</td>
           <td style="text-align:right;color:#006600;">+50,000</td>
           <td style="text-align:right;">0</td>
@@ -1812,7 +1812,7 @@ const sapScreenByLesson = {
   <style>${SAP_SCREEN_CSS}</style>
   <div class="sap-window">
     <div class="sap-titlebar">
-      <span>G/L Account Line Item Display — Account 400100 Audit Expenses</span>
+      <span>G/L Account Line Item Display — Account 450000 Audit and Professional Fees</span>
       <div class="sap-titlebar-btns"><span>─</span><span>□</span><span>✕</span></div>
     </div>
     <div class="sap-tcode-bar">
@@ -1879,7 +1879,7 @@ const sapScreenByLesson = {
       </div>
     </div>
     <div class="sap-statusbar">
-      <span>3 items | G/L: 400100 | All Items</span>
+      <span>3 items | G/L: 450000 | All Items</span>
       <span>Co: 1000 | FY: 2025 | 01.04.24-31.03.25</span>
     </div>
   </div>
@@ -3164,6 +3164,47 @@ const SAP_SIM = {
   statusErr: '#e07171',
 };
 
+// Full GL master list — correct accounts for simulator (Expense 400000 range, Income 500000 range)
+const GL_MASTERS_FULL = [
+  { number: '100100', name: 'Cash in Hand', type: 'Asset' },
+  { number: '113100', name: 'HDFC Bank Current Account', type: 'Asset' },
+  { number: '130100', name: 'Closing Stock', type: 'Asset' },
+  { number: '150100', name: 'Plant and Machinery', type: 'Asset' },
+  { number: '175100', name: 'GST Input Credit 18%', type: 'Asset' },
+  { number: '175200', name: 'GST Input Credit 5%', type: 'Asset' },
+  { number: '200100', name: 'Sundry Creditors Reconciliation', type: 'Liability' },
+  { number: '200200', name: 'Sundry Debtors Reconciliation', type: 'Liability' },
+  { number: '200300', name: 'Provisions Account', type: 'Liability' },
+  { number: '200400', name: 'GST Payable 18%', type: 'Liability' },
+  { number: '200500', name: 'GST Payable 5%', type: 'Liability' },
+  { number: '210100', name: 'Long Term Loans', type: 'Liability' },
+  { number: '300100', name: 'Share Capital', type: 'Equity' },
+  { number: '300200', name: 'Reserves and Surplus', type: 'Equity' },
+  { number: '300300', name: 'Retained Earnings', type: 'Equity' },
+  { number: '400000', name: 'Cost of Raw Materials', type: 'Expense' },
+  { number: '415000', name: 'IT Services and Software', type: 'Expense' },
+  { number: '420000', name: 'Rent Expense', type: 'Expense' },
+  { number: '425000', name: 'Electricity and Utilities', type: 'Expense' },
+  { number: '430000', name: 'Salaries and Wages', type: 'Expense' },
+  { number: '435000', name: 'Staff Welfare', type: 'Expense' },
+  { number: '440000', name: 'Travel and Conveyance', type: 'Expense' },
+  { number: '445000', name: 'Repairs and Maintenance', type: 'Expense' },
+  { number: '450000', name: 'Audit and Professional Fees', type: 'Expense' },
+  { number: '455000', name: 'Marketing and Advertising', type: 'Expense' },
+  { number: '460000', name: 'Depreciation', type: 'Expense' },
+  { number: '465000', name: 'Bank Charges', type: 'Expense' },
+  { number: '470000', name: 'Miscellaneous Expenses', type: 'Expense' },
+  { number: '500100', name: 'Sales Revenue — Domestic', type: 'Income' },
+  { number: '500200', name: 'Sales Revenue — Export', type: 'Income' },
+  { number: '510100', name: 'Service Revenue', type: 'Income' },
+  { number: '520100', name: 'Other Operating Income', type: 'Income' },
+  { number: '530100', name: 'Interest Income', type: 'Income' },
+  { number: '540100', name: 'Miscellaneous Income', type: 'Income' },
+];
+
+// FB60 F4 order: Expense first, then Income, Asset, Liability, Equity
+const GL_F4_ORDER_FB60 = ['Expense', 'Income', 'Asset', 'Liability', 'Equity'];
+
 function createInitialSimState() {
   return {
     currentTcode: 'FB50',
@@ -3175,32 +3216,21 @@ function createInitialSimState() {
         date: '2024-04-01',
         companyCode: 'IN01',
         items: [
-          { gl: '400100', dc: 'D', amount: 50000, text: 'Audit fee provision' },
-          { gl: '200300', dc: 'C', amount: 50000, text: 'Provision - audit fees' },
+          { gl: '450000', dc: 'D', amount: 287600, text: 'Opening balance expense' },
+          { gl: '450000', dc: 'D', amount: 50000, text: 'Audit fee provision' },
+          { gl: '420000', dc: 'D', amount: 40000, text: 'Rent expense' },
+          { gl: '200300', dc: 'C', amount: 377600, text: 'Provision / accruals' },
         ],
       },
     ],
     vendorDocs: [
-      {
-        docNo: '1900000001',
-        vendor: 'V1001',
-        name: 'Tata Steel Ltd',
-        amount: 118000,
-        open: true,
-        tcode: 'FB60',
-        costCentre: 'CC001',
-        gl: '400100',
-      },
+      { docNo: '1900000001', vendor: 'V1001', name: 'Tata Steel Ltd', amount: 236000, open: true, tcode: 'FB60', costCentre: 'CC001', gl: '415000' },
+      { docNo: '1900000002', vendor: 'V1002', name: 'Infosys Ltd', amount: 118000, open: true, tcode: 'FB60', costCentre: 'CC001', gl: '415000' },
+      { docNo: '1900000003', vendor: 'V1003', name: 'Reliance Industries Ltd', amount: 94400, open: true, tcode: 'FB60', costCentre: 'CC001', gl: '415000' },
     ],
     customerDocs: [
-      {
-        docNo: '2000000001',
-        customer: 'C2001',
-        name: 'Mahindra & Mahindra',
-        amount: 590000,
-        open: true,
-        tcode: 'FB70',
-      },
+      { docNo: '2000000001', customer: 'C2001', name: 'Mahindra & Mahindra Ltd', amount: 590000, open: true, tcode: 'FB70' },
+      { docNo: '2000000002', customer: 'C2002', name: 'Bajaj Auto Ltd', amount: 236000, open: true, tcode: 'FB70' },
     ],
     bankLines: [
       { id: 1, date: '2024-04-01', text: 'Opening balance', amount: 5263456 },
@@ -3229,14 +3259,7 @@ function createInitialSimState() {
       { id: 'F4', date: '2024-04-04', amount: -105136, description: 'Bank Charges', status: 'Exception', action: 'Manual assign' },
       { id: 'F5', date: '2024-04-05', amount: 50000, description: 'Unknown NEFT', status: 'Unprocessed', action: 'Match' },
     ],
-    glMasters: [
-      { number: '100100', name: 'Cash', type: 'Asset' },
-      { number: '200100', name: 'Sundry Creditors', type: 'Liability' },
-      { number: '200300', name: 'Provisions', type: 'Liability' },
-      { number: '400100', name: 'Sales Revenue', type: 'Income' },
-      { number: '410000', name: 'Revenue from Operations', type: 'Income' },
-      { number: '500100', name: 'Office Expenses', type: 'Expense' },
-    ],
+    glMasters: GL_MASTERS_FULL,
     profitCentres: [
       { code: 'PC001', name: 'North Division' },
       { code: 'PC002', name: 'South Division' },
@@ -3416,6 +3439,11 @@ function DocumentTrailPanel({ state, setState }) {
             ✅ {docNo ? `Document ${docNo} posted in Company Code ${companyCode}` : 'Operation completed successfully'}
           </div>
           <div style={{ fontSize: 11, color: '#64748b', marginBottom: 10 }}>📍 This document now appears in:</div>
+          {postedFrom === 'FB60' && trail.amount != null && (
+            <div style={{ fontSize: 11, fontFamily: 'monospace', color: '#1a3a5c', marginBottom: 8 }}>
+              Auto posted: Cr 200100 Vendor Recon ₹{Number(trail.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+            </div>
+          )}
         </div>
         <button type="button" onClick={close} style={{ background: 'none', border: 'none', fontSize: 14, cursor: 'pointer', color: '#64748b', padding: '2px 6px' }}>Close Panel ✕</button>
       </div>
@@ -3550,7 +3578,29 @@ function SimulatorShell({ state, setState }) {
             <span style={{ fontWeight: 600 }}>SAP</span>
           </div>
           <div>Bharat Manufacturing Pvt Ltd · SAP ERP 6.0 · Company Code IN01 · FY 2024-25</div>
-          <div style={{ fontFamily: C.mono, fontSize: 11 }}>User: CA_TRAINEE</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm('This will clear all your practice postings and restore original demo data. Continue?')) {
+                  setState(createInitialSimState());
+                }
+              }}
+              style={{
+                padding: '4px 10px',
+                fontSize: 11,
+                fontWeight: 600,
+                color: '#0f172a',
+                background: 'linear-gradient(180deg,#e2e8f0,#cbd5e1)',
+                border: '1px solid #94a3b8',
+                borderRadius: 4,
+                cursor: 'pointer',
+              }}
+            >
+              🔄 Reset Demo Data
+            </button>
+            <span style={{ fontFamily: C.mono, fontSize: 11 }}>User: CA_TRAINEE</span>
+          </div>
         </div>
 
         {/* Menu bar */}
@@ -3777,18 +3827,7 @@ function SimulatorScreen({ state, setState }) {
       body = <SimS_ALR_87012284 state={state} setState={setState} />;
       break;
     case 'FB60':
-      body = (
-        <div
-          className="sap-fb60-full"
-          style={{
-            background: '#fff',
-            borderRadius: 6,
-            overflow: 'auto',
-            minHeight: 320,
-          }}
-          dangerouslySetInnerHTML={{ __html: sapScreenByModule[2] }}
-        />
-      );
+      body = <SimFB60 state={state} setState={setState} />;
       break;
     case 'F-53':
       body = <SimF53 state={state} setState={setState} />;
@@ -3990,7 +4029,7 @@ function SimFB50({ state, setState }) {
   const [postDate, setPostDate] = useState('2024-04-30');
   const [companyCode] = useState('IN01');
   const [rows, setRows] = useState([
-    { gl: '400100', dc: 'D', amount: '50000', costCenter: 'CC001', text: '' },
+    { gl: '450000', dc: 'D', amount: '50000', costCenter: 'CC001', text: '' },
     { gl: '200300', dc: 'C', amount: '50000', costCenter: '', text: '' },
   ]);
   const [glSearchRowIndex, setGlSearchRowIndex] = useState(null);
@@ -4406,7 +4445,7 @@ function SimFBL3N({ state, setState }) {
     <SimCard>
       <div style={{ fontWeight: 600, marginBottom: 8 }}>G/L Account Line Items</div>
       <SimFieldRow label="G/L Account">
-        <SimInput value={glAccount} onChange={(e) => setGlAccount(e.target.value)} width={120} placeholder="e.g. 400100" />
+        <SimInput value={glAccount} onChange={(e) => setGlAccount(e.target.value)} width={120} placeholder="e.g. 415000" />
       </SimFieldRow>
       <div style={{ marginBottom: 8 }}>
         <button type="button" onClick={() => setExecuted(true)} style={{ padding: '4px 12px', background: SAP_SIM.headerBg, color: '#fff', border: 'none', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Execute</button>
@@ -4446,80 +4485,234 @@ const INCOME_GL_MAX = 599999;
 const isExpenseGL = (gl) => { const n = parseInt(gl, 10); return !Number.isNaN(n) && n >= EXPENSE_GL_MIN && n <= EXPENSE_GL_MAX; };
 const isIncomeGL = (gl) => { const n = parseInt(gl, 10); return !Number.isNaN(n) && n >= INCOME_GL_MIN && n <= INCOME_GL_MAX; };
 
-// FB60 — skeleton vendor invoice posting (adds to vendorDocs)
-function SimFB60({ state, setState }) {
-  const [vendor, setVendor] = useState('V1001');
-  const [amount, setAmount] = useState('118000');
-  const [invDate, setInvDate] = useState('2024-04-05');
-  const [glAccount, setGlAccount] = useState('400100');
+const inExpenseRange = (gl, low, high) => { const n = parseInt(gl, 10); return !Number.isNaN(n) && n >= low && n <= high; };
+const isOtherExpenseGL = (gl) => {
+  const n = parseInt(gl, 10);
+  if (Number.isNaN(n) || n < 400000 || n > 499999) return false;
+  if (n >= 400000 && n <= 404999) return false;
+  if (n >= 430000 && n <= 439999) return false;
+  if (n >= 460000 && n <= 460999) return false;
+  return true;
+};
 
-  const post = () => {
-    if (!vendor || !amount) {
-      setState((prev) => ({
-        ...prev,
-        status: {
-          type: 'error',
-          message: 'Vendor and Amount are required in company code IN01',
-        },
-      }));
+function getPandLExpenseByCategory(state) {
+  const journalDebit = (state.journalDocs || []).flatMap((d) => (d.items || []).filter((i) => i.dc === 'D').map((i) => ({ gl: i.gl, amount: i.amount || 0 })));
+  const vendorExpense = (state.vendorDocs || []).filter((d) => d.gl && isExpenseGL(d.gl)).map((d) => ({ gl: d.gl, amount: d.amount || 0 }));
+  const all = [...journalDebit, ...vendorExpense];
+  const sum = (pred) => all.filter((x) => pred(x.gl)).reduce((a, x) => a + x.amount, 0);
+  const costOfMaterials = sum((gl) => inExpenseRange(gl, 400000, 404999));
+  const employeeCosts = sum((gl) => inExpenseRange(gl, 430000, 439999));
+  const depreciationFromGL = sum((gl) => inExpenseRange(gl, 460000, 460999));
+  const depreciation = depreciationFromGL + (state.depreciationTotal ?? 0);
+  const otherExpenses = sum((gl) => isOtherExpenseGL(gl));
+  return { costOfMaterials, employeeCosts, depreciation, otherExpenses };
+}
+
+const todayStr = () => new Date().toISOString().slice(0, 10);
+
+const emptyGlRow = () => ({ gl: '', dc: 'D', amount: '', costCentre: '', text: '' });
+
+// FB60 — full editable vendor invoice (adds to vendorDocs; balance must be 0 to post)
+function SimFB60({ state, setState }) {
+  const [vendor, setVendor] = useState('');
+  const [invoiceDate, setInvoiceDate] = useState(todayStr);
+  const [postingDate, setPostingDate] = useState(todayStr);
+  const [amount, setAmount] = useState('');
+  const [currency, setCurrency] = useState('INR');
+  const [lines, setLines] = useState([emptyGlRow(), emptyGlRow()]);
+  const [showVendorSearch, setShowVendorSearch] = useState(false);
+  const [showGlSearchRow, setShowGlSearchRow] = useState(null);
+
+  const vendors = state.vendorMasters || [];
+  const costCentres = state.costCentres || [];
+  const glMasters = state.glMasters || [];
+
+  // FB60: Header Amount = CREDIT (vendor 200100); GL lines = DEBITS. Balance = Header - sum(GL line amounts).
+  const headerAmount = parseFloat(amount) || 0;
+  const glLinesTotal = lines.reduce((s, r) => s + (r.dc === 'D' ? 1 : -1) * (parseFloat(r.amount) || 0), 0);
+  const balance = headerAmount - glLinesTotal;
+  const balanceZero = Math.abs(balance) < 0.01;
+
+  const updateLine = (idx, field, value) => {
+    setLines((prev) => prev.map((r, i) => (i === idx ? { ...r, [field]: value } : r)));
+  };
+
+  const addRow = () => setLines((prev) => [...prev, emptyGlRow()]);
+  const deleteRow = (idx) => setLines((prev) => prev.filter((_, i) => i !== idx));
+
+  const clearForm = () => {
+    setVendor('');
+    setInvoiceDate(todayStr());
+    setPostingDate(todayStr());
+    setAmount('');
+    setCurrency('INR');
+    setLines([emptyGlRow(), emptyGlRow()]);
+    setShowVendorSearch(false);
+    setShowGlSearchRow(null);
+  };
+
+  const handlePost = () => {
+    if (!balanceZero) {
+      setState((prev) => ({ ...prev, status: { type: 'error', message: 'Balance must be 0.00 to post' } }));
       return;
     }
-    const seq = state.vendorDocs.length + 1;
-    const docNo = `1900000${String(seq).padStart(3, '0')}`;
+    if (!vendor || !vendor.trim()) {
+      setState((prev) => ({ ...prev, status: { type: 'error', message: 'Vendor is required' } }));
+      return;
+    }
+    const totalAmt = parseFloat(amount) || 0;
+    if (totalAmt <= 0) {
+      setState((prev) => ({ ...prev, status: { type: 'error', message: 'Amount is required' } }));
+      return;
+    }
+    const vend = vendors.find((v) => v.code === vendor.trim() || v.name === vendor.trim() || (v.searchTerm && vendor.toLowerCase().includes(v.searchTerm.toLowerCase())));
+    const firstExpenseGl = lines.find((r) => r.dc === 'D' && isExpenseGL((r.gl || '').trim()))?.gl?.trim() || lines.find((r) => (r.gl || '').trim())?.gl?.trim() || '415000';
+    const docNo = '19' + String(Math.floor(10000000 + Math.random() * 90000000)).slice(0, 8);
     const newDoc = {
       docNo,
-      vendor,
-      name: vendor === 'V1001' ? 'Tata Steel Ltd' : 'Vendor',
-      amount: parseFloat(amount || '0') || 0,
+      vendor: vendor.trim(),
+      name: vend ? vend.name : vendor.trim(),
+      amount: totalAmt,
       open: true,
       tcode: 'FB60',
-      date: invDate,
-      costCentre: 'CC001',
-      gl: (glAccount || '400100').trim(),
+      date: postingDate,
+      costCentre: (lines[0] && lines[0].costCentre) || 'CC001',
+      gl: firstExpenseGl,
     };
     setState((prev) => ({
       ...prev,
       vendorDocs: [...prev.vendorDocs, newDoc],
-      status: {
-        type: 'success',
-        message: `Document ${docNo} posted`,
-      },
-      documentTrail: { show: true, docNo, postedFrom: 'FB60' },
+      status: { type: 'success', message: `Document ${docNo} posted` },
+      documentTrail: { show: true, docNo, postedFrom: 'FB60', amount: totalAmt },
     }));
+    clearForm();
   };
 
   return (
     <SimCard>
-      <div style={{ fontWeight: 600, marginBottom: 8 }}>Enter Vendor Invoice</div>
-      <SimFieldRow label="Vendor" required>
-        <SimInput value={vendor} onChange={(e) => setVendor(e.target.value)} />
-      </SimFieldRow>
-      <SimFieldRow label="Invoice Date" required>
-        <SimInput value={invDate} onChange={(e) => setInvDate(e.target.value)} />
-      </SimFieldRow>
-      <SimFieldRow label="Amount" required>
-        <SimInput value={amount} onChange={(e) => setAmount(e.target.value)} />
-      </SimFieldRow>
-      <SimFieldRow label="G/L Account (expense 4xxxxx)">
-        <SimInput value={glAccount} onChange={(e) => setGlAccount(e.target.value)} width={100} placeholder="400100" />
-      </SimFieldRow>
-      <div style={{ textAlign: 'right', marginTop: 12 }}>
+      <div style={{ fontWeight: 600, marginBottom: 10 }}>Enter Incoming Invoice</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginBottom: 8 }}>
+        <SimFieldRow label="Vendor *" required>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <SimInput value={vendor} onChange={(e) => setVendor(e.target.value)} width={140} placeholder="Code or name" />
+            <button
+              type="button"
+              onClick={() => setShowVendorSearch(!showVendorSearch)}
+              style={{ padding: '2px 6px', border: '1px solid #9ca3af', borderRadius: 2, fontSize: 10, background: '#f0f2f5', cursor: 'pointer' }}
+            >
+              F4
+            </button>
+          </div>
+        </SimFieldRow>
+      </div>
+      {showVendorSearch && (
+        <div style={{ marginBottom: 8, border: '1px solid #e5e7eb', padding: 8, background: '#fff', maxHeight: 120, overflow: 'auto' }}>
+          {vendors.map((v) => (
+            <div key={v.code} onClick={() => { setVendor(v.code); setShowVendorSearch(false); }} style={{ padding: '2px 0', cursor: 'pointer', fontSize: 11 }}>{v.code} — {v.name}</div>
+          ))}
+        </div>
+      )}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginBottom: 8 }}>
+        <SimFieldRow label="Invoice Date *">
+          <SimInput value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} width={100} />
+        </SimFieldRow>
+        <SimFieldRow label="Posting Date">
+          <SimInput value={postingDate} onChange={(e) => setPostingDate(e.target.value)} width={100} />
+        </SimFieldRow>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginBottom: 12 }}>
+        <SimFieldRow label="Amount *">
+          <SimInput value={amount} onChange={(e) => setAmount(e.target.value)} width={120} placeholder="0.00" />
+        </SimFieldRow>
+        <SimFieldRow label="Currency">
+          <SimInput value={currency} onChange={(e) => setCurrency(e.target.value)} width={60} />
+        </SimFieldRow>
+      </div>
+      <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 4 }}>G/L Account Assignment</div>
+      <div style={{ fontSize: 10, color: '#6b7280', marginBottom: 6 }}>For vendor invoices — select an Expense account (400000 range) to debit</div>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+        <thead>
+          <tr style={{ background: '#f0f2f5' }}>
+            <th style={{ padding: '4px 6px', textAlign: 'left' }}>G/L Account</th>
+            <th style={{ padding: '4px 6px', textAlign: 'left' }}>D/C</th>
+            <th style={{ padding: '4px 6px', textAlign: 'right' }}>Amount</th>
+            <th style={{ padding: '4px 6px', textAlign: 'left' }}>Cost Centre</th>
+            <th style={{ padding: '4px 6px', textAlign: 'left' }}>Text</th>
+            <th style={{ padding: '4px 6px', width: 50 }}></th>
+          </tr>
+        </thead>
+        <tbody>
+          {lines.map((row, idx) => (
+            <tr key={idx}>
+              <td style={{ padding: '2px 4px', border: '1px solid #e5e7eb' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <SimInput value={row.gl} onChange={(e) => updateLine(idx, 'gl', e.target.value)} width={80} />
+                  <button type="button" onClick={() => setShowGlSearchRow(showGlSearchRow === idx ? null : idx)} style={{ padding: '2px 4px', fontSize: 10, border: '1px solid #9ca3af', borderRadius: 2, background: '#f0f2f5', cursor: 'pointer' }}>F4</button>
+                </div>
+              </td>
+              <td style={{ padding: '2px 4px', border: '1px solid #e5e7eb' }}>
+                <select value={row.dc} onChange={(e) => updateLine(idx, 'dc', e.target.value)} style={{ height: 22, fontSize: 11, border: '1px solid #9ca3af', borderRadius: 2, padding: '0 4px' }}>
+                  <option value="D">D</option>
+                  <option value="C">C</option>
+                </select>
+              </td>
+              <td style={{ padding: '2px 4px', border: '1px solid #e5e7eb', textAlign: 'right' }}>
+                <SimInput value={row.amount} onChange={(e) => updateLine(idx, 'amount', e.target.value)} width={100} />
+              </td>
+              <td style={{ padding: '2px 4px', border: '1px solid #e5e7eb' }}>
+                <SimInput value={row.costCentre} onChange={(e) => updateLine(idx, 'costCentre', e.target.value)} width={70} />
+              </td>
+              <td style={{ padding: '2px 4px', border: '1px solid #e5e7eb' }}>
+                <SimInput value={row.text} onChange={(e) => updateLine(idx, 'text', e.target.value)} width={140} />
+              </td>
+              <td style={{ padding: '2px 4px', border: '1px solid #e5e7eb' }}>
+                <button type="button" onClick={() => deleteRow(idx)} style={{ padding: '2px 6px', fontSize: 10, background: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca', borderRadius: 2, cursor: 'pointer' }}>Del</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {showGlSearchRow !== null && (
+        <div style={{ marginTop: 4, marginBottom: 8, border: '1px solid #e5e7eb', padding: 8, background: '#fff', maxHeight: 220, overflow: 'auto' }}>
+          {GL_F4_ORDER_FB60.map((type) => {
+            const accounts = glMasters.filter((g) => g.type === type);
+            if (!accounts.length) return null;
+            return (
+              <div key={type}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', marginTop: 8, marginBottom: 4 }}>--- {type.toUpperCase()} ACCOUNTS ---</div>
+                {accounts.map((g) => (
+                  <div key={g.number} onClick={() => { updateLine(showGlSearchRow, 'gl', g.number); setShowGlSearchRow(null); }} style={{ padding: '2px 0', cursor: 'pointer', fontSize: 11 }}>{g.number} — {g.name}</div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      )}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, marginBottom: 12 }}>
+        <button type="button" onClick={addRow} style={{ padding: '4px 10px', fontSize: 11, border: '1px solid #9ca3af', borderRadius: 4, background: '#f0f2f5', cursor: 'pointer' }}>Add Row</button>
+        <span style={{ fontSize: 11, fontFamily: 'monospace', color: balanceZero ? '#059669' : '#b91c1c' }}>
+          Balance: {balance.toFixed(2)} {balanceZero ? '✓' : ''}
+        </span>
+      </div>
+      <div style={{ textAlign: 'right' }}>
         <button
           type="button"
-          onClick={post}
+          onClick={handlePost}
+          disabled={!balanceZero}
           style={{
             borderRadius: 3,
             border: '1px solid #2563eb',
             padding: '4px 18px',
-            background: 'linear-gradient(180deg,#3b82f6,#1d4ed8)',
-            fontSize: 11,
+            background: balanceZero ? 'linear-gradient(180deg,#3b82f6,#1d4ed8)' : '#9ca3af',
             color: '#ffffff',
-            cursor: 'pointer',
+            fontSize: 11,
+            cursor: balanceZero ? 'pointer' : 'not-allowed',
           }}
         >
           Post
         </button>
       </div>
+      <div style={{ marginTop: 8, fontSize: 10, color: '#6b7280' }}>FB60 | Vendor Invoice Entry</div>
     </SimCard>
   );
 }
@@ -4809,23 +5002,15 @@ function SimF01({ state, setState }) {
   const creditors = (state.vendorDocs || []).filter((d) => d.open === true).reduce((a, d) => a + (d.amount || 0), 0);
   const bankBalance = (state.bankLines || []).reduce((a, l) => a + (l.amount || 0), 0);
   const revenueFromOps = (state.customerDocs || []).reduce((a, d) => a + (d.amount || 0), 0);
-  const expenseFromJournal = (state.journalDocs || [])
-    .flatMap((d) => d.items || [])
-    .filter((i) => i.dc === 'D' && isExpenseGL(i.gl))
-    .reduce((a, i) => a + (i.amount || 0), 0);
-  const expenseFromFB60 = (state.vendorDocs || [])
-    .filter((d) => !d.gl || isExpenseGL(d.gl))
-    .reduce((a, d) => a + (d.amount || 0), 0);
-  const depreciation = state.depreciationTotal ?? 0;
+  const { costOfMaterials, employeeCosts, depreciation, otherExpenses } = getPandLExpenseByCategory(state);
 
   const PLANT_MACHINERY = 25000000;
   const SHARE_CAPITAL = 20000000;
   const LONG_TERM_LOANS = 5000000;
+  const OPENING_RETAINED_EARNINGS = 841056;
   const CLOSING_STOCK = 3500000;
   const CASH = 200000;
   const OTHER_INCOME = 0;
-  const COST_OF_MATERIALS = 0;
-  const EMPLOYEE_COSTS = 0;
   const GST_PAYABLE = 0;
 
   const accDepreciation = depreciation;
@@ -4833,15 +5018,17 @@ function SimF01({ state, setState }) {
   const totalCurrentAssets = debtors + bankBalance + CASH + CLOSING_STOCK;
   const totalAssets = netBlock + totalCurrentAssets;
 
+  const OPENING_RESERVES = 8500000;
   const totalIncome = revenueFromOps + OTHER_INCOME;
-  const otherExpenses = Math.max(0, expenseFromJournal - depreciation);
-  const totalExpenses = COST_OF_MATERIALS + EMPLOYEE_COSTS + depreciation + otherExpenses + expenseFromFB60;
+  const totalExpenses = costOfMaterials + employeeCosts + depreciation + otherExpenses;
   const profitBeforeTax = totalIncome - totalExpenses;
-  const tax = Math.max(0, profitBeforeTax * 0.25);
+  const tax = profitBeforeTax > 0 ? profitBeforeTax * 0.25 : 0;
   const netProfit = profitBeforeTax - tax;
 
-  const reservesAndSurplus = totalAssets - SHARE_CAPITAL - LONG_TERM_LOANS - creditors - GST_PAYABLE - netProfit;
-  const totalLiabilities = SHARE_CAPITAL + reservesAndSurplus + LONG_TERM_LOANS + creditors + GST_PAYABLE + netProfit;
+  const reservesAndSurplus = OPENING_RESERVES + netProfit;
+  const totalLiabilities = SHARE_CAPITAL + reservesAndSurplus + LONG_TERM_LOANS + creditors + GST_PAYABLE + OPENING_RETAINED_EARNINGS;
+  const balanceSheetDiff = totalAssets - totalLiabilities;
+  const isOutOfBalance = Math.abs(balanceSheetDiff) > 0.01;
 
   const handleExecute = () => {
     setExecuted(true);
@@ -4855,22 +5042,29 @@ function SimF01({ state, setState }) {
     setTimeout(() => setExportMsg(null), 3000);
   };
 
-  const BsRow = ({ label, amount, bold, sub, total, alt }) => (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        padding: sub ? '2px 8px 2px 16px' : '4px 8px',
-        fontSize: total ? 13 : 11,
-        fontWeight: bold || total ? 600 : 400,
-        background: total ? '#e0e7ff' : alt ? F01_ROW_ALT : '#fff',
-        borderBottom: '1px solid #e5e7eb',
-      }}
-    >
-      <span>{label}</span>
-      <span style={{ fontFamily: 'monospace' }}>{amount != null ? `₹${fmt(amount)}` : '—'}</span>
-    </div>
-  );
+  const BsRow = ({ label, amount, bold, sub, total, alt, bracketsIfNegative }) => {
+    let amtStr = '—';
+    if (amount != null) {
+      if (bracketsIfNegative && amount < 0) amtStr = `(₹${fmt(-amount)})`;
+      else amtStr = `₹${fmt(amount)}`;
+    }
+    return (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          padding: sub ? '2px 8px 2px 16px' : '4px 8px',
+          fontSize: total ? 13 : 11,
+          fontWeight: bold || total ? 600 : 400,
+          background: total ? '#e0e7ff' : alt ? F01_ROW_ALT : '#fff',
+          borderBottom: '1px solid #e5e7eb',
+        }}
+      >
+        <span>{label}</span>
+        <span style={{ fontFamily: 'monospace' }}>{amtStr}</span>
+      </div>
+    );
+  };
 
   const BsSection = ({ title, children }) => (
     <>
@@ -4930,6 +5124,7 @@ function SimF01({ state, setState }) {
         <button type="button" onClick={handleExecute} style={{ padding: '4px 12px', background: F01_HEADER_BG, color: '#fff', border: 'none', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Execute</button>
         <button type="button" onClick={handlePrint} style={{ padding: '4px 12px', background: '#f0f2f5', border: '1px solid #9ca3af', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Print</button>
         <button type="button" onClick={handleExport} style={{ padding: '4px 12px', background: '#f0f2f5', border: '1px solid #9ca3af', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Export to Excel</button>
+        <button type="button" onClick={() => setState(createInitialSimState())} style={{ padding: '4px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 4, fontSize: 11, cursor: 'pointer', color: '#b91c1c' }}>Reset Demo Data</button>
         {exportMsg && <span style={{ fontSize: 11, color: '#059669' }}>{exportMsg}</span>}
       </div>
       {lastUpdated && (
@@ -4955,11 +5150,15 @@ function SimF01({ state, setState }) {
               { label: 'TOTAL ASSETS', amount: totalAssets, total: true },
               { label: 'LIABILITIES & EQUITY', amount: null, header: true },
               { label: 'Share Capital', amount: SHARE_CAPITAL, sub: true },
-              { label: 'Reserves & Surplus', amount: reservesAndSurplus, sub: true },
+              { label: 'Reserves & Surplus', amount: OPENING_RESERVES, sub: true },
+              { label: netProfit >= 0 ? 'Add: Current Year Profit' : 'Less: Current Year Loss', amount: netProfit, sub: true, bracketsIfNegative: netProfit < 0 },
+              { divider: true },
+              { label: 'Total Reserves & Surplus', amount: reservesAndSurplus, bold: true, sub: true, bracketsIfNegative: true },
               { label: 'Long Term Loans', amount: LONG_TERM_LOANS, sub: true },
               { label: 'Current Liabilities', amount: null, sub: true },
               { label: 'Creditors', amount: creditors, sub: true },
               { label: 'GST Payable', amount: GST_PAYABLE, sub: true },
+              { label: 'Opening Retained Earnings', amount: OPENING_RETAINED_EARNINGS, sub: true },
               { label: 'TOTAL LIABILITIES & EQUITY', amount: totalLiabilities, total: true },
             ];
             let rowIdx = 0;
@@ -4967,11 +5166,17 @@ function SimF01({ state, setState }) {
               <>
                 {rows.map((r, i) => {
                   if (r.header) return <div key={i} style={{ background: F01_HEADER_BG, color: '#fff', padding: '6px 10px', fontSize: 12, fontWeight: 600, marginTop: 8 }}>{r.label}</div>;
-                  return <BsRow key={i} label={r.label} amount={r.amount} bold={r.bold} sub={r.sub} total={r.total} alt={rowIdx++ % 2 === 1} />;
+                  if (r.divider) return <div key={i} style={{ padding: '2px 8px 2px 16px', fontSize: 11, textAlign: 'right', borderBottom: '1px solid #e5e7eb', fontFamily: 'monospace' }}>──────────</div>;
+                  return <BsRow key={i} label={r.label} amount={r.amount} bold={r.bold} sub={r.sub} total={r.total} alt={rowIdx++ % 2 === 1} bracketsIfNegative={r.bracketsIfNegative} />;
                 })}
               </>
             );
           })()}</BsSection>
+          {isOutOfBalance && (
+            <div style={{ padding: '8px 10px', background: '#fef2f2', border: '1px solid #fecaca', borderTop: 0, borderRadius: '0 0 4px 4px', fontSize: 11, color: '#b91c1c', fontWeight: 600 }}>
+              ⚠ Balance Sheet out of balance by ₹{fmt(balanceSheetDiff)}
+            </div>
+          )}
         </div>
 
         {/* P&L — Right */}
@@ -4981,8 +5186,8 @@ function SimF01({ state, setState }) {
               { label: 'Revenue from Operations', amount: revenueFromOps, sub: true },
               { label: 'Other Income', amount: OTHER_INCOME, sub: true },
               { label: 'TOTAL INCOME', amount: totalIncome, bold: true },
-              { label: 'Cost of Materials', amount: COST_OF_MATERIALS, sub: true },
-              { label: 'Employee Costs', amount: EMPLOYEE_COSTS, sub: true },
+              { label: 'Cost of Materials', amount: costOfMaterials, sub: true },
+              { label: 'Employee Costs', amount: employeeCosts, sub: true },
               { label: 'Depreciation', amount: depreciation, sub: true },
               { label: 'Other Expenses', amount: otherExpenses, sub: true },
               { label: 'TOTAL EXPENSES', amount: totalExpenses, bold: true },
@@ -5555,7 +5760,7 @@ function SimFB70({ state, setState }) {
   const [currency, setCurrency] = useState('INR');
   const [reference, setReference] = useState('');
   const [showSearch, setShowSearch] = useState(false);
-  const [lines, setLines] = useState([{ gl: '410000', amount: '' }]);
+  const [lines, setLines] = useState([{ gl: '500100', amount: '' }]);
 
   const customers = state.customerMasters || [];
 
@@ -5818,7 +6023,7 @@ function SimF28({ state, setState }) {
   );
 }
 
-// S_ALR_87012284 — Balance Sheet / P&L Report (same aggregation as F.01: debtors, creditors, bank from state; reserves as plug)
+// S_ALR_87012284 — Balance Sheet / P&L Report (Schedule III: Reserves = Opening + Net Profit/Loss; creditors from vendorDocs only)
 function SimS_ALR_87012284({ state, setState }) {
   const [companyCode, setCompanyCode] = useState('IN01');
   const [fiscalYear, setFiscalYear] = useState('2024');
@@ -5839,24 +6044,23 @@ function SimS_ALR_87012284({ state, setState }) {
   const creditors = (state.vendorDocs || []).filter((d) => d.open === true).reduce((a, d) => a + (d.amount || 0), 0);
   const bankBalance = (state.bankLines || []).reduce((a, l) => a + (l.amount || 0), 0);
   const revenue = (state.customerDocs || []).reduce((a, d) => a + (d.amount || 0), 0);
-  const expenseFromJournal = (state.journalDocs || []).flatMap((d) => d.items || []).filter((i) => i.dc === 'D' && isExpenseGL(i.gl)).reduce((a, i) => a + (i.amount || 0), 0);
-  const expenseFromFB60 = (state.vendorDocs || []).filter((d) => !d.gl || isExpenseGL(d.gl)).reduce((a, d) => a + (d.amount || 0), 0);
-  const depreciation = state.depreciationTotal ?? 0;
+  const { costOfMaterials, employeeCosts, depreciation, otherExpenses } = getPandLExpenseByCategory(state);
   const PLANT_MACHINERY = 25000000;
   const SHARE_CAPITAL = 20000000;
   const LONG_TERM_LOANS = 5000000;
+  const OPENING_RESERVES = 8500000;
   const CLOSING_STOCK = 3500000;
   const CASH = 200000;
   const GST_PAYABLE = 0;
   const netBlock = PLANT_MACHINERY - depreciation;
   const totalCurrentAssets = debtors + bankBalance + CASH + CLOSING_STOCK;
   const totalAssets = netBlock + totalCurrentAssets;
-  const totalExpenses = depreciation + Math.max(0, expenseFromJournal - depreciation) + expenseFromFB60;
+  const totalExpenses = costOfMaterials + employeeCosts + depreciation + otherExpenses;
   const profit = revenue - totalExpenses;
-  const tax = Math.max(0, profit * 0.25);
+  const tax = profit > 0 ? profit * 0.25 : 0;
   const netProfit = profit - tax;
-  const reservesAndSurplus = totalAssets - SHARE_CAPITAL - LONG_TERM_LOANS - creditors - GST_PAYABLE - netProfit;
-  const totalLiabilitiesEquity = SHARE_CAPITAL + reservesAndSurplus + LONG_TERM_LOANS + creditors + GST_PAYABLE + netProfit;
+  const reservesAndSurplus = OPENING_RESERVES + netProfit;
+  const totalLiabilitiesEquity = SHARE_CAPITAL + reservesAndSurplus + LONG_TERM_LOANS + creditors + GST_PAYABLE;
   const prevYearRevenue = revenue * 0.92;
   const prevYearExpenses = totalExpenses * 0.95;
   const prevYearProfit = prevYearRevenue - prevYearExpenses;
@@ -5882,7 +6086,7 @@ function SimS_ALR_87012284({ state, setState }) {
       <SimFieldRow label="To Period">
         <SimInput value={periodTo} onChange={(e) => setPeriodTo(e.target.value)} width={60} />
       </SimFieldRow>
-      <div style={{ marginBottom: 12 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
         <button
           type="button"
           onClick={handleExecute}
@@ -5898,6 +6102,7 @@ function SimS_ALR_87012284({ state, setState }) {
         >
           Execute
         </button>
+        <button type="button" onClick={() => setState(createInitialSimState())} style={{ padding: '4px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 4, fontSize: 11, cursor: 'pointer', color: '#b91c1c' }}>Reset Demo Data</button>
       </div>
       {executed && (
         <>
@@ -5915,7 +6120,7 @@ function SimS_ALR_87012284({ state, setState }) {
                 <tbody>
                   <tr><td style={{ padding: '4px 6px' }}>Assets</td><td style={{ textAlign: 'right', padding: '4px 6px' }}>₹{totalAssets.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td><td style={{ textAlign: 'right', padding: '4px 6px' }}>₹{(totalAssets * 0.96).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
                   <tr><td style={{ padding: '4px 6px' }}>Liabilities</td><td style={{ textAlign: 'right', padding: '4px 6px' }}>₹{(creditors + LONG_TERM_LOANS + GST_PAYABLE).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td><td style={{ textAlign: 'right', padding: '4px 6px' }}>₹{((creditors + LONG_TERM_LOANS + GST_PAYABLE) * 0.97).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
-                  <tr><td style={{ padding: '4px 6px' }}>Equity (incl. Reserves)</td><td style={{ textAlign: 'right', padding: '4px 6px' }}>₹{(SHARE_CAPITAL + reservesAndSurplus + netProfit).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td><td style={{ textAlign: 'right', padding: '4px 6px' }}>₹{((SHARE_CAPITAL + reservesAndSurplus + netProfit) * 0.98).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
+                  <tr><td style={{ padding: '4px 6px' }}>Equity (incl. Reserves)</td><td style={{ textAlign: 'right', padding: '4px 6px' }}>{(SHARE_CAPITAL + reservesAndSurplus) >= 0 ? '₹' + (SHARE_CAPITAL + reservesAndSurplus).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '(₹' + (-(SHARE_CAPITAL + reservesAndSurplus)).toLocaleString('en-IN', { minimumFractionDigits: 2 }) + ')'}</td><td style={{ textAlign: 'right', padding: '4px 6px' }}>₹{((SHARE_CAPITAL + reservesAndSurplus) * 0.98).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
                 </tbody>
               </table>
             </div>
