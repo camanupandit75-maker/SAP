@@ -2041,6 +2041,51 @@ const moduleIcons = [Icons.book, Icons.chart, Icons.settings, Icons.layers, Icon
 
 // Derive total lessons and T-code list from curriculum
 const totalLessons = curriculum.reduce((acc, m) => acc + m.lessons.length, 0);
+
+// ─── Scenarios (guided end-to-end) ─────────────────────────────────────────────
+const SCENARIOS_DATA = [
+  {
+    id: 0,
+    icon: '🧾',
+    title: 'Pay a Vendor — End to End',
+    description: 'Follow the complete journey from receiving a vendor invoice to making payment and verifying in reports.',
+    steps: [
+      { title: 'Post Vendor Invoice', tcode: 'FB60', instruction: 'Your vendor Tata Consulting has sent an invoice for ₹1,18,000 including GST. Post it in SAP using FB60. Enter vendor code, invoice date, amount and expense GL account. Verify balance is zero and post.', caInsight: 'Like posting a purchase entry in Tally against a creditor ledger. SAP auto-calculates due date from payment terms.', checkpoint: 'Document number generated ✓' },
+      { title: 'Verify Invoice in Vendor Report', tcode: 'FBL1N', instruction: 'Check that your posted invoice appears in the vendor outstanding report. Open FBL1N, enter vendor code V100002, select Open Items and execute. You should see the invoice you just posted.', caInsight: 'Like checking the creditor ledger in Tally to confirm the entry went through correctly.', checkpoint: 'Invoice visible in FBL1N ✓' },
+      { title: 'Make Payment', tcode: 'F-53', instruction: 'The invoice is now due. Pay it using F-53 manual payment. Enter bank GL account 113100, amount 1,18,000, vendor code V100002. Click Process Open Items — select the invoice you posted. Verify balance zero. Post.', caInsight: 'Like posting a payment entry in Tally against the specific bill. Always match payment to invoice — never post as on account.', checkpoint: 'Payment document generated ✓' },
+      { title: 'Verify Payment in Vendor Report', tcode: 'FBL1N', instruction: 'Open FBL1N again for vendor V100002. This time select Cleared Items. You should see the invoice now shows as cleared — meaning it has been paid and matched. The open items list should now be empty for this invoice.', caInsight: 'Like verifying the bill is marked as paid in Tally. Cleared in SAP means matched and closed.', checkpoint: 'Invoice status Cleared ✓' },
+      { title: 'Check Financial Impact', tcode: 'F.01', instruction: 'Open F.01 financial statements. Execute for current period. Check the Current Liabilities section — Creditors balance should have reduced by ₹1,18,000 compared to before you made the payment. Also check bank balance — it should have reduced by the same amount.', caInsight: 'The complete accounting cycle — liability created, liability discharged, cash reduced. All visible in real time in SAP financial statements.', checkpoint: 'Creditors reduced in F.01 ✓' },
+    ],
+  },
+  {
+    id: 1,
+    icon: '📨',
+    title: 'Collect from a Customer — End to End',
+    description: 'Follow the complete journey from raising a customer invoice to receiving payment and checking your debtor position.',
+    steps: [
+      { title: 'Post Customer Invoice', tcode: 'FB70', instruction: 'Raise an invoice for Mahindra for ₹5,90,000 including GST using FB70. Enter customer code C100001, invoice date, amount and revenue GL account 500100. Verify balance zero and post.', caInsight: 'Like posting a sales entry in Tally against a debtor ledger. SAP auto-hits the debtor reconciliation account.', checkpoint: 'Document number generated ✓' },
+      { title: 'Verify Invoice in Customer Report', tcode: 'FBL5N', instruction: 'Open FBL5N for customer C100001 Mahindra. Select Open Items and execute. Confirm your invoice appears with correct amount and due date.', caInsight: 'Like checking the debtor ledger in Tally. Outstanding invoice visible with due date.', checkpoint: 'Invoice visible in FBL5N ✓' },
+      { title: 'Post Customer Receipt', tcode: 'F-28', instruction: 'Mahindra has paid ₹5,90,000. Post the receipt in F-28. Enter bank GL 113100, amount 5,90,000, customer C100001. Click Process Open Items — select the invoice. Verify balance zero. Post.', caInsight: 'Like posting a receipt in Tally against the specific debtor invoice. Always clear against specific invoice — never leave unmatched.', checkpoint: 'Receipt document generated ✓' },
+      { title: 'Check AR Ageing Report', tcode: 'S_ALR_87012178', instruction: 'Open S_ALR_87012178 AR Ageing report. Enter today as key date. Execute. Check Mahindra row — the ₹5,90,000 invoice should no longer appear in outstanding since it has been cleared by the receipt.', caInsight: 'Like your debtors outstanding statement — confirmed cleared means collections team can stop follow up.', checkpoint: 'Invoice cleared in ageing ✓' },
+      { title: 'Check Financial Impact', tcode: 'F.01', instruction: 'Open F.01. Execute. Check Current Assets — Debtors balance should reflect the cleared invoice. Bank balance should have increased by ₹5,90,000. Revenue in P&L should show the sale.', caInsight: 'Asset created — debtor. Asset converted — cash. Revenue recognised. Complete sales cycle visible in real time.', checkpoint: 'F.01 reflects receipt ✓' },
+    ],
+  },
+  {
+    id: 2,
+    icon: '📅',
+    title: 'Close the Books — Month End',
+    description: 'Follow the complete month end closing sequence exactly as a Finance Manager would execute it in a live SAP environment.',
+    steps: [
+      { title: 'Check Outstanding Payables', tcode: 'FBL1N', instruction: 'Open FBL1N. Select All Vendors, Open Items, current month date range. Execute. Review all unpaid vendor invoices. Confirm all invoices for the month are posted. Any missing invoices must be posted before period closes.', caInsight: 'Your creditor reconciliation before closing. Every invoice received must be in SAP before you close.', checkpoint: 'All payables verified ✓' },
+      { title: 'Check Outstanding Receivables', tcode: 'FBL5N', instruction: 'Open FBL5N. Select All Customers, Open Items. Execute. Review all outstanding customer invoices. Confirm all sales invoices for the month are posted and receipts are matched.', caInsight: 'Your debtor reconciliation. Every receipt must be matched to an invoice — no unmatched entries.', checkpoint: 'All receivables verified ✓' },
+      { title: 'Bank Reconciliation', tcode: 'FF67', instruction: 'Open FF67. Enter house bank HDFC1 and account CURR01. Enter month end date and closing balance from actual bank statement. Post all matched entries. Investigate and clear exceptions. Closing balance must match bank statement.', caInsight: 'Same BRS you have done for years. SAP auto-matches most entries — you only handle exceptions. Must be complete before period close.', checkpoint: 'Bank reconciled ✓' },
+      { title: 'Run Depreciation', tcode: 'AFAB', instruction: 'Open AFAB. Enter Company Code IN01, Fiscal Year 2024, current period. Run Test Mode first — review output. If correct run Productive Mode. Never run productive mode twice.', caInsight: 'Like passing the monthly depreciation journal — except SAP calculates every asset automatically. You just review and execute.', checkpoint: 'Depreciation posted ✓' },
+      { title: 'Check Open Periods', tcode: 'OB52', instruction: 'Open OB52. Verify current period is still open. Note the closing deadline communicated by your Finance Controller. All postings must be done before this deadline. After deadline period will be closed and no further postings allowed.', caInsight: 'Like a lock on the financial period. Once closed no entries possible without special access. Always complete all postings before the deadline.', checkpoint: 'Period status confirmed ✓' },
+      { title: 'Review Financial Statements', tcode: 'F.01', instruction: 'Open F.01. Execute for the closing period. Review Balance Sheet — check all balances look correct. Review P&L — check revenue and expense figures. Drill down into any unusual balances. This is your final review before sign off.', caInsight: 'Your final accounts review before month end sign off. Same as reviewing Tally financials at month end — except SAP generates it instantly and every number is drillable.', checkpoint: 'Financials reviewed ✓' },
+    ],
+  },
+];
+
 function getTcodeList() {
   const list = [];
   curriculum.forEach((mod, mi) => {
@@ -2232,6 +2277,24 @@ function HomePage({ navigate, completedLessons }) {
             onClick={() => navigate('tcode')}
           >
             T-Code Reference
+          </button>
+          <button
+            style={{
+              ...s.card,
+              padding: '8px 16px',
+              fontSize: 12,
+              color: C.accentLight,
+              fontFamily: C.body,
+              fontWeight: 500,
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: C.bgCard,
+              border: `1px solid ${C.border}`,
+              ...(h.is('scenarios-btn') ? { borderColor: C.accent, color: C.accentLight } : {}),
+            }}
+            {...h.bind('scenarios-btn')}
+            onClick={() => navigate('scenarios')}
+          >
+            🎯 Scenarios
           </button>
           <button
             style={{
@@ -2503,6 +2566,7 @@ function LessonPage({ navigate, moduleIndex, lessonIndex, onCompleteLesson, comp
   const h = useHover();
   const [selectedOption, setSelectedOption] = useState(null);
   const [quizAttempted, setQuizAttempted] = useState(false);
+  const [videoExpanded, setVideoExpanded] = useState(false);
 
   const mod = curriculum[moduleIndex];
   const lesson = mod?.lessons[lessonIndex];
@@ -2510,6 +2574,11 @@ function LessonPage({ navigate, moduleIndex, lessonIndex, onCompleteLesson, comp
 
   const quiz = lesson.quiz;
   const tcodes = lesson.tcodes || [];
+  const hasVideo = tcodes.includes('FBL3N') || tcodes.includes('FB50');
+
+  useEffect(() => {
+    setVideoExpanded(false);
+  }, [moduleIndex, lessonIndex]);
   const alreadyCompleted = completedLessons.has(`${moduleIndex}-${lessonIndex}`);
 
   const lessonKey = `${moduleIndex}-${lessonIndex}`;
@@ -2552,88 +2621,97 @@ function LessonPage({ navigate, moduleIndex, lessonIndex, onCompleteLesson, comp
         </div>
       </div>
 
-      {/* Video — FBL3N lesson only (first thing user sees) */}
-      {tcodes.includes('FBL3N') && (
+      {/* Collapsible video — FBL3N or FB50 lessons */}
+      {hasVideo && (
         <div style={{ marginBottom: 24 }}>
-          <div style={{
-            fontSize: 12,
-            fontWeight: 700,
-            color: '#c8a96e',
-            letterSpacing: '2px',
-            textTransform: 'uppercase',
-            marginBottom: 8,
-          }}>
-            📹 Watch First — Then Read
-          </div>
-          <div
+          <button
+            type="button"
+            onClick={() => setVideoExpanded((v) => !v)}
             style={{
               width: '100%',
-              borderRadius: 12,
+              padding: '14px 18px',
               border: '1px solid #c8a96e',
-              overflow: 'hidden',
-              background: '#000',
-              position: 'relative',
-              paddingBottom: '56.25%',
-              height: 0,
+              borderRadius: 12,
+              background: 'rgba(10,14,26,0.9)',
+              color: '#c8a96e',
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: 'pointer',
+              textAlign: 'left',
+              transition: 'opacity 0.2s',
             }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
           >
-            <iframe
-              title="FBL3N — G/L Line Items"
-              src="https://www.youtube.com/embed/iltcY_mAUWc"
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                border: 'none',
-              }}
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Video — FB50 lesson only */}
-      {tcodes.includes('FB50') && (
-        <div style={{ marginBottom: 24 }}>
-          <div style={{
-            fontSize: 11,
-            fontWeight: 700,
-            color: C.accentLight,
-            textTransform: 'uppercase',
-            letterSpacing: '1.5px',
-            marginBottom: 10,
-          }}>
-            📹 Watch before you read
-          </div>
+            {videoExpanded ? '▼ Hide video' : '▶ Watch walkthrough before you read'}
+          </button>
           <div
             style={{
-              width: '100%',
-              borderRadius: 12,
-              border: '1px solid rgba(200,169,110,0.5)',
               overflow: 'hidden',
-              background: '#000',
-              position: 'relative',
-              aspectRatio: '16 / 9',
+              maxHeight: videoExpanded ? 800 : 0,
+              transition: 'max-height 0.35s ease-out',
             }}
           >
-            <iframe
-              title="FB50 — Post Journal Entry"
-              src="https://www.youtube.com/embed/Jx5d5PW6xwQ"
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                border: 'none',
-              }}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
+            <div style={{ paddingTop: 12 }}>
+              {tcodes.includes('FBL3N') && (
+                <div
+                  style={{
+                    width: '100%',
+                    borderRadius: 12,
+                    border: '1px solid #c8a96e',
+                    overflow: 'hidden',
+                    background: '#000',
+                    position: 'relative',
+                    paddingBottom: '56.25%',
+                    height: 0,
+                  }}
+                >
+                  <iframe
+                    title="FBL3N — G/L Line Items"
+                    src="https://www.youtube.com/embed/iltcY_mAUWc"
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      border: 'none',
+                    }}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              )}
+              {tcodes.includes('FB50') && (
+                <div
+                  style={{
+                    width: '100%',
+                    borderRadius: 12,
+                    border: '1px solid rgba(200,169,110,0.5)',
+                    overflow: 'hidden',
+                    background: '#000',
+                    position: 'relative',
+                    aspectRatio: '16 / 9',
+                  }}
+                >
+                  <iframe
+                    title="FB50 — Post Journal Entry"
+                    src="https://www.youtube.com/embed/Jx5d5PW6xwQ"
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      border: 'none',
+                    }}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -6374,6 +6452,298 @@ function SimFAGLB03({ state }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// PAGE: SCENARIOS
+// ═══════════════════════════════════════════════════════════════════════════════
+function ScenariosPage({ navigate, setSimState }) {
+  const h = useHover();
+  const [selectedScenario, setSelectedScenario] = useState(null);
+  const [scenarioProgress, setScenarioProgress] = useState(() => ({}));
+  const [showCelebration, setShowCelebration] = useState(false);
+
+  const getProgress = (scenarioId) => {
+    const prog = scenarioProgress[String(scenarioId)] || {};
+    const steps = SCENARIOS_DATA[scenarioId].steps.length;
+    const done = Object.keys(prog).filter((k) => prog[k]).length;
+    return { done, total: steps };
+  };
+
+  const openSimulator = (tcode) => {
+    setSimState((prev) => ({ ...prev, currentTcode: tcode }));
+    navigate('simulator');
+  };
+
+  const isStepDone = (scenarioId, stepIndex) => {
+    const prog = scenarioProgress[String(scenarioId)] || {};
+    return !!prog[stepIndex];
+  };
+
+  const allStepsDone = (scenarioId) => {
+    const sc = SCENARIOS_DATA[scenarioId];
+    if (!sc) return false;
+    const prog = scenarioProgress[String(scenarioId)] || {};
+    return sc.steps.every((_, i) => !!prog[i]);
+  };
+
+  const handleToggleStep = (scenarioId, stepIndex) => {
+    setScenarioProgress((prev) => {
+      const key = String(scenarioId);
+      const current = prev[key] || {};
+      const nextProg = { ...current, [stepIndex]: !current[stepIndex] };
+      const next = { ...prev, [key]: nextProg };
+      const total = SCENARIOS_DATA[scenarioId].steps.length;
+      const doneCount = Object.keys(nextProg).filter((k) => nextProg[k]).length;
+      if (doneCount === total) setTimeout(() => setShowCelebration(true), 150);
+      return next;
+    });
+  };
+
+  if (selectedScenario === null) {
+    return (
+      <div style={{ minHeight: '100vh', fontFamily: C.body, background: C.bgPrimary, padding: '32px', maxWidth: 960, margin: '0 auto' }}>
+        <button
+          style={{ ...s.backBtn, ...(h.is('back') ? { color: C.accentLight } : {}) }}
+          {...h.bind('back')}
+          onClick={() => navigate('home')}
+        >
+          {Icons.back} Back to Home
+        </button>
+        <h1 style={{ fontFamily: C.heading, fontSize: 28, color: C.accentLight, fontWeight: 700, marginBottom: 12 }}>
+          🎯 Scenarios
+        </h1>
+        <p style={{ fontSize: 14, color: C.textSecondary, marginBottom: 32, maxWidth: 560 }}>
+          Guided end-to-end flows. Complete steps in the simulator and mark them done.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {SCENARIOS_DATA.map((sc, i) => {
+            const { done, total } = getProgress(sc.id);
+            const active = h.is(`sc-${i}`);
+            return (
+              <div
+                key={sc.id}
+                style={{
+                  ...s.card,
+                  padding: 24,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 16,
+                  borderColor: active ? C.accent : C.border,
+                  borderWidth: active ? 2 : 1,
+                }}
+                {...h.bind(`sc-${i}`)}
+                onClick={() => setSelectedScenario(sc.id)}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+                  <span style={{ fontSize: 32 }}>{sc.icon}</span>
+                  <div style={{ flex: 1 }}>
+                    <h2 style={{ fontFamily: C.heading, fontSize: 20, color: C.accentLight, fontWeight: 600, marginBottom: 8 }}>
+                      {sc.title}
+                    </h2>
+                    <p style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.6, marginBottom: 12 }}>
+                      {sc.description}
+                    </p>
+                    <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 12 }}>
+                      {done} of {total} steps completed
+                    </div>
+                    <button
+                      type="button"
+                      style={{
+                        ...s.btnPrimary,
+                        alignSelf: 'flex-start',
+                        ...(h.is(`start-${i}`) ? s.btnPrimaryHover : {}),
+                      }}
+                      {...h.bind(`start-${i}`)}
+                      onClick={(e) => { e.stopPropagation(); setSelectedScenario(sc.id); }}
+                    >
+                      Start
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  const sc = SCENARIOS_DATA[selectedScenario];
+  if (!sc) return null;
+
+  const { done, total } = getProgress(selectedScenario);
+  const progressPct = total ? Math.round((done / total) * 100) : 0;
+  const firstIncompleteStep = sc.steps.findIndex((_, i) => !isStepDone(selectedScenario, i));
+  const currentStepIndex = firstIncompleteStep < 0 ? sc.steps.length - 1 : firstIncompleteStep;
+
+  if (showCelebration && selectedScenario !== null) {
+    const scComplete = SCENARIOS_DATA[selectedScenario];
+    return (
+      <div style={{ minHeight: '100vh', fontFamily: C.body, background: C.bgPrimary, padding: 32, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+        {/* Simple confetti */}
+        {Array.from({ length: 60 }).map((_, i) => (
+          <div
+            key={i}
+            style={{
+              position: 'absolute',
+              width: 8,
+              height: 8,
+              borderRadius: i % 3 === 0 ? '50%' : 0,
+              background: ['#c8a96e', '#4aaa7a', '#5aacda', '#e8d5a3', '#d4a44a'][i % 5],
+              left: `${10 + (i * 1.4) % 80}%`,
+              top: '-20px',
+              animation: `scenarioConfetti 2.5s ease-out ${i * 0.03}s forwards`,
+              opacity: 0,
+            }}
+          />
+        ))}
+        <style>{`
+          @keyframes scenarioConfetti {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0.8; }
+          }
+        `}</style>
+        <h1 style={{ fontFamily: C.heading, fontSize: 32, color: C.accentLight, fontWeight: 700, marginBottom: 12, position: 'relative', zIndex: 1 }}>
+          Scenario Complete
+        </h1>
+        <p style={{ fontSize: 16, color: C.textSecondary, marginBottom: 24, position: 'relative', zIndex: 1 }}>
+          {scComplete.icon} {scComplete.title}
+        </p>
+        <button
+          type="button"
+          style={{ ...s.btnPrimary, position: 'relative', zIndex: 1 }}
+          onClick={() => { setShowCelebration(false); setSelectedScenario(null); }}
+        >
+          Back to Scenarios
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ minHeight: '100vh', fontFamily: C.body, background: C.bgPrimary, padding: '32px', maxWidth: 720, margin: '0 auto' }}>
+      <button
+        style={{ ...s.backBtn, ...(h.is('back') ? { color: C.accentLight } : {}) }}
+        {...h.bind('back')}
+        onClick={() => setSelectedScenario(null)}
+      >
+        {Icons.back} Back to Scenarios
+      </button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+        <span style={{ fontSize: 28 }}>{sc.icon}</span>
+        <div>
+          <h1 style={{ fontFamily: C.heading, fontSize: 24, color: C.accentLight, fontWeight: 700, marginBottom: 4 }}>
+            {sc.title}
+          </h1>
+          <p style={{ fontSize: 12, color: C.textMuted }}>{done} of {total} steps completed</p>
+        </div>
+      </div>
+      <div style={{ ...s.progressBar(100), marginBottom: 32 }}>
+        <div style={s.progressFill(progressPct)} />
+      </div>
+      <div style={{ position: 'relative' }}>
+        {sc.steps.map((step, stepIndex) => {
+          const done = isStepDone(selectedScenario, stepIndex);
+          const isCurrent = stepIndex === currentStepIndex;
+          return (
+            <div
+              key={stepIndex}
+              style={{
+                display: 'flex',
+                gap: 16,
+                marginBottom: 28,
+                paddingLeft: 8,
+                borderLeft: stepIndex < sc.steps.length - 1 ? `2px solid ${C.border}` : 'none',
+                marginLeft: 20,
+              }}
+            >
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: '50%',
+                  background: done ? C.success : isCurrent ? C.accent : C.bgCard,
+                  border: `2px solid ${done ? C.success : isCurrent ? C.accent : C.border}`,
+                  flexShrink: 0,
+                  marginLeft: -26,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: done ? '#fff' : isCurrent ? '#0a0e1a' : C.textMuted,
+                  fontWeight: 700,
+                  fontSize: 14,
+                  boxShadow: isCurrent ? `0 0 0 4px rgba(200,169,110,0.3)` : 'none',
+                  animation: isCurrent ? 'scenarioPulse 1.5s ease-in-out infinite' : 'none',
+                }}
+              >
+                {done ? '✓' : stepIndex + 1}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h3 style={{
+                  fontFamily: C.heading,
+                  fontSize: 16,
+                  color: done ? C.textMuted : C.accentLight,
+                  fontWeight: 600,
+                  marginBottom: 8,
+                  textDecoration: done ? 'line-through' : 'none',
+                }}>
+                  Step {stepIndex + 1} — {step.title}
+                </h3>
+                <p style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.7, marginBottom: 12, opacity: done ? 0.8 : 1 }}>
+                  {step.instruction}
+                </p>
+                <div style={{
+                  background: 'rgba(74,170,122,0.08)',
+                  border: `1px solid rgba(74,170,122,0.3)`,
+                  borderRadius: 8,
+                  padding: '12px 14px',
+                  marginBottom: 12,
+                }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: C.success, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 6 }}>CA Insight</div>
+                  <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.6 }}>{step.caInsight}</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    style={{
+                      background: 'linear-gradient(135deg, #c8a96e 0%, #b8954e 100%)',
+                      color: '#0a0e1a',
+                      border: 'none',
+                      borderRadius: 8,
+                      padding: '10px 18px',
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      fontFamily: C.body,
+                    }}
+                    onClick={() => openSimulator(step.tcode)}
+                  >
+                    Open {step.tcode} in Simulator →
+                  </button>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: C.textSecondary, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={done}
+                      onChange={() => handleToggleStep(selectedScenario, stepIndex)}
+                    />
+                    Mark step complete
+                  </label>
+                </div>
+                <div style={{ fontSize: 12, color: C.success, marginTop: 8 }}>{step.checkpoint}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <style>{`
+        @keyframes scenarioPulse {
+          0%, 100% { box-shadow: 0 0 0 4px rgba(200,169,110,0.3); }
+          50% { box-shadow: 0 0 0 8px rgba(200,169,110,0.15); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // APP SHELL — Navigation Router
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function App() {
@@ -6419,6 +6789,8 @@ export default function App() {
       );
     case 'tcode':
       return <TCodePage navigate={navigate} />;
+    case 'scenarios':
+      return <ScenariosPage navigate={navigate} setSimState={setSimState} />;
     case 'cheatsheet':
       return <CheatSheetPage navigate={navigate} />;
     case 'simulator':
