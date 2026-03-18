@@ -2613,7 +2613,12 @@ function LessonPage({ navigate, moduleIndex, lessonIndex, onCompleteLesson, comp
 
   const quiz = lesson.quiz;
   const tcodes = lesson.tcodes || [];
-  const hasVideo = tcodes.includes('FBL3N') || tcodes.includes('FB50');
+  const hasVideo = tcodes.includes('FBL3N') || tcodes.includes('FB50') || tcodes.includes('F.01') || tcodes.includes('FB60');
+  const videoToggleText = tcodes.includes('F.01')
+    ? '▶ Watch before you read — F.01 Financial Statements walkthrough'
+    : tcodes.includes('FB60')
+      ? '▶ Watch before you read — FB60 Vendor Invoice walkthrough'
+      : '▶ Watch walkthrough before you read';
 
   useEffect(() => {
     setVideoExpanded(false);
@@ -2682,7 +2687,7 @@ function LessonPage({ navigate, moduleIndex, lessonIndex, onCompleteLesson, comp
             onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; }}
             onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
           >
-            {videoExpanded ? '▼ Hide video' : '▶ Watch walkthrough before you read'}
+            {videoExpanded ? '▼ Hide video' : videoToggleText}
           </button>
           <div
             style={{
@@ -2692,6 +2697,62 @@ function LessonPage({ navigate, moduleIndex, lessonIndex, onCompleteLesson, comp
             }}
           >
             <div style={{ paddingTop: 12 }}>
+              {tcodes.includes('F.01') && (
+                <div
+                  style={{
+                    position: 'relative',
+                    paddingBottom: '56.25%',
+                    height: 0,
+                    overflow: 'hidden',
+                    borderRadius: 12,
+                    border: '1px solid #c8a96e',
+                    background: '#000',
+                  }}
+                >
+                  <iframe
+                    title="F.01 — Financial Statements walkthrough"
+                    src="https://www.youtube.com/embed/HrJiPjJpLiA"
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      border: 'none',
+                    }}
+                    frameBorder="0"
+                    allowFullScreen={true}
+                  />
+                </div>
+              )}
+              {tcodes.includes('FB60') && (
+                <div
+                  style={{
+                    position: 'relative',
+                    paddingBottom: '56.25%',
+                    height: 0,
+                    overflow: 'hidden',
+                    borderRadius: 12,
+                    border: '1px solid #c8a96e',
+                    background: '#000',
+                  }}
+                >
+                  <iframe
+                    title="FB60 — Vendor Invoice walkthrough"
+                    src="https://www.youtube.com/embed/jBM-snzxPrs"
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      border: 'none',
+                    }}
+                    frameBorder="0"
+                    allowFullScreen={true}
+                  />
+                </div>
+              )}
               {tcodes.includes('FBL3N') && (
                 <div
                   style={{
