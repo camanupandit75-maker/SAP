@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 
 // ─── Curriculum (CA-focused: where to click, what to type; no accounting theory) ─
 const curriculum = [
@@ -7800,25 +7801,31 @@ export default function App() {
     });
   };
 
+  let body;
   switch (page) {
     case 'about':
-      return <AboutPage navigate={navigate} />;
+      body = <AboutPage navigate={navigate} />;
+      break;
     case 'testimonials':
-      return <TestimonialsPage navigate={navigate} />;
+      body = <TestimonialsPage navigate={navigate} />;
+      break;
     case 'disclaimer':
-      return <DisclaimerPage navigate={navigate} />;
+      body = <DisclaimerPage navigate={navigate} />;
+      break;
     case 'terms':
-      return <TermsPage navigate={navigate} />;
+      body = <TermsPage navigate={navigate} />;
+      break;
     case 'module':
-      return (
+      body = (
         <ModulePage
           navigate={navigate}
           moduleIndex={moduleIndex}
           completedLessons={completedLessons}
         />
       );
+      break;
     case 'lesson':
-      return (
+      body = (
         <LessonPage
           navigate={navigate}
           moduleIndex={moduleIndex}
@@ -7827,21 +7834,34 @@ export default function App() {
           completedLessons={completedLessons}
         />
       );
+      break;
     case 'tcode':
-      return <TCodePage navigate={navigate} />;
+      body = <TCodePage navigate={navigate} />;
+      break;
     case 'scenarios':
-      return <ScenariosPage navigate={navigate} setSimState={setSimState} />;
+      body = <ScenariosPage navigate={navigate} setSimState={setSimState} />;
+      break;
     case 'cheatsheet':
-      return <CheatSheetPage navigate={navigate} />;
+      body = <CheatSheetPage navigate={navigate} />;
+      break;
     case 'simulator':
-      return (
+      body = (
         <SimulatorShell
           state={simState}
           setState={setSimState}
           navigate={navigate}
         />
       );
+      break;
     default:
-      return <HomePage navigate={navigate} completedLessons={completedLessons} />;
+      body = <HomePage navigate={navigate} completedLessons={completedLessons} />;
+      break;
   }
+
+  return (
+    <div>
+      {body}
+      <Analytics />
+    </div>
+  );
 }
