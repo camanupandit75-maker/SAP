@@ -2241,15 +2241,17 @@ function HomePage({ navigate, completedLessons }) {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {Icons.logo}
-          <span style={{
-            fontFamily: C.heading, fontSize: 18, fontWeight: 700,
-            color: C.accentLight, letterSpacing: '0.5px',
-          }}>
-            SAP FICO
-          </span>
-          <span style={{ color: C.textMuted, fontSize: 12, fontWeight: 400, marginLeft: 4 }}>
-            Learning Platform
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+            <span style={{
+              fontFamily: C.heading, fontSize: 18, fontWeight: 700,
+              color: C.accent, letterSpacing: '0.5px',
+            }}>
+              ZeroFico
+            </span>
+            <span style={{ color: C.textMuted, fontSize: 11, fontWeight: 500, letterSpacing: '0.4px' }}>
+              SAP Training Built for Chartered Accountants
+            </span>
+          </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <div style={{ width: 160 }}>
@@ -2358,12 +2360,12 @@ function HomePage({ navigate, completedLessons }) {
         <h1 style={{
           fontFamily: C.heading, fontSize: 42, fontWeight: 700,
           color: C.accentLight, marginBottom: 8, lineHeight: 1.2,
+          whiteSpace: 'pre-line',
         }}>
-          Master SAP FICO
+          {'ZeroFico — SAP FICO Training\nBuilt for Chartered Accountants'}
         </h1>
-        <p style={{ fontSize: 16, color: C.textSecondary, marginBottom: 40, maxWidth: 560, lineHeight: 1.6 }}>
-          Financial Accounting & Controlling — structured learning with real-world
-          transaction codes, CA insights, and assessment-driven mastery.
+        <p style={{ fontSize: 16, color: C.textSecondary, marginBottom: 40, maxWidth: 640, lineHeight: 1.6, whiteSpace: 'pre-line' }}>
+          {'Skip the theory. You already know accounting. Learn exactly where to click,\nwhat T-code to use, and how your expertise maps to SAP. Built by a CA, for CAs.'}
         </p>
 
         {/* Stat boxes */}
@@ -2474,7 +2476,7 @@ function HomePage({ navigate, completedLessons }) {
             }}
             onClick={() => navigate('testimonials')}
           >
-            What CAs say about FicoReady →
+            What CAs say about ZeroFico →
           </button>
         </section>
       </section>
@@ -7139,7 +7141,7 @@ const TESTIMONIALS_DATA = [
     designation: 'Finance Controller',
     company: 'Auto parts manufacturing, Pune',
     experience: 'ACA, 15 years in practice',
-    text: 'I joined as FC when the company had just gone live on SAP. FicoReady’s Tally-to-SAP mapping was the key — I could relate every screen to what I did in Tally. FB50 and FBL3N are now part of my daily routine. The simulator gave me confidence before Day 1.',
+    text: 'I joined as FC when the company had just gone live on SAP. ZeroFico’s Tally-to-SAP mapping was the key — I could relate every screen to what I did in Tally. FB50 and FBL3N are now part of my daily routine. The simulator gave me confidence before Day 1.',
     rating: 5,
     module: 'Journal Entries',
   },
@@ -7166,7 +7168,7 @@ const TESTIMONIALS_DATA = [
     designation: 'Audit Manager',
     company: 'CA firm, Mumbai',
     experience: 'ACA, 14 years in practice',
-    text: 'We audit several clients on SAP. I needed to understand document flow and how to trace a payment back to the invoice. FicoReady’s scenarios and the simulator (F-28, FBL5N) made it click. I no longer depend on the client’s IT team to pull reports.',
+    text: 'We audit several clients on SAP. I needed to understand document flow and how to trace a payment back to the invoice. ZeroFico’s scenarios and the simulator (F-28, FBL5N) made it click. I no longer depend on the client’s IT team to pull reports.',
     rating: 5,
     module: 'Accounts Receivable',
   },
@@ -7195,7 +7197,7 @@ const TESTIMONIALS_DATA = [
 // ═══════════════════════════════════════════════════════════════════════════════
 function AboutPage({ navigate }) {
   const h = useHover();
-  const PLATFORM_NAME = 'FicoReady';
+  const PLATFORM_NAME = 'ZeroFico';
   const goldIcon = (d) => (
     <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, borderRadius: 10, background: 'rgba(200,169,110,0.15)', color: C.accent }}>
       {d}
@@ -7213,10 +7215,14 @@ function AboutPage({ navigate }) {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {Icons.logo}
-          <span style={{ fontFamily: C.heading, fontSize: 18, fontWeight: 700, color: C.accentLight, letterSpacing: '0.5px' }}>
-            SAP FICO
-          </span>
-          <span style={{ color: C.textMuted, fontSize: 12, fontWeight: 400, marginLeft: 4 }}>Learning Platform</span>
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+            <span style={{ fontFamily: C.heading, fontSize: 18, fontWeight: 700, color: C.accent, letterSpacing: '0.5px' }}>
+              ZeroFico
+            </span>
+            <span style={{ color: C.textMuted, fontSize: 11, fontWeight: 500, letterSpacing: '0.4px' }}>
+              SAP Training Built for Chartered Accountants
+            </span>
+          </div>
         </div>
         <button
           style={{ ...s.backBtn, ...(h.is('back') ? { color: C.accentLight } : {}) }}
@@ -7234,7 +7240,7 @@ function AboutPage({ navigate }) {
             Built by a CA, for CAs
           </h1>
           <p style={{ fontSize: 16, color: C.textSecondary, lineHeight: 1.7 }}>
-            SAP FICO training that skips the accounting basics and goes straight to what you need:
+            ZeroFico training that skips the accounting basics and goes straight to what you need:
             <br />
             which T-code to use, when, and why — so you can operate confidently from day one.
           </p>
@@ -7389,8 +7395,12 @@ function TestimonialsPage({ navigate }) {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {Icons.logo}
-          <span style={{ fontFamily: C.heading, fontSize: 18, fontWeight: 700, color: C.accentLight, letterSpacing: '0.5px' }}>SAP FICO</span>
-          <span style={{ color: C.textMuted, fontSize: 12, fontWeight: 400, marginLeft: 4 }}>Learning Platform</span>
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+            <span style={{ fontFamily: C.heading, fontSize: 18, fontWeight: 700, color: C.accent, letterSpacing: '0.5px' }}>ZeroFico</span>
+            <span style={{ color: C.textMuted, fontSize: 11, fontWeight: 500, letterSpacing: '0.4px' }}>
+              SAP Training Built for Chartered Accountants
+            </span>
+          </div>
         </div>
         <button style={{ ...s.backBtn, ...(h.is('back') ? { color: C.accentLight } : {}) }} {...h.bind('back')} onClick={() => navigate('home')}>
           {Icons.back} Back to Home
@@ -7399,7 +7409,7 @@ function TestimonialsPage({ navigate }) {
 
       <main style={{ maxWidth: 1000, margin: '0 auto', padding: '40px 32px 64px' }}>
         <h1 style={{ fontFamily: C.heading, fontSize: 28, fontWeight: 700, color: C.accentLight, marginBottom: 8 }}>
-          What CAs say about FicoReady
+          What CAs say about ZeroFico
         </h1>
         <p style={{ fontSize: 14, color: C.textSecondary, marginBottom: 32 }}>
           Real feedback from chartered accountants who used the platform to get SAP-ready.
@@ -7490,7 +7500,7 @@ function TestimonialsPage({ navigate }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // PAGE: DISCLAIMER
 // ═══════════════════════════════════════════════════════════════════════════════
-const PLATFORM_NAME_DISCLAIMER = 'FicoReady';
+const PLATFORM_NAME_DISCLAIMER = 'ZeroFico';
 
 function DisclaimerPage({ navigate }) {
   const h = useHover();
@@ -7529,8 +7539,12 @@ function DisclaimerPage({ navigate }) {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {Icons.logo}
-          <span style={{ fontFamily: C.heading, fontSize: 18, fontWeight: 700, color: C.accentLight, letterSpacing: '0.5px' }}>SAP FICO</span>
-          <span style={{ color: C.textMuted, fontSize: 12, fontWeight: 400, marginLeft: 4 }}>Learning Platform</span>
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+            <span style={{ fontFamily: C.heading, fontSize: 18, fontWeight: 700, color: C.accent, letterSpacing: '0.5px' }}>ZeroFico</span>
+            <span style={{ color: C.textMuted, fontSize: 11, fontWeight: 500, letterSpacing: '0.4px' }}>
+              SAP Training Built for Chartered Accountants
+            </span>
+          </div>
         </div>
         <button style={{ ...s.backBtn, ...(h.is('back') ? { color: C.accentLight } : {}) }} {...h.bind('back')} onClick={() => navigate('home')}>
           {Icons.back} Back to Home
@@ -7573,7 +7587,7 @@ function DisclaimerPage({ navigate }) {
 }
 
 // ─── Platform footer (About | Disclaimer | Terms | Testimonials + copyright) ───
-const PLATFORM_NAME_FOOTER = 'FicoReady';
+const PLATFORM_NAME_FOOTER = 'ZeroFico';
 
 function PlatformFooter({ navigate }) {
   const linkStyle = {
@@ -7607,8 +7621,8 @@ function PlatformFooter({ navigate }) {
         <span style={{ color: C.border }}>|</span>
         <button type="button" style={linkStyle} onClick={() => navigate('testimonials')}>Testimonials</button>
       </div>
-      <div style={{ color: C.textMuted, lineHeight: 1.5 }}>
-        © 2025 {PLATFORM_NAME_FOOTER} | Created by Manu Pandit, ACA | Not affiliated with SAP SE
+      <div style={{ color: C.textMuted, lineHeight: 1.5, whiteSpace: 'pre-line' }}>
+        {'© 2025 ' + PLATFORM_NAME_FOOTER + ' | Not affiliated with SAP SE\n| Built by CAs for CAs'}
       </div>
     </footer>
   );
@@ -7617,7 +7631,7 @@ function PlatformFooter({ navigate }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // PAGE: TERMS OF SERVICE
 // ═══════════════════════════════════════════════════════════════════════════════
-const PLATFORM_NAME_TERMS = 'FicoReady';
+const PLATFORM_NAME_TERMS = 'ZeroFico';
 
 const TERMS_SECTIONS = [
   {
@@ -7650,7 +7664,7 @@ const TERMS_SECTIONS = [
   },
   {
     title: 'Governing Law',
-    content: 'These terms are governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of the courts of New Delhi, India.',
+    content: 'These terms are governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of the courts of New Delhi, India. ZeroFico, New Delhi, India.',
   },
   {
     title: 'Changes to Terms',
@@ -7658,7 +7672,7 @@ const TERMS_SECTIONS = [
   },
   {
     title: 'Contact',
-    content: `${PLATFORM_NAME_TERMS} | Created by Manu Pandit, ACA (ICAI). For questions about these terms, contact through the platform or the creator\'s professional channels.`,
+    content: `${PLATFORM_NAME_TERMS} | Created by Manu Pandit, ACA (ICAI). Email: hello@zerofico.com`,
   },
 ];
 
@@ -7677,8 +7691,12 @@ function TermsPage({ navigate }) {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {Icons.logo}
-          <span style={{ fontFamily: C.heading, fontSize: 18, fontWeight: 700, color: C.accentLight, letterSpacing: '0.5px' }}>SAP FICO</span>
-          <span style={{ color: C.textMuted, fontSize: 12, fontWeight: 400, marginLeft: 4 }}>Learning Platform</span>
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+            <span style={{ fontFamily: C.heading, fontSize: 18, fontWeight: 700, color: C.accent, letterSpacing: '0.5px' }}>ZeroFico</span>
+            <span style={{ color: C.textMuted, fontSize: 11, fontWeight: 500, letterSpacing: '0.4px' }}>
+              SAP Training Built for Chartered Accountants
+            </span>
+          </div>
         </div>
         <button style={{ ...s.backBtn }} onClick={() => navigate('home')}>
           {Icons.back} Back to Home
