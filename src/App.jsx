@@ -2211,8 +2211,9 @@ function useHover() {
 // ═══════════════════════════════════════════════════════════════════════════════
 // PAGE 1: HOME
 // ═══════════════════════════════════════════════════════════════════════════════
-function HomePage({ navigate, completedLessons }) {
+function HomePage({ navigate, completedLessons, returningUser, lastLessonName, onContinueLastLesson, resetSuccessMsg }) {
   const h = useHover();
+  const [dismissWelcome, setDismissWelcome] = useState(false);
 
   const completedCount = completedLessons.size;
   const progressPct = totalLessons ? Math.round((completedCount / totalLessons) * 100) : 0;
@@ -2429,6 +2430,30 @@ function HomePage({ navigate, completedLessons }) {
             </div>
           ))}
         </div>
+
+        {resetSuccessMsg && (
+          <div style={{ ...s.card, borderLeft: `4px solid ${C.success}`, padding: 12, marginBottom: 14, color: C.success, fontSize: 13 }}>
+            {resetSuccessMsg}
+          </div>
+        )}
+
+        {returningUser && !dismissWelcome && (
+          <div style={{ ...s.card, borderLeft: `4px solid ${C.accent}`, padding: 16, marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+            <div>
+              <div style={{ color: C.accentLight, fontWeight: 600, marginBottom: 4 }}>Welcome back. You left off at {lastLessonName || 'your last lesson'}.</div>
+              <button
+                type="button"
+                style={{ ...s.btnPrimary, padding: '8px 14px', fontSize: 13 }}
+                onClick={onContinueLastLesson}
+              >
+                Continue Learning →
+              </button>
+            </div>
+            <button type="button" onClick={() => setDismissWelcome(true)} style={{ background: 'none', border: 'none', color: C.textMuted, cursor: 'pointer', fontSize: 16 }}>
+              ✕
+            </button>
+          </div>
+        )}
 
         {/* ── Module Grid ──────────────────────────────────── */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
@@ -2657,7 +2682,7 @@ function ModulePage({ navigate, moduleIndex, completedLessons }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // PAGE 3: LESSON
 // ═══════════════════════════════════════════════════════════════════════════════
-function LessonPage({ navigate, moduleIndex, lessonIndex, onCompleteLesson, completedLessons }) {
+function LessonPage({ navigate, moduleIndex, lessonIndex, onCompleteLesson, completedLessons, onQuizAttempt, onQuizScore, onLastLessonChange }) {
   const h = useHover();
   const [selectedOption, setSelectedOption] = useState(null);
   const [quizAttempted, setQuizAttempted] = useState(false);
@@ -2691,11 +2716,15 @@ function LessonPage({ navigate, moduleIndex, lessonIndex, onCompleteLesson, comp
     if (quizAttempted) return;
     setSelectedOption(i);
     setQuizAttempted(true);
+    const lessonId = `${moduleIndex}-${lessonIndex}`;
+    if (onQuizAttempt) onQuizAttempt(lessonId);
+    if (onQuizScore && quiz) onQuizScore(lessonId, i === quiz.correctIndex ? 100 : 0);
   };
 
   const handleMarkComplete = () => {
     if (!quizAttempted || alreadyCompleted) return;
     onCompleteLesson(moduleIndex, lessonIndex);
+    if (onLastLessonChange) onLastLessonChange({ moduleId: moduleIndex, lessonId: lessonIndex });
     navigate('module', moduleIndex);
   };
 
@@ -8276,6 +8305,16 @@ function PlatformFooter({ navigate }) {
         <button type="button" style={linkStyle} onClick={() => navigate('terms')}>Terms</button>
         <span style={{ color: C.border }}>|</span>
         <button type="button" style={linkStyle} onClick={() => navigate('testimonials')}>Testimonials</button>
+        <span style={{ color: C.border }}>|</span>
+        <button
+          type="button"
+          style={{ ...linkStyle, color: '#ef4444', border: '1px solid #ef4444', padding: '6px 12px', borderRadius: 6, background: 'transparent', cursor: 'pointer' }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.1)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+          onClick={() => window.dispatchEvent(new CustomEvent('zerofico-reset-progress'))}
+        >
+          Reset Progress
+        </button>
       </div>
       <div style={{ color: C.textMuted, lineHeight: 1.5, whiteSpace: 'pre-line' }}>
         {'© 2025 ' + PLATFORM_NAME_FOOTER + ' | Not affiliated with SAP SE\n| Built by CAs for CAs'}
@@ -8435,16 +8474,73 @@ function TermsPage({ navigate }) {
 // APP SHELL — Navigation Router
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function App() {
+  const PROGRESS_KEY = 'zerofico_progress';
   const [page, setPage] = useState('home');
   const [moduleIndex, setModuleIndex] = useState(0);
   const [lessonIndex, setLessonIndex] = useState(0);
   const [completedLessons, setCompletedLessons] = useState(() => new Set());
+  const [quizScores, setQuizScores] = useState({});
+  const [quizAttemptedSet, setQuizAttemptedSet] = useState(() => new Set());
+  const [lastLesson, setLastLesson] = useState(null);
+  const [startDate, setStartDate] = useState(Date.now());
+  const [totalTimeSpent, setTotalTimeSpent] = useState(0);
+  const [returningUser, setReturningUser] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetSuccessMsg, setResetSuccessMsg] = useState('');
   const [simState, setSimState] = useState(() => createInitialSimState());
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(PROGRESS_KEY);
+      if (!raw) {
+        localStorage.setItem(PROGRESS_KEY, JSON.stringify({
+          completedLessons: [],
+          quizScores: {},
+          quizAttempted: [],
+          lastLesson: null,
+          startDate: Date.now(),
+          totalTimeSpent: 0,
+        }));
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed.completedLessons)) setCompletedLessons(new Set(parsed.completedLessons));
+      if (parsed.quizScores && typeof parsed.quizScores === 'object') setQuizScores(parsed.quizScores);
+      if (Array.isArray(parsed.quizAttempted)) setQuizAttemptedSet(new Set(parsed.quizAttempted));
+      if (parsed.lastLesson) setLastLesson(parsed.lastLesson);
+      if (parsed.startDate) setStartDate(parsed.startDate);
+      if (typeof parsed.totalTimeSpent === 'number') setTotalTimeSpent(parsed.totalTimeSpent);
+      if (parsed.lastLesson) setReturningUser(true);
+    } catch {
+      // ignore corrupted progress and continue with default state
+    }
+  }, []);
+
+  useEffect(() => {
+    const saveObj = {
+      completedLessons: Array.from(completedLessons),
+      quizScores,
+      quizAttempted: Array.from(quizAttemptedSet),
+      lastLesson,
+      startDate,
+      totalTimeSpent: Math.max(totalTimeSpent, Math.floor((Date.now() - startDate) / 60000)),
+    };
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify(saveObj));
+  }, [completedLessons, quizScores, quizAttemptedSet, lastLesson, startDate, totalTimeSpent]);
+
+  useEffect(() => {
+    const onResetRequest = () => setShowResetConfirm(true);
+    window.addEventListener('zerofico-reset-progress', onResetRequest);
+    return () => window.removeEventListener('zerofico-reset-progress', onResetRequest);
+  }, []);
 
   const navigate = (target, modIdx, lesIdx) => {
     setPage(target);
     if (modIdx !== undefined) setModuleIndex(modIdx);
     if (lesIdx !== undefined) setLessonIndex(lesIdx);
+    if (target === 'lesson' && modIdx !== undefined && lesIdx !== undefined) {
+      setLastLesson({ moduleId: modIdx, lessonId: lesIdx });
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -8454,7 +8550,39 @@ export default function App() {
       next.add(`${modIdx}-${lesIdx}`);
       return next;
     });
+    setLastLesson({ moduleId: modIdx, lessonId: lesIdx });
   };
+
+  const onQuizAttempt = (lessonId) => {
+    setQuizAttemptedSet((prev) => {
+      const next = new Set(prev);
+      next.add(lessonId);
+      return next;
+    });
+  };
+
+  const onQuizScore = (lessonId, score) => {
+    setQuizScores((prev) => ({ ...prev, [lessonId]: score }));
+  };
+
+  const resetProgress = () => {
+    localStorage.removeItem(PROGRESS_KEY);
+    setCompletedLessons(new Set());
+    setQuizScores({});
+    setQuizAttemptedSet(new Set());
+    setLastLesson(null);
+    setStartDate(Date.now());
+    setTotalTimeSpent(0);
+    setReturningUser(false);
+    setShowResetConfirm(false);
+    setResetSuccessMsg('Progress reset successfully');
+    setPage('home');
+    setTimeout(() => setResetSuccessMsg(''), 2500);
+  };
+
+  const lastLessonName = lastLesson
+    ? `${curriculum[lastLesson.moduleId]?.title || 'Module'} - ${curriculum[lastLesson.moduleId]?.lessons?.[lastLesson.lessonId]?.title || 'Lesson'}`
+    : '';
 
   let body;
   switch (page) {
@@ -8493,6 +8621,9 @@ export default function App() {
           lessonIndex={lessonIndex}
           onCompleteLesson={onCompleteLesson}
           completedLessons={completedLessons}
+          onQuizAttempt={onQuizAttempt}
+          onQuizScore={onQuizScore}
+          onLastLessonChange={setLastLesson}
         />
       );
       break;
@@ -8515,13 +8646,39 @@ export default function App() {
       );
       break;
     default:
-      body = <HomePage navigate={navigate} completedLessons={completedLessons} />;
+      body = (
+        <HomePage
+          navigate={navigate}
+          completedLessons={completedLessons}
+          returningUser={returningUser}
+          lastLessonName={lastLessonName}
+          onContinueLastLesson={() => {
+            if (!lastLesson) return;
+            navigate('lesson', lastLesson.moduleId, lastLesson.lessonId);
+          }}
+          resetSuccessMsg={resetSuccessMsg}
+        />
+      );
       break;
   }
 
   return (
     <div>
       {body}
+      {showResetConfirm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1200 }}>
+          <div style={{ ...s.card, width: 'min(520px, 92vw)', padding: 20, background: C.bgCard }}>
+            <div style={{ fontFamily: C.heading, color: C.accentLight, fontSize: 22, marginBottom: 8 }}>Reset Progress?</div>
+            <div style={{ color: C.textSecondary, lineHeight: 1.7, marginBottom: 16 }}>
+              This will permanently clear all your progress, quiz scores and completed lessons. Are you sure?
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button type="button" style={{ ...s.card, padding: '9px 12px', background: C.bgSecondary, border: `1px solid ${C.border}`, color: C.textSecondary }} onClick={() => setShowResetConfirm(false)}>Cancel</button>
+              <button type="button" style={{ ...s.btnPrimary, background: 'linear-gradient(135deg,#ef4444 0%, #b91c1c 100%)', color: '#fff' }} onClick={resetProgress}>Yes, Reset Everything</button>
+            </div>
+          </div>
+        </div>
+      )}
       <Analytics />
     </div>
   );
