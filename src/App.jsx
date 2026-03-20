@@ -2340,6 +2340,24 @@ function HomePage({ navigate, completedLessons }) {
               ...s.card,
               padding: '8px 16px',
               fontSize: 12,
+              color: C.accentLight,
+              fontFamily: C.body,
+              fontWeight: 600,
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: C.bgCard,
+              border: `1px solid ${C.border}`,
+              ...(h.is('drill-btn') ? { borderColor: C.accent, color: C.accentLight } : {}),
+            }}
+            {...h.bind('drill-btn')}
+            onClick={() => navigate('drill')}
+          >
+            ⚡ Speed Drill
+          </button>
+          <button
+            style={{
+              ...s.card,
+              padding: '8px 16px',
+              fontSize: 12,
               color: C.textSecondary,
               fontFamily: C.body,
               fontWeight: 500,
@@ -7498,6 +7516,304 @@ function TestimonialsPage({ navigate }) {
   );
 }
 
+const drillQuestions = [
+  { task: 'Post a journal entry', answer: 'FB50' },
+  { task: 'Display a posted document', answer: 'FB03' },
+  { task: 'Reverse a document', answer: 'FB08' },
+  { task: 'View G/L line items', answer: 'FBL3N' },
+  { task: 'Post a vendor invoice', answer: 'FB60' },
+  { task: 'Look up a vendor master', answer: 'FK03' },
+  { task: 'Run automatic payments', answer: 'F110' },
+  { task: 'Post manual outgoing payment', answer: 'F-53' },
+  { task: 'View vendor line items', answer: 'FBL1N' },
+  { task: 'Post a customer invoice', answer: 'FB70' },
+  { task: 'Receive incoming payment', answer: 'F-28' },
+  { task: 'Clear open items', answer: 'F-32' },
+  { task: 'View customer line items', answer: 'FBL5N' },
+  { task: 'Look up customer master', answer: 'FD03' },
+  { task: 'View financial statements', answer: 'F.01' },
+  { task: 'Run balance sheet report', answer: 'S_ALR_87012284' },
+  { task: 'Post manual bank statement', answer: 'FF67' },
+  { task: 'Process bank statement items', answer: 'FEBAN' },
+  { task: 'Open or close posting periods', answer: 'OB52' },
+  { task: 'Run depreciation', answer: 'AFAB' },
+];
+
+function TCodeSpeedDrill({ navigate }) {
+  const h = useHover();
+  const [mode, setMode] = useState(null);
+  const [started, setStarted] = useState(false);
+  const [index, setIndex] = useState(0);
+  const [input, setInput] = useState('');
+  const [score, setScore] = useState(0);
+  const [attempted, setAttempted] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(false);
+  const [usedHint, setUsedHint] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+  const [wrongList, setWrongList] = useState([]);
+  const [secondsLeft, setSecondsLeft] = useState(30);
+  const [startTs, setStartTs] = useState(null);
+  const [endTs, setEndTs] = useState(null);
+  const [flash, setFlash] = useState(null);
+  const [bestScores, setBestScores] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('zerofico_drill_best') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  const total = drillQuestions.length;
+  const current = drillQuestions[index];
+  const progressPct = total ? Math.round(((index + 1) / total) * 100) : 0;
+  const finished = started && index >= total;
+  const elapsedMs = startTs ? ((finished ? endTs : Date.now()) - startTs) : 0;
+  const elapsedSec = Math.max(0, Math.floor(elapsedMs / 1000));
+  const mm = String(Math.floor(elapsedSec / 60)).padStart(2, '0');
+  const ss = String(elapsedSec % 60).padStart(2, '0');
+
+  useEffect(() => {
+    if (!started || finished || mode !== 'speed' || attempted) return undefined;
+    const timer = setInterval(() => {
+      setSecondsLeft((s) => {
+        if (s <= 1) {
+          clearInterval(timer);
+          setAttempted(true);
+          setIsCorrect(false);
+          setFeedback(`Time up. Correct answer: ${current.answer}`);
+          setWrongList((w) => [...w, current]);
+          setFlash('wrong');
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [started, finished, mode, attempted, current]);
+
+  const startGame = (selectedMode) => {
+    setMode(selectedMode);
+    setStarted(true);
+    setIndex(0);
+    setInput('');
+    setScore(0);
+    setAttempted(false);
+    setIsCorrect(false);
+    setUsedHint(false);
+    setFeedback(null);
+    setWrongList([]);
+    setSecondsLeft(30);
+    setStartTs(Date.now());
+    setEndTs(null);
+    setFlash(null);
+  };
+
+  const submitAnswer = () => {
+    if (attempted || !current) return;
+    const normalized = input.trim().toUpperCase();
+    if (!normalized) return;
+    const correct = normalized === current.answer.toUpperCase();
+    setAttempted(true);
+    setIsCorrect(correct);
+    if (correct) {
+      const pts = usedHint ? 5 : 10;
+      setScore((s) => s + pts);
+      setFeedback(`Correct! +${pts} points`);
+      setFlash('correct');
+    } else {
+      setFeedback(`Incorrect. Correct answer: ${current.answer}`);
+      setWrongList((w) => [...w, current]);
+      setFlash('wrong');
+    }
+  };
+
+  const nextQuestion = () => {
+    const nextIdx = index + 1;
+    setFlash(null);
+    if (nextIdx >= total) {
+      const now = Date.now();
+      setIndex(nextIdx);
+      setEndTs(now);
+      const entry = {
+        score,
+        mode,
+        seconds: Math.floor((now - (startTs || now)) / 1000),
+        at: now,
+      };
+      const nextBest = [...bestScores, entry].sort((a, b) => b.score - a.score || a.seconds - b.seconds).slice(0, 5);
+      setBestScores(nextBest);
+      localStorage.setItem('zerofico_drill_best', JSON.stringify(nextBest));
+      return;
+    }
+    setIndex(nextIdx);
+    setInput('');
+    setAttempted(false);
+    setIsCorrect(false);
+    setUsedHint(false);
+    setFeedback(null);
+    setSecondsLeft(30);
+  };
+
+  const badge = score <= 80
+    ? 'Keep Practicing 📚'
+    : score <= 140
+      ? 'Getting There 💪'
+      : score <= 180
+        ? 'Almost Ready ⭐'
+        : 'Day 1 Ready 🏆';
+
+  return (
+    <div style={{ minHeight: '100vh', fontFamily: C.body, background: C.bgPrimary, padding: '32px', maxWidth: 980, margin: '0 auto' }}>
+      <button style={{ ...s.backBtn, ...(h.is('back') ? { color: C.accentLight } : {}) }} {...h.bind('back')} onClick={() => navigate('home')}>
+        {Icons.back} Back to Home
+      </button>
+
+      <h1 style={{ fontFamily: C.heading, fontSize: 30, color: C.accentLight, marginBottom: 8 }}>⚡ T-Code Speed Drill</h1>
+      <p style={{ color: C.textSecondary, marginBottom: 24 }}>Train memory under pressure and improve SAP navigation speed.</p>
+
+      {!started && (
+        <div style={{ ...s.card, padding: 24, borderColor: C.border }}>
+          <div style={{ fontSize: 12, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 12 }}>Choose mode</div>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
+            <button type="button" onClick={() => startGame('practice')} style={{ ...s.btnPrimary }}>Practice Mode</button>
+            <button type="button" onClick={() => startGame('speed')} style={{ ...s.btnPrimary }}>Speed Mode (30s)</button>
+          </div>
+          <div style={{ color: C.textSecondary, fontSize: 13, lineHeight: 1.8 }}>
+            Practice Mode is learning-focused and shows answers. Speed Mode gives 30 seconds per question and tracks timing.
+          </div>
+        </div>
+      )}
+
+      {started && !finished && (
+        <>
+          <div style={{ marginBottom: 12, color: C.textMuted, fontSize: 12 }}>Question {index + 1} of {total}</div>
+          <div style={s.progressBar(progressPct)}>
+            <div style={s.progressFill(progressPct)} />
+          </div>
+
+          {mode === 'speed' && (
+            <div style={{ marginTop: 12, marginBottom: 14 }}>
+              <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 6 }}>Time left: {secondsLeft}s</div>
+              <div style={s.progressBar((secondsLeft / 30) * 100, '#b91c1c')}>
+                <div style={s.progressFill((secondsLeft / 30) * 100, '#b91c1c')} />
+              </div>
+            </div>
+          )}
+
+          <div style={{ ...s.card, marginTop: 14, padding: 28, position: 'relative', overflow: 'hidden' }}>
+            {flash && (
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: flash === 'correct' ? 'rgba(74,170,122,0.2)' : 'rgba(185,28,28,0.2)',
+                  pointerEvents: 'none',
+                }}
+              />
+            )}
+            <div style={{ fontFamily: C.heading, fontSize: 36, color: C.accentLight, marginBottom: 22, lineHeight: 1.2 }}>
+              {current.task}
+            </div>
+            <form onSubmit={(e) => { e.preventDefault(); submitAnswer(); }} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Type T-code..."
+                disabled={attempted}
+                style={{
+                  flex: 1,
+                  minWidth: 280,
+                  fontFamily: C.mono,
+                  fontSize: 28,
+                  letterSpacing: '1px',
+                  padding: '14px 16px',
+                  borderRadius: 10,
+                  border: `1px solid ${C.border}`,
+                  background: '#0f1724',
+                  color: C.accentLight,
+                }}
+              />
+              {!attempted && <button type="submit" style={s.btnPrimary}>Submit</button>}
+              {!attempted && (
+                <button
+                  type="button"
+                  onClick={() => setUsedHint(true)}
+                  style={{ ...s.card, padding: '10px 14px', color: C.textSecondary, background: C.bgSecondary, border: `1px solid ${C.border}` }}
+                >
+                  Show Hint
+                </button>
+              )}
+            </form>
+            {usedHint && !attempted && (
+              <div style={{ marginTop: 10, color: C.warning, fontSize: 13 }}>
+                Hint: starts with <strong>{current.answer.slice(0, 2)}</strong>
+              </div>
+            )}
+            <div style={{ marginTop: 14, fontSize: 13, color: C.textSecondary }}>Running score: <span style={{ color: C.accentLight, fontWeight: 700 }}>{score}</span></div>
+            {feedback && (
+              <div style={{ marginTop: 14, color: isCorrect ? C.success : '#ef4444', fontSize: 14, fontWeight: 600 }}>
+                {feedback}
+              </div>
+            )}
+            {attempted && !isCorrect && (
+              <div style={{ marginTop: 8, color: C.success, fontSize: 13 }}>
+                Correct answer: {current.answer}
+              </div>
+            )}
+            {attempted && (
+              <button type="button" onClick={nextQuestion} style={{ ...s.btnPrimary, marginTop: 16 }}>
+                Next Question →
+              </button>
+            )}
+          </div>
+        </>
+      )}
+
+      {finished && (
+        <div style={{ ...s.card, padding: 28 }}>
+          <h2 style={{ fontFamily: C.heading, fontSize: 28, color: C.accentLight, marginBottom: 12 }}>Drill Complete</h2>
+          <div style={{ fontSize: 16, color: C.textSecondary, marginBottom: 8 }}>Total score: <strong style={{ color: C.accentLight }}>{score}</strong> / 200</div>
+          <div style={{ fontSize: 16, color: C.textSecondary, marginBottom: 18 }}>Time taken: <strong style={{ color: C.accentLight }}>{mm}:{ss}</strong></div>
+          <div style={{ display: 'inline-block', padding: '8px 14px', borderRadius: 20, background: 'rgba(200,169,110,0.15)', color: C.accent, fontWeight: 700, marginBottom: 18 }}>
+            {badge}
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 12, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 8 }}>Review These</div>
+            {wrongList.length === 0 ? (
+              <div style={{ color: C.success }}>No weak areas. Great run.</div>
+            ) : (
+              <div style={{ color: C.textSecondary, lineHeight: 1.8 }}>
+                {wrongList.map((q) => <div key={q.task}>- {q.task} → {q.answer}</div>)}
+              </div>
+            )}
+          </div>
+
+          <div style={{ marginBottom: 18 }}>
+            <div style={{ fontSize: 12, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 8 }}>Personal Best</div>
+            {bestScores.length === 0 ? (
+              <div style={{ color: C.textSecondary }}>No saved scores yet.</div>
+            ) : (
+              <div style={{ color: C.textSecondary, lineHeight: 1.8 }}>
+                {bestScores.map((b, i) => (
+                  <div key={`${b.at}-${i}`}>#{i + 1} — {b.score} pts ({b.mode}) in {Math.floor(b.seconds / 60)}m {b.seconds % 60}s</div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button type="button" style={s.btnPrimary} onClick={() => startGame(mode || 'practice')}>Try Again</button>
+            <button type="button" style={{ ...s.card, padding: '10px 14px', color: C.textSecondary, background: C.bgSecondary, border: `1px solid ${C.border}` }} onClick={() => navigate('home')}>Back to Home</button>
+          </div>
+        </div>
+      )}
+
+      <PlatformFooter navigate={navigate} />
+    </div>
+  );
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // PAGE: DISCLAIMER
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -7814,6 +8130,9 @@ export default function App() {
       break;
     case 'terms':
       body = <TermsPage navigate={navigate} />;
+      break;
+    case 'drill':
+      body = <TCodeSpeedDrill navigate={navigate} />;
       break;
     case 'module':
       body = (
