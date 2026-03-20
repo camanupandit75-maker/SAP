@@ -2358,6 +2358,24 @@ function HomePage({ navigate, completedLessons }) {
               ...s.card,
               padding: '8px 16px',
               fontSize: 12,
+              color: '#ef4444',
+              fontFamily: C.body,
+              fontWeight: 600,
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: C.bgCard,
+              border: `1px solid ${C.border}`,
+              ...(h.is('errors-btn') ? { borderColor: '#ef4444', color: '#fca5a5' } : {}),
+            }}
+            {...h.bind('errors-btn')}
+            onClick={() => navigate('errors')}
+          >
+            🔴 Error Decoder
+          </button>
+          <button
+            style={{
+              ...s.card,
+              padding: '8px 16px',
+              fontSize: 12,
               color: C.textSecondary,
               fontFamily: C.body,
               fontWeight: 500,
@@ -2482,6 +2500,23 @@ function HomePage({ navigate, completedLessons }) {
 
         {/* Footer — link to Testimonials */}
         <section style={{ marginTop: 48, paddingTop: 32, borderTop: `1px solid ${C.border}`, textAlign: 'center' }}>
+          <button
+            type="button"
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#ef4444',
+              fontSize: 14,
+              fontFamily: C.body,
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              marginBottom: 10,
+            }}
+            onClick={() => navigate('errors')}
+          >
+            🔴 Error Decoder — Fix SAP errors fast →
+          </button>
+          <br />
           <button
             type="button"
             style={{
@@ -2921,6 +2956,25 @@ function LessonPage({ navigate, moduleIndex, lessonIndex, onCompleteLesson, comp
         <div style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.7 }}>
           {lesson.commonMistakes}
         </div>
+      </div>
+      <div style={{ marginBottom: 28 }}>
+        <button
+          type="button"
+          style={{
+            ...s.card,
+            padding: '10px 14px',
+            color: '#fca5a5',
+            background: C.bgSecondary,
+            border: '1px solid rgba(239,68,68,0.4)',
+            fontFamily: C.body,
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: 'pointer',
+          }}
+          onClick={() => navigate('errors')}
+        >
+          🔴 Open Error Decoder for this lesson
+        </button>
       </div>
 
       {/* Quiz section */}
@@ -7516,6 +7570,291 @@ function TestimonialsPage({ navigate }) {
   );
 }
 
+const sapErrors = [
+  {
+    code: 'F5702',
+    message: 'Posting period 012/2024 is not open',
+    module: 'Period Close',
+    cause: 'The accounting period is closed. Finance team has not opened the period for posting.',
+    fix: 'Go to OB52 -> find your company code IN01 -> change the allowed posting period to include the current period -> Save.',
+    tcode: 'OB52',
+    mostCommon: true,
+  },
+  {
+    code: 'F5263',
+    message: 'Account 400100 requires a cost center assignment',
+    module: 'GL',
+    cause: 'This G/L account is a cost element and requires a cost center in the line item.',
+    fix: 'In the line item, fill the Cost Center field with a valid cost center e.g. CC001 before posting.',
+    tcode: 'FB50',
+    mostCommon: true,
+  },
+  {
+    code: 'F5085',
+    message: 'Enter an account for the remaining amount of Rs50,000',
+    module: 'GL',
+    cause: 'Debits and credits do not balance. SAP will not post an unbalanced document.',
+    fix: 'Check all line items in your document. Total debits must exactly equal total credits before you can post.',
+    tcode: 'FB50',
+    mostCommon: true,
+  },
+  {
+    code: 'F5151',
+    message: 'Vendor V1001 does not exist in company code IN01',
+    module: 'AP',
+    cause: 'The vendor number entered is either wrong or not extended to this company code.',
+    fix: 'Use FK03 to verify the vendor exists and is active in company code IN01. Check vendor number carefully.',
+    tcode: 'FK03',
+    mostCommon: true,
+  },
+  {
+    code: 'F5464',
+    message: 'Document 1800000012 has already been reversed',
+    module: 'GL',
+    cause: 'You are trying to reverse a document that was already reversed previously.',
+    fix: 'Go to FB03 -> display the document -> check the Reversal Document field to see the existing reversal.',
+    tcode: 'FB03',
+  },
+  {
+    code: 'F5579',
+    message: 'No open items found for account V1001',
+    module: 'AP',
+    cause: 'All invoices for this vendor are already cleared. There is nothing left to pay.',
+    fix: 'Check FBL1N with All Items selected to see cleared items. Verify you have the correct vendor number.',
+    tcode: 'FBL1N',
+  },
+  {
+    code: 'F5136',
+    message: 'Field Payment Method is required in company code IN01',
+    module: 'AP',
+    cause: 'The vendor master does not have a payment method assigned.',
+    fix: 'Go to FK03 -> Payment Transactions tab -> add payment method T (Bank Transfer) -> Save.',
+    tcode: 'FK03',
+  },
+  {
+    code: 'FF747',
+    message: 'Tax code V9 does not exist for country IN',
+    module: 'AP',
+    cause: 'The tax code entered is not configured for India.',
+    fix: 'Use only valid tax codes: V0 (No Tax), VN (GST 18%), VO (GST 5%). Check with your SAP configuration team.',
+    tcode: 'FB60',
+  },
+  {
+    code: 'F5808',
+    message: 'Transaction FB50 - you are not authorized',
+    module: 'GL',
+    cause: 'Your SAP user ID does not have authorization for this transaction.',
+    fix: 'Contact your SAP Basis team or system administrator to request FB50 posting authorization for your user.',
+    tcode: 'SU53',
+    mostCommon: true,
+  },
+  {
+    code: 'F5394',
+    message: 'Customer C2001 has exceeded the credit limit',
+    module: 'AR',
+    cause: 'This customer has outstanding balances beyond their approved credit limit.',
+    fix: 'Check FD03 -> Credit Management tab to see limit and exposure. Escalate to credit control team for approval.',
+    tcode: 'FD03',
+  },
+  {
+    code: 'AA607',
+    message: 'Depreciation area 01 is not defined for asset 100001',
+    module: 'GL',
+    cause: 'The asset master record is incomplete. Depreciation area has not been configured.',
+    fix: 'Check asset master in AS03. Contact your SAP asset accounting team to complete the depreciation area setup.',
+    tcode: 'AS03',
+  },
+  {
+    code: 'F5112',
+    message: 'Company code IN02 is not defined',
+    module: 'GL',
+    cause: 'You entered a company code that does not exist in the system.',
+    fix: 'Use company code IN01 for Bharat Manufacturing. Check with your SAP team for the correct company code list.',
+    tcode: 'FB50',
+  },
+  {
+    code: 'F5507',
+    message: 'Document date 31.03.2026 is in the future',
+    module: 'GL',
+    cause: "The document date entered is later than today's date which is not allowed.",
+    fix: 'Correct the Document Date field in the header. Use today\'s date or a past date.',
+    tcode: 'FB50',
+  },
+  {
+    code: 'F5560',
+    message: 'G/L account 999999 is blocked for posting',
+    module: 'GL',
+    cause: 'This account has been blocked by the finance team and cannot receive postings.',
+    fix: 'Contact your finance administrator to unblock the account or use the correct G/L account number.',
+    tcode: 'FS00',
+  },
+  {
+    code: 'RW602',
+    message: 'No selection variant found for S_ALR_87012284',
+    module: 'Reports',
+    cause: 'The report requires a saved variant to run. No default variant exists.',
+    fix: 'On the selection screen click Get Variant -> choose an existing variant or fill parameters manually and execute.',
+    tcode: 'S_ALR_87012284',
+  },
+];
+
+function ErrorDecoder({ navigate, setSimState }) {
+  const h = useHover();
+  const [query, setQuery] = useState('');
+  const [activeModule, setActiveModule] = useState('All');
+  const [expandedCodes, setExpandedCodes] = useState(() => ({}));
+  const chips = ['All', 'GL', 'AP', 'AR', 'Reports', 'Period Close'];
+  const q = query.trim().toLowerCase();
+
+  const filtered = sapErrors.filter((e) => {
+    const modOk = activeModule === 'All' || e.module === activeModule;
+    if (!modOk) return false;
+    if (!q) return true;
+    return (
+      e.code.toLowerCase().includes(q)
+      || e.message.toLowerCase().includes(q)
+      || e.cause.toLowerCase().includes(q)
+      || e.fix.toLowerCase().includes(q)
+    );
+  });
+
+  const toggleCard = (code) => setExpandedCodes((prev) => ({ ...prev, [code]: !prev[code] }));
+  const openTcode = (tcode) => {
+    if (setSimState) {
+      setSimState((prev) => ({ ...prev, currentTcode: tcode }));
+      navigate('simulator');
+    }
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', fontFamily: C.body, background: C.bgPrimary, padding: '32px', maxWidth: 1040, margin: '0 auto' }}>
+      <button style={{ ...s.backBtn, ...(h.is('back') ? { color: C.accentLight } : {}) }} {...h.bind('back')} onClick={() => navigate('home')}>
+        {Icons.back} Back to Home
+      </button>
+      <h1 style={{ fontFamily: C.heading, fontSize: 32, color: C.accentLight, marginBottom: 8 }}>SAP Error Decoder</h1>
+      <p style={{ color: C.textSecondary, marginBottom: 6 }}>The 15 errors every new SAP user hits — with exact fixes</p>
+      <p style={{ color: C.textMuted, fontSize: 12, marginBottom: 20 }}>Showing {filtered.length} of {sapErrors.length} errors</p>
+
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search error message or code..."
+        style={{
+          width: '100%',
+          padding: '12px 14px',
+          borderRadius: 10,
+          border: `1px solid ${C.border}`,
+          background: C.bgSecondary,
+          color: C.accentLight,
+          fontSize: 14,
+          marginBottom: 14,
+        }}
+      />
+
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 18 }}>
+        {chips.map((m) => {
+          const active = activeModule === m;
+          return (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setActiveModule(m)}
+              style={{
+                borderRadius: 999,
+                border: `1px solid ${active ? C.accent : C.border}`,
+                background: active ? 'rgba(200,169,110,0.18)' : C.bgCard,
+                color: active ? C.accentLight : C.textSecondary,
+                padding: '6px 12px',
+                fontSize: 12,
+                cursor: 'pointer',
+              }}
+            >
+              {m}
+            </button>
+          );
+        })}
+      </div>
+
+      {filtered.length === 0 && (
+        <div style={{ ...s.card, padding: 22, color: C.textSecondary }}>
+          No errors found for '{query}'. Try searching by error code or keywords.
+        </div>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {filtered.map((err) => {
+          const isOpen = !!expandedCodes[err.code];
+          return (
+            <div key={err.code} style={{ ...s.card, borderLeft: '4px solid #ef4444', padding: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+                    {err.mostCommon && (
+                      <span style={{ fontSize: 11, color: C.accent, background: 'rgba(200,169,110,0.16)', padding: '3px 8px', borderRadius: 999, fontWeight: 700 }}>
+                        ⭐ Most Common
+                      </span>
+                    )}
+                    <span style={{ fontSize: 11, color: '#93c5fd', background: 'rgba(37,99,235,0.15)', padding: '3px 8px', borderRadius: 999, fontWeight: 600 }}>
+                      {err.module}
+                    </span>
+                  </div>
+                  <div style={{ fontFamily: C.mono, color: C.accentLight, fontSize: 15, lineHeight: 1.5 }}>
+                    {err.message}
+                  </div>
+                </div>
+                <span style={{ fontFamily: C.mono, color: '#fca5a5', border: '1px solid rgba(239,68,68,0.5)', borderRadius: 8, fontSize: 12, padding: '4px 8px' }}>
+                  {err.code}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => toggleCard(err.code)}
+                style={{ marginTop: 10, background: 'none', border: 'none', color: C.textSecondary, cursor: 'pointer', padding: 0, fontSize: 13 }}
+              >
+                {isOpen ? '▼ Hide details' : '▶ Show details'}
+              </button>
+
+              {isOpen && (
+                <div style={{ marginTop: 12 }}>
+                  <div style={{ background: 'rgba(212,164,74,0.12)', border: '1px solid rgba(212,164,74,0.25)', borderRadius: 10, padding: 12, marginBottom: 10 }}>
+                    <div style={{ color: C.warning, fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Why this happens:</div>
+                    <div style={{ color: C.textSecondary, fontSize: 14, lineHeight: 1.65 }}>{err.cause}</div>
+                  </div>
+                  <div style={{ background: 'rgba(74,170,122,0.12)', border: '1px solid rgba(74,170,122,0.25)', borderRadius: 10, padding: 12, marginBottom: 10 }}>
+                    <div style={{ color: C.success, fontSize: 12, fontWeight: 700, marginBottom: 6 }}>How to fix it:</div>
+                    <div style={{ color: C.textSecondary, fontSize: 14, lineHeight: 1.65 }}>{err.fix}</div>
+                  </div>
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => openTcode(err.tcode)}
+                      style={{
+                        fontFamily: C.mono,
+                        fontSize: 12,
+                        color: C.tcode,
+                        background: C.tcodeBg,
+                        border: `1px solid ${C.border}`,
+                        borderRadius: 8,
+                        padding: '6px 10px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Go to T-Code: {err.tcode}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <PlatformFooter navigate={navigate} />
+    </div>
+  );
+}
+
 const drillQuestions = [
   { task: 'Post a journal entry', answer: 'FB50' },
   { task: 'Display a posted document', answer: 'FB03' },
@@ -8130,6 +8469,9 @@ export default function App() {
       break;
     case 'terms':
       body = <TermsPage navigate={navigate} />;
+      break;
+    case 'errors':
+      body = <ErrorDecoder navigate={navigate} setSimState={setSimState} />;
       break;
     case 'drill':
       body = <TCodeSpeedDrill navigate={navigate} />;
