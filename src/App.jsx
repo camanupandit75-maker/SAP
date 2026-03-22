@@ -8511,6 +8511,31 @@ function PlatformFooter({ navigate }) {
           Reset Progress
         </button>
       </div>
+      <div
+        style={{
+          borderTop: `1px solid ${C.border}`,
+          marginTop: 16,
+          paddingTop: 20,
+          textAlign: 'center',
+          marginBottom: 16,
+        }}
+      >
+        <div style={{ fontSize: 10, color: C.textMuted, letterSpacing: '0.12em', fontWeight: 700, marginBottom: 8 }}>
+          CONTACT US
+        </div>
+        <div style={{ fontSize: 13, color: C.textSecondary, marginBottom: 8, lineHeight: 1.5 }}>
+          Questions? We&apos;re here to help.
+        </div>
+        <a
+          href="mailto:zerofico2026@gmail.com"
+          style={{ color: C.accent, fontSize: 13, textDecoration: 'none', fontWeight: 500 }}
+        >
+          zerofico2026@gmail.com
+        </a>
+        <div style={{ fontSize: 12, color: C.textSecondary, marginTop: 10, lineHeight: 1.5 }}>
+          Or WhatsApp us directly
+        </div>
+      </div>
       <div style={{ color: C.textMuted, lineHeight: 1.5, whiteSpace: 'pre-line' }}>
         {'© 2025 ' + PLATFORM_NAME_FOOTER + ' | Not affiliated with SAP SE\n| Built by CAs for CAs'}
       </div>
@@ -8889,7 +8914,7 @@ function LoginPage({ navigate, onLoggedIn }) {
         </button>
         <p style={{ fontSize: 13, color: C.textMuted, textAlign: 'center', lineHeight: 1.6, margin: 0 }}>
           Forgot password?{' '}
-          <a href="mailto:manupandit75@gmail.com" style={{ color: C.accent }}>Email us at manupandit75@gmail.com</a>
+          <a href="mailto:zerofico2026@gmail.com" style={{ color: C.accent }}>Email us at zerofico2026@gmail.com</a>
         </p>
       </div>
     </AuthShell>
@@ -9204,7 +9229,7 @@ function PaymentPage({ currentUser, setAuthUser, navigate, onSignOut }) {
             </button>
             <p style={{ fontSize: 12, color: C.textMuted, marginTop: 18, lineHeight: 1.6, marginBottom: 0 }}>
               For any issues email{' '}
-              <a href="mailto:manupandit75@gmail.com" style={{ color: C.accent }}>manupandit75@gmail.com</a>
+              <a href="mailto:zerofico2026@gmail.com" style={{ color: C.accent }}>zerofico2026@gmail.com</a>
             </p>
           </div>
         )}
@@ -9254,7 +9279,7 @@ function PaymentPage({ currentUser, setAuthUser, navigate, onSignOut }) {
                 Try Again
               </button>
               <a
-                href="mailto:manupandit75@gmail.com"
+                href="mailto:zerofico2026@gmail.com"
                 style={{
                   display: 'block',
                   textAlign: 'center',
@@ -9678,7 +9703,7 @@ const PRICING_FAQ = [
   },
   {
     q: 'Is there a refund policy?',
-    a: 'Yes — full refund within 7 days if the platform does not meet your expectations. No questions asked. Email manupandit75@gmail.com',
+    a: 'Yes — full refund within 7 days if the platform does not meet your expectations. No questions asked. Email zerofico2026@gmail.com',
   },
 ];
 
