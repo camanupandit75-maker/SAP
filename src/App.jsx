@@ -1,8 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, createContext, useContext } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import { supabase } from './supabaseClient';
 
 const ZEROFICO_SESSION_KEY = 'zerofico_session';
+
+const ADMIN_EMAIL = 'manupandit75@gmail.com';
+function isAdminUser(user) {
+  return user?.email?.toLowerCase().trim() === ADMIN_EMAIL;
+}
+
+const FooterAuthContext = createContext(null);
 
 // ─── Curriculum (CA-focused: where to click, what to type; no accounting theory) ─
 const curriculum = [
@@ -8470,6 +8477,7 @@ function DisclaimerPage({ navigate }) {
 const PLATFORM_NAME_FOOTER = 'ZeroFico';
 
 function PlatformFooter({ navigate }) {
+  const authUser = useContext(FooterAuthContext);
   const linkStyle = {
     background: 'none',
     border: 'none',
@@ -8536,10 +8544,349 @@ function PlatformFooter({ navigate }) {
           Or WhatsApp us directly
         </div>
       </div>
+      {isAdminUser(authUser) && (
+        <div style={{ textAlign: 'center', marginBottom: 12 }}>
+          <button
+            type="button"
+            onClick={() => navigate('admin')}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: C.textMuted,
+              fontSize: 11,
+              cursor: 'pointer',
+              fontFamily: C.body,
+              letterSpacing: '0.04em',
+            }}
+          >
+            ⚙ Admin
+          </button>
+        </div>
+      )}
       <div style={{ color: C.textMuted, lineHeight: 1.5, whiteSpace: 'pre-line' }}>
         {'© 2025 ' + PLATFORM_NAME_FOOTER + ' | Not affiliated with SAP SE\n| Built by CAs for CAs'}
       </div>
     </footer>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PAGE: ADMIN DASHBOARD
+// ═══════════════════════════════════════════════════════════════════════════════
+function formatRupeesFromPaise(paise) {
+  const n = Math.round(Number(paise) || 0) / 100;
+  return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
+}
+
+function csvEscape(val) {
+  if (val == null) return '';
+  const s = String(val);
+  if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+function downloadCsv(filename, rows) {
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function AdminPage({ navigate }) {
+  const h = useHover();
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState('');
+  const [metrics, setMetrics] = useState({ totalUsers: 0, founding: 0, paid: 0, waitlist: 0 });
+  const [revenuePaise, setRevenuePaise] = useState(0);
+  const [successPayCount, setSuccessPayCount] = useState(0);
+  const [usersRows, setUsersRows] = useState([]);
+  const [waitlistRows, setWaitlistRows] = useState([]);
+  const [paymentsRows, setPaymentsRows] = useState([]);
+  const [userSearch, setUserSearch] = useState('');
+
+  const loadAll = async () => {
+    setErr('');
+    setLoading(true);
+    try {
+      const [
+        { count: totalUsers },
+        { count: founding },
+        { count: paid },
+        { count: waitlist },
+        { data: usersData, error: uErr },
+        { data: wlData, error: wlErr },
+        { data: payData, error: payErr },
+      ] = await Promise.all([
+        supabase.from('users').select('id', { count: 'exact', head: true }),
+        supabase.from('users').select('id', { count: 'exact', head: true }).eq('access_type', 'founding'),
+        supabase.from('users').select('id', { count: 'exact', head: true }).eq('access_type', 'paid'),
+        supabase.from('waitlist').select('id', { count: 'exact', head: true }),
+        supabase.from('users').select('id, email, name, phone, access_type, created_at, last_login').order('created_at', { ascending: false }),
+        supabase.from('waitlist').select('*').order('joined_at', { ascending: false }),
+        supabase.from('payments').select('*').eq('status', 'success').order('paid_at', { ascending: false }),
+      ]);
+      if (uErr) throw uErr;
+      if (wlErr) throw wlErr;
+      if (payErr) throw payErr;
+      setMetrics({
+        totalUsers: totalUsers ?? 0,
+        founding: founding ?? 0,
+        paid: paid ?? 0,
+        waitlist: waitlist ?? 0,
+      });
+      const spc = payData?.length ?? 0;
+      setSuccessPayCount(spc);
+      setRevenuePaise(spc * 500000);
+      setUsersRows(usersData || []);
+      setWaitlistRows(wlData || []);
+      setPaymentsRows(payData || []);
+    } catch (e) {
+      setErr('Failed to load data. Check Supabase policies and RLS.');
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    void loadAll();
+  }, []);
+
+  const filteredUsers = usersRows.filter((u) => {
+    const q = userSearch.trim().toLowerCase();
+    if (!q) return true;
+    return (u.name || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q);
+  });
+
+  const accessChip = (t) => {
+    const base = { display: 'inline-block', padding: '2px 10px', borderRadius: 12, fontSize: 11, fontWeight: 600 };
+    if (t === 'founding') return { ...base, background: 'rgba(200,169,110,0.2)', color: C.accent, border: `1px solid ${C.accent}` };
+    if (t === 'paid') return { ...base, background: 'rgba(74,170,122,0.15)', color: C.success, border: `1px solid ${C.success}` };
+    return { ...base, background: 'rgba(239,68,68,0.12)', color: '#fca5a5', border: '1px solid #ef4444' };
+  };
+
+  const exportWaitlistCsv = () => {
+    const cols = ['id', 'email', 'name', 'phone', 'joined_at', 'is_founding_member', 'converted_to_user'];
+    const header = cols.map(csvEscape).join(',');
+    const lines = [header, ...waitlistRows.map((r) => cols.map((c) => csvEscape(r[c])).join(','))];
+    downloadCsv(`zerofico-waitlist-${Date.now()}.csv`, lines);
+  };
+
+  const exportUsersCsv = () => {
+    const cols = ['id', 'email', 'name', 'phone', 'access_type', 'created_at', 'last_login'];
+    const header = cols.map(csvEscape).join(',');
+    const lines = [header, ...usersRows.map((r) => cols.map((c) => csvEscape(r[c])).join(','))];
+    downloadCsv(`zerofico-users-${Date.now()}.csv`, lines);
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', fontFamily: C.body, background: C.bgPrimary, display: 'flex', flexDirection: 'column' }}>
+      <header style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '16px 32px',
+        borderBottom: `1px solid ${C.border}`,
+        background: 'rgba(10,14,26,0.8)',
+        backdropFilter: 'blur(12px)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+      }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {Icons.logo}
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+            <span style={{ fontFamily: C.heading, fontSize: 18, fontWeight: 700, color: C.accent, letterSpacing: '0.5px' }}>ZeroFico</span>
+            <span style={{ color: C.textMuted, fontSize: 11, fontWeight: 500, letterSpacing: '0.4px' }}>Admin dashboard</span>
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button
+            type="button"
+            style={{ ...s.card, padding: '8px 14px', fontSize: 13, color: C.textSecondary, border: `1px solid ${C.border}` }}
+            {...h.bind('refresh')}
+            onClick={() => void loadAll()}
+          >
+            ↻ Refresh
+          </button>
+          <button type="button" style={{ ...s.backBtn, ...(h.is('back') ? { color: C.accentLight } : {}) }} {...h.bind('back')} onClick={() => navigate('home')}>
+            {Icons.back} Back to Home
+          </button>
+        </div>
+      </header>
+
+      <main style={{ flex: 1, maxWidth: 1200, margin: '0 auto', padding: '40px 24px 64px', width: '100%', boxSizing: 'border-box' }}>
+        <h1 style={{ fontFamily: C.heading, fontSize: 28, color: C.accentLight, marginBottom: 8 }}>Admin dashboard</h1>
+        <p style={{ fontSize: 13, color: C.textMuted, marginBottom: 28 }}>Live metrics from Supabase</p>
+
+        {err && (
+          <div style={{ padding: 12, borderRadius: 8, marginBottom: 16, borderLeft: '4px solid #ef4444', background: 'rgba(239,68,68,0.1)', color: '#fca5a5', fontSize: 14 }}>
+            {err}
+          </div>
+        )}
+
+        {loading && (
+          <div style={{ color: C.textSecondary, marginBottom: 24 }}>Loading…</div>
+        )}
+
+        {/** Metrics */}
+        <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', marginBottom: 36 }}>
+          {[
+            { label: 'Total Users', value: String(metrics.totalUsers) },
+            { label: 'Founding Members', value: String(metrics.founding) },
+            { label: 'Paid Users', value: String(metrics.paid) },
+            { label: 'Waitlist Total', value: String(metrics.waitlist) },
+          ].map((st, i) => (
+            <div key={i} style={{
+              ...s.card,
+              padding: '20px 28px',
+              minWidth: 180,
+              flex: '1 1 180px',
+            }}
+            >
+              <div style={{ fontSize: 11, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: 8 }}>{st.label}</div>
+              <div style={{ fontFamily: C.heading, fontSize: 32, fontWeight: 700, color: C.accentLight }}>{st.value}</div>
+            </div>
+          ))}
+        </div>
+
+        {/** Revenue */}
+        <div style={{ ...s.card, padding: 24, marginBottom: 24 }}>
+          <h2 style={{ fontFamily: C.heading, fontSize: 18, color: C.accent, marginBottom: 12 }}>Revenue</h2>
+          <div style={{ fontSize: 22, fontWeight: 700, color: C.accentLight, marginBottom: 8 }}>
+            {formatRupeesFromPaise(revenuePaise)} collected
+          </div>
+          <div style={{ fontSize: 13, color: C.textSecondary }}>
+            {successPayCount} successful payment{successPayCount !== 1 ? 's' : ''}
+          </div>
+        </div>
+
+        {/** Users */}
+        <div style={{ ...s.card, padding: 24, marginBottom: 24 }}>
+          <h2 style={{ fontFamily: C.heading, fontSize: 18, color: C.accent, marginBottom: 12 }}>Users</h2>
+          <input
+            type="search"
+            placeholder="Search by name or email…"
+            value={userSearch}
+            onChange={(e) => setUserSearch(e.target.value)}
+            style={{
+              width: '100%',
+              maxWidth: 360,
+              marginBottom: 16,
+              padding: '10px 12px',
+              borderRadius: 8,
+              border: `1px solid ${C.border}`,
+              background: C.bgSecondary,
+              color: C.accentLight,
+              fontFamily: C.body,
+              fontSize: 14,
+              outline: 'none',
+              boxSizing: 'border-box',
+            }}
+          />
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr style={{ color: C.textMuted, textAlign: 'left', borderBottom: `1px solid ${C.border}` }}>
+                  <th style={{ padding: '10px 8px' }}>Name</th>
+                  <th style={{ padding: '10px 8px' }}>Email</th>
+                  <th style={{ padding: '10px 8px' }}>Access Type</th>
+                  <th style={{ padding: '10px 8px' }}>Joined</th>
+                  <th style={{ padding: '10px 8px' }}>Last Login</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredUsers.map((u, i) => (
+                  <tr key={u.id || u.email || i} style={{ background: i % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent' }}>
+                    <td style={{ padding: '10px 8px', color: C.textPrimary }}>{u.name || '—'}</td>
+                    <td style={{ padding: '10px 8px', color: C.textSecondary }}>{u.email}</td>
+                    <td style={{ padding: '10px 8px' }}><span style={accessChip(u.access_type)}>{u.access_type || '—'}</span></td>
+                    <td style={{ padding: '10px 8px', color: C.textSecondary }}>{u.created_at ? new Date(u.created_at).toLocaleString('en-IN') : '—'}</td>
+                    <td style={{ padding: '10px 8px', color: C.textSecondary }}>{u.last_login ? new Date(u.last_login).toLocaleString('en-IN') : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/** Waitlist */}
+        <div style={{ ...s.card, padding: 24, marginBottom: 24 }}>
+          <h2 style={{ fontFamily: C.heading, fontSize: 18, color: C.accent, marginBottom: 12 }}>Waitlist</h2>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr style={{ color: C.textMuted, textAlign: 'left', borderBottom: `1px solid ${C.border}` }}>
+                  <th style={{ padding: '10px 8px' }}>Name</th>
+                  <th style={{ padding: '10px 8px' }}>Email</th>
+                  <th style={{ padding: '10px 8px' }}>Phone</th>
+                  <th style={{ padding: '10px 8px' }}>Joined Date</th>
+                  <th style={{ padding: '10px 8px' }}>Founding Member</th>
+                  <th style={{ padding: '10px 8px' }}>Converted</th>
+                </tr>
+              </thead>
+              <tbody>
+                {waitlistRows.map((w, i) => (
+                  <tr key={w.id || w.email || i} style={{ background: i % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent' }}>
+                    <td style={{ padding: '10px 8px', color: C.textPrimary }}>{w.name || '—'}</td>
+                    <td style={{ padding: '10px 8px', color: C.textSecondary }}>{w.email}</td>
+                    <td style={{ padding: '10px 8px', color: C.textSecondary }}>{w.phone || '—'}</td>
+                    <td style={{ padding: '10px 8px', color: C.textSecondary }}>{w.joined_at ? new Date(w.joined_at).toLocaleString('en-IN') : '—'}</td>
+                    <td style={{ padding: '10px 8px' }}>{w.is_founding_member ? '✅' : '❌'}</td>
+                    <td style={{ padding: '10px 8px' }}>{w.converted_to_user ? '✅' : '❌'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/** Payments */}
+        <div style={{ ...s.card, padding: 24, marginBottom: 24 }}>
+          <h2 style={{ fontFamily: C.heading, fontSize: 18, color: C.accent, marginBottom: 12 }}>Payments (success)</h2>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr style={{ color: C.textMuted, textAlign: 'left', borderBottom: `1px solid ${C.border}` }}>
+                  <th style={{ padding: '10px 8px' }}>Email</th>
+                  <th style={{ padding: '10px 8px' }}>Amount</th>
+                  <th style={{ padding: '10px 8px' }}>Payment ID</th>
+                  <th style={{ padding: '10px 8px' }}>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paymentsRows.map((p, i) => (
+                  <tr key={p.id || p.razorpay_payment_id || i} style={{ background: i % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent' }}>
+                    <td style={{ padding: '10px 8px', color: C.textSecondary }}>{p.email}</td>
+                    <td style={{ padding: '10px 8px', color: C.accentLight }}>{formatRupeesFromPaise(p.amount || 0)}</td>
+                    <td style={{ padding: '10px 8px', color: C.textSecondary, fontFamily: C.mono, fontSize: 12 }}>{p.razorpay_payment_id || '—'}</td>
+                    <td style={{ padding: '10px 8px', color: C.textSecondary }}>{p.paid_at ? new Date(p.paid_at).toLocaleString('en-IN') : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div style={{ marginTop: 16, fontSize: 14, color: C.textSecondary, fontWeight: 600 }}>
+            Total: {formatRupeesFromPaise(paymentsRows.reduce((a, p) => a + (Number(p.amount) || 0), 0))}
+          </div>
+        </div>
+
+        {/** Quick actions */}
+        <div style={{ ...s.card, padding: 24 }}>
+          <h2 style={{ fontFamily: C.heading, fontSize: 18, color: C.accent, marginBottom: 16 }}>Quick actions</h2>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+            <button type="button" style={{ ...s.btnPrimary, padding: '12px 20px' }} onClick={exportWaitlistCsv}>
+              Export Waitlist CSV
+            </button>
+            <button type="button" style={{ ...s.btnPrimary, padding: '12px 20px' }} onClick={exportUsersCsv}>
+              Export Users CSV
+            </button>
+          </div>
+        </div>
+      </main>
+      <PlatformFooter navigate={navigate} />
+    </div>
   );
 }
 
@@ -10125,11 +10472,20 @@ export default function App() {
   useEffect(() => {
     if (authStatus !== 'authed' || !authUser) return;
     if (authUser.access_type === 'pending' && page !== 'payment') {
+      if (isAdminUser(authUser) && page === 'admin') return;
       if (page === 'home' || !PENDING_MARKETING_PAGES.has(page)) {
         setPage('payment');
       }
     }
   }, [authStatus, authUser, page]);
+
+  useEffect(() => {
+    if (authStatus === 'loading') return;
+    if (page !== 'admin') return;
+    if (authStatus !== 'authed' || !authUser || !isAdminUser(authUser)) {
+      setPage('home');
+    }
+  }, [page, authStatus, authUser]);
 
   useEffect(() => {
     if (authStatus !== 'authed' || !authUser) return;
@@ -10164,13 +10520,20 @@ export default function App() {
         return;
       }
     } else if (authStatus === 'authed' && authUser) {
+      if (target === 'admin' && !isAdminUser(authUser)) {
+        setPage('home');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
       if (authUser.access_type === 'founding' && target === 'payment') {
         setPage('home');
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
       if (authUser.access_type === 'pending' && target !== 'payment') {
-        if (target === 'home' || !PENDING_MARKETING_PAGES.has(target)) {
+        if (isAdminUser(authUser) && target === 'admin') {
+          /* allow admin dashboard */
+        } else if (target === 'home' || !PENDING_MARKETING_PAGES.has(target)) {
           setPage('payment');
           window.scrollTo({ top: 0, behavior: 'smooth' });
           return;
@@ -10318,6 +10681,9 @@ export default function App() {
         />
       );
       break;
+    case 'admin':
+      body = <AdminPage navigate={navigate} />;
+      break;
     default:
       body = (
         <HomePage
@@ -10359,6 +10725,7 @@ export default function App() {
   }
 
   return (
+    <FooterAuthContext.Provider value={authUser}>
     <div>
       {body}
       {showResetConfirm && (
@@ -10377,5 +10744,6 @@ export default function App() {
       )}
       <Analytics />
     </div>
+    </FooterAuthContext.Provider>
   );
 }
