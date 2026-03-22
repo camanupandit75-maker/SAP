@@ -1,5 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Analytics } from '@vercel/analytics/react';
+import { supabase } from './supabaseClient';
+
+const ZEROFICO_SESSION_KEY = 'zerofico_session';
 
 // ─── Curriculum (CA-focused: where to click, what to type; no accounting theory) ─
 const curriculum = [
@@ -2211,7 +2214,7 @@ function useHover() {
 // ═══════════════════════════════════════════════════════════════════════════════
 // PAGE 1: HOME
 // ═══════════════════════════════════════════════════════════════════════════════
-function HomePage({ navigate, completedLessons, returningUser, lastLessonName, onContinueLastLesson, resetSuccessMsg }) {
+function HomePage({ navigate, completedLessons, returningUser, lastLessonName, onContinueLastLesson, resetSuccessMsg, onSignOut }) {
   const h = useHover();
   const [dismissWelcome, setDismissWelcome] = useState(false);
 
@@ -2373,6 +2376,46 @@ function HomePage({ navigate, completedLessons, returningUser, lastLessonName, o
             🔴 Error Decoder
           </button>
           <button
+            type="button"
+            style={{
+              ...s.card,
+              padding: '8px 16px',
+              fontSize: 12,
+              color: C.accent,
+              fontFamily: C.body,
+              fontWeight: 600,
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: 'rgba(200,169,110,0.12)',
+              border: `1px solid ${C.accent}`,
+              ...(h.is('waitlist-btn') ? { borderColor: C.accentLight, color: C.accentLight } : {}),
+            }}
+            {...h.bind('waitlist-btn')}
+            onClick={() => navigate('waitlist')}
+          >
+            Join Free →
+          </button>
+          <button
+            type="button"
+            style={{
+              ...s.card,
+              padding: '8px 16px',
+              fontSize: 12,
+              color: C.accentLight,
+              fontFamily: C.body,
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              background: C.bgCard,
+              border: `1px solid ${C.border}`,
+              ...(h.is('pricing-btn') ? { borderColor: C.accent, color: C.accentLight } : {}),
+            }}
+            {...h.bind('pricing-btn')}
+            onClick={() => navigate('pricing')}
+          >
+            Pricing
+          </button>
+          <button
             style={{
               ...s.card,
               padding: '8px 16px',
@@ -2389,6 +2432,27 @@ function HomePage({ navigate, completedLessons, returningUser, lastLessonName, o
             onClick={() => navigate('about')}
           >
             About
+          </button>
+          <button
+            type="button"
+            style={{
+              ...s.card,
+              padding: '8px 16px',
+              fontSize: 12,
+              color: C.textMuted,
+              fontFamily: C.body,
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              background: C.bgSecondary,
+              border: `1px solid ${C.border}`,
+              ...(h.is('signout-btn') ? { borderColor: C.accent, color: C.accentLight } : {}),
+            }}
+            {...h.bind('signout-btn')}
+            onClick={() => onSignOut?.()}
+          >
+            Sign Out
           </button>
         </div>
       </header>
@@ -8471,11 +8535,1312 @@ function TermsPage({ navigate }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// PAGE: WAITLIST — ZeroFico Founders
+// ═══════════════════════════════════════════════════════════════════════════════
+const WAITLIST_BENEFITS = [
+  'All 8 learning modules',
+  'SAP Simulator — 20+ T-code screens',
+  'Scenario Mode',
+  'T-Code Speed Drill',
+  'SAP Error Decoder',
+  'Document Trail Panel',
+  'Progress tracking across sessions',
+  'Lifetime access — no subscription',
+  'All future updates free',
+  'No credit card needed',
+];
+
+const inputBase = {
+  width: '100%',
+  padding: '12px 14px',
+  borderRadius: 8,
+  border: `1px solid ${C.border}`,
+  background: C.bgSecondary,
+  color: C.accentLight,
+  fontFamily: C.body,
+  fontSize: 14,
+  outline: 'none',
+  boxSizing: 'border-box',
+};
+
+function hashPassword(plain) {
+  // TODO: upgrade to bcrypt in production
+  return btoa(unescape(encodeURIComponent(plain)));
+}
+
+function newSessionExpiresAtIso() {
+  return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+}
+
+function newSessionToken() {
+  return crypto.randomUUID();
+}
+
+const AUTH_GUEST_PUBLIC_PAGES = new Set(['login', 'signup', 'waitlist', 'waitlist_success', 'pricing']);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// AUTH: LOGIN / SIGNUP / PAYMENT (pending)
+// ═══════════════════════════════════════════════════════════════════════════════
+function AuthShell({ children, title }) {
+  return (
+    <div style={{
+      minHeight: '100vh',
+      fontFamily: C.body,
+      background: C.bgPrimary,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '32px 20px',
+    }}
+    >
+      <div style={{ marginBottom: 28, textAlign: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>{Icons.logo}</div>
+        <div style={{ fontFamily: C.heading, fontSize: 20, fontWeight: 700, color: C.accent }}>ZeroFico</div>
+        <div style={{ fontSize: 12, color: C.textMuted, marginTop: 4 }}>SAP Training Built for Chartered Accountants</div>
+      </div>
+      <div style={{
+        ...s.card,
+        cursor: 'default',
+        width: '100%',
+        maxWidth: 420,
+        padding: 28,
+        border: `2px solid ${C.accent}`,
+        background: 'rgba(200,169,110,0.04)',
+      }}
+      >
+        {title && (
+          <h1 style={{ fontFamily: C.heading, fontSize: 22, fontWeight: 700, color: C.accentLight, marginBottom: 22, textAlign: 'center', lineHeight: 1.3 }}>
+            {title}
+          </h1>
+        )}
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function LoginPage({ navigate, onLoggedIn }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const linkStyle = {
+    background: 'none',
+    border: 'none',
+    color: C.accent,
+    fontSize: 13,
+    fontFamily: C.body,
+    cursor: 'pointer',
+    padding: 0,
+    textDecoration: 'underline',
+    textUnderlineOffset: 3,
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    const emailNorm = email.trim().toLowerCase();
+    if (!emailNorm || !password) return;
+    setSubmitting(true);
+    try {
+      const { data: user, error: uErr } = await supabase
+        .from('users')
+        .select('id, email, name, password_hash, access_type, is_active')
+        .eq('email', emailNorm)
+        .maybeSingle();
+      if (uErr) throw uErr;
+      if (!user) {
+        setError('No account found for this email.');
+        setSubmitting(false);
+        return;
+      }
+      if (!user.is_active) {
+        setError('This account is inactive. Please contact support.');
+        setSubmitting(false);
+        return;
+      }
+      const hashed = hashPassword(password);
+      if (user.password_hash !== hashed) {
+        setError('Incorrect password.');
+        setSubmitting(false);
+        return;
+      }
+      const token = newSessionToken();
+      const expiresAt = newSessionExpiresAtIso();
+      await supabase.from('sessions').delete().eq('user_id', user.id);
+      const { error: sErr } = await supabase.from('sessions').insert({
+        user_id: user.id,
+        email: user.email,
+        token,
+        expires_at: expiresAt,
+        is_active: true,
+      });
+      if (sErr) throw sErr;
+      localStorage.setItem(ZEROFICO_SESSION_KEY, token);
+      onLoggedIn({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        access_type: user.access_type,
+        is_active: user.is_active,
+      });
+      if (user.access_type === 'pending') {
+        navigate('payment');
+      } else {
+        navigate('home');
+      }
+    } catch {
+      setError('Something went wrong. Please try again.');
+    }
+    setSubmitting(false);
+  };
+
+  return (
+    <AuthShell title="Welcome Back to ZeroFico">
+      <form onSubmit={handleSubmit}>
+        {error && (
+          <div style={{
+            padding: 12,
+            borderRadius: 8,
+            marginBottom: 16,
+            fontSize: 14,
+            lineHeight: 1.5,
+            borderLeft: '4px solid #ef4444',
+            background: 'rgba(239,68,68,0.1)',
+            color: '#fca5a5',
+          }}
+          >
+            {error}
+          </div>
+        )}
+        <label style={{ display: 'block', marginBottom: 8, fontSize: 12, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.6px' }}>Email</label>
+        <input
+          type="email"
+          required
+          value={email}
+          onChange={(ev) => setEmail(ev.target.value)}
+          style={{ ...inputBase, marginBottom: 16 }}
+          autoComplete="email"
+        />
+        <label style={{ display: 'block', marginBottom: 8, fontSize: 12, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.6px' }}>Password</label>
+        <input
+          type="password"
+          required
+          value={password}
+          onChange={(ev) => setPassword(ev.target.value)}
+          style={{ ...inputBase, marginBottom: 22 }}
+          autoComplete="current-password"
+        />
+        <button
+          type="submit"
+          disabled={submitting}
+          style={{ ...s.btnPrimary, width: '100%', opacity: submitting ? 0.75 : 1, cursor: submitting ? 'wait' : 'pointer' }}
+        >
+          {submitting ? 'Signing In…' : 'Sign In'}
+        </button>
+      </form>
+      <div style={{ marginTop: 22, display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'center' }}>
+        <button type="button" style={linkStyle} onClick={() => navigate('signup')}>
+          Create an account
+        </button>
+        <button type="button" style={linkStyle} onClick={() => navigate('waitlist')}>
+          New to ZeroFico? Join Founders free →
+        </button>
+        <p style={{ fontSize: 13, color: C.textMuted, textAlign: 'center', lineHeight: 1.6, margin: 0 }}>
+          Forgot password?{' '}
+          <a href="mailto:manupandit75@gmail.com" style={{ color: C.accent }}>Email us at manupandit75@gmail.com</a>
+        </p>
+      </div>
+    </AuthShell>
+  );
+}
+
+function SignupPage({ navigate, onLoggedIn }) {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const linkStyle = {
+    background: 'none',
+    border: 'none',
+    color: C.accent,
+    fontSize: 13,
+    fontFamily: C.body,
+    cursor: 'pointer',
+    padding: 0,
+    textDecoration: 'underline',
+    textUnderlineOffset: 3,
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    const nameTrim = name.trim();
+    const emailNorm = email.trim().toLowerCase();
+    if (!nameTrim || !emailNorm) return;
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
+    if (password !== confirm) {
+      setError('Passwords do not match.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const { data: existingUser, error: exErr } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', emailNorm)
+        .maybeSingle();
+      if (exErr) throw exErr;
+      if (existingUser) {
+        setError('An account with this email already exists. Sign in instead.');
+        setSubmitting(false);
+        return;
+      }
+
+      const { data: wlRow, error: wlErr } = await supabase
+        .from('waitlist')
+        .select('is_founding_member')
+        .eq('email', emailNorm)
+        .maybeSingle();
+      if (wlErr) throw wlErr;
+
+      const isFounding = wlRow?.is_founding_member === true;
+      const accessType = isFounding ? 'founding' : 'pending';
+      const passwordHash = hashPassword(password);
+
+      const { data: newUser, error: insErr } = await supabase
+        .from('users')
+        .insert({
+          email: emailNorm,
+          name: nameTrim,
+          phone: null,
+          password_hash: passwordHash,
+          access_type: accessType,
+          is_active: true,
+        })
+        .select('id, email, name, access_type, is_active')
+        .single();
+      if (insErr) throw insErr;
+
+      if (isFounding) {
+        await supabase.from('waitlist').update({ converted_to_user: true }).eq('email', emailNorm);
+      }
+
+      const token = newSessionToken();
+      const expiresAt = newSessionExpiresAtIso();
+      await supabase.from('sessions').delete().eq('user_id', newUser.id);
+      const { error: sErr } = await supabase.from('sessions').insert({
+        user_id: newUser.id,
+        email: newUser.email,
+        token,
+        expires_at: expiresAt,
+        is_active: true,
+      });
+      if (sErr) throw sErr;
+
+      localStorage.setItem(ZEROFICO_SESSION_KEY, token);
+      onLoggedIn(newUser);
+      if (accessType === 'pending') {
+        navigate('payment');
+      } else {
+        navigate('home');
+      }
+    } catch {
+      setError('Something went wrong. Please try again.');
+    }
+    setSubmitting(false);
+  };
+
+  return (
+    <AuthShell title="Create Your ZeroFico Account">
+      <form onSubmit={handleSubmit}>
+        {error && (
+          <div style={{
+            padding: 12,
+            borderRadius: 8,
+            marginBottom: 16,
+            fontSize: 14,
+            lineHeight: 1.5,
+            borderLeft: '4px solid #ef4444',
+            background: 'rgba(239,68,68,0.1)',
+            color: '#fca5a5',
+          }}
+          >
+            {error}
+          </div>
+        )}
+        <label style={{ display: 'block', marginBottom: 8, fontSize: 12, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.6px' }}>Full Name</label>
+        <input type="text" required value={name} onChange={(ev) => setName(ev.target.value)} style={{ ...inputBase, marginBottom: 16 }} autoComplete="name" />
+        <label style={{ display: 'block', marginBottom: 8, fontSize: 12, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.6px' }}>Email</label>
+        <input type="email" required value={email} onChange={(ev) => setEmail(ev.target.value)} style={{ ...inputBase, marginBottom: 16 }} autoComplete="email" />
+        <label style={{ display: 'block', marginBottom: 8, fontSize: 12, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.6px' }}>Password (min 8 characters)</label>
+        <input type="password" required minLength={8} value={password} onChange={(ev) => setPassword(ev.target.value)} style={{ ...inputBase, marginBottom: 16 }} autoComplete="new-password" />
+        <label style={{ display: 'block', marginBottom: 8, fontSize: 12, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.6px' }}>Confirm Password</label>
+        <input type="password" required value={confirm} onChange={(ev) => setConfirm(ev.target.value)} style={{ ...inputBase, marginBottom: 22 }} autoComplete="new-password" />
+        <button type="submit" disabled={submitting} style={{ ...s.btnPrimary, width: '100%', opacity: submitting ? 0.75 : 1, cursor: submitting ? 'wait' : 'pointer' }}>
+          {submitting ? 'Creating…' : 'Create Account'}
+        </button>
+      </form>
+      <div style={{ marginTop: 22, display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
+        <button type="button" style={linkStyle} onClick={() => navigate('login')}>
+          Already have an account? Sign In
+        </button>
+        <button type="button" style={linkStyle} onClick={() => navigate('waitlist')}>
+          Join ZeroFico Founders free →
+        </button>
+      </div>
+    </AuthShell>
+  );
+}
+
+function PaymentPage({ currentUser, setAuthUser, navigate, onSignOut }) {
+  const h = useHover();
+  const successRef = useRef(false);
+  const [paymentStatus, setPaymentStatus] = useState('checkout');
+  const [refPaymentId, setRefPaymentId] = useState('');
+
+  useEffect(() => {
+    if (!currentUser) return;
+    if (currentUser.access_type === 'paid' || currentUser.access_type === 'founding') {
+      navigate('home');
+    }
+  }, [currentUser?.id, currentUser?.access_type]);
+
+  useEffect(() => {
+    const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+    if (existing) return;
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
+
+  const handlePaymentSuccess = async (response) => {
+    if (!currentUser?.email) return;
+    try {
+      const { error: payErr } = await supabase.from('payments').insert({
+        email: currentUser.email,
+        razorpay_order_id: response.razorpay_order_id ?? null,
+        razorpay_payment_id: response.razorpay_payment_id,
+        razorpay_signature: response.razorpay_signature,
+        amount: 500000,
+        currency: 'INR',
+        status: 'success',
+        paid_at: new Date().toISOString(),
+      });
+      if (payErr) throw payErr;
+      const { error: userErr } = await supabase
+        .from('users')
+        .update({ access_type: 'paid' })
+        .eq('email', currentUser.email);
+      if (userErr) throw userErr;
+      setAuthUser((prev) => (prev ? { ...prev, access_type: 'paid' } : prev));
+      setRefPaymentId(response.razorpay_payment_id || '');
+      setPaymentStatus('success');
+    } catch {
+      setPaymentStatus('failure');
+    }
+  };
+
+  const openRazorpay = () => {
+    if (typeof window === 'undefined' || !window.Razorpay) {
+      return;
+    }
+    successRef.current = false;
+
+    // SECURITY NOTE: In production, create Razorpay
+    // orders server-side via Vercel serverless function
+    // to verify payment signature before granting access.
+    // Current implementation is for MVP testing only.
+
+    const options = {
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+      amount: 500000,
+      currency: 'INR',
+      name: 'ZeroFico',
+      description: 'SAP FICO Platform — Lifetime Access',
+      prefill: {
+        name: currentUser?.name || '',
+        email: currentUser?.email || '',
+        contact: currentUser?.phone || '',
+      },
+      theme: { color: '#c8a96e' },
+      modal: {
+        ondismiss() {
+          if (!successRef.current) {
+            setPaymentStatus('cancelled');
+          }
+        },
+      },
+      handler(response) {
+        successRef.current = true;
+        void handlePaymentSuccess(response);
+      },
+    };
+    const rzp = new window.Razorpay(options);
+    rzp.on('payment.failed', () => {
+      setPaymentStatus('failure');
+    });
+    rzp.open();
+  };
+
+  const cardShell = {
+    ...s.card,
+    maxWidth: 480,
+    width: '100%',
+    padding: 28,
+    border: `2px solid ${C.accent}`,
+    background: 'rgba(200,169,110,0.04)',
+    boxSizing: 'border-box',
+  };
+
+  const divider = {
+    height: 1,
+    background: `linear-gradient(90deg, transparent, ${C.border}, transparent)`,
+    margin: '20px 0',
+  };
+
+  if (!currentUser) {
+    return (
+      <div style={{ minHeight: '100vh', fontFamily: C.body, background: C.bgPrimary, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.textMuted }}>
+        Loading…
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ minHeight: '100vh', fontFamily: C.body, background: C.bgPrimary, display: 'flex', flexDirection: 'column' }}>
+      <header style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '16px 32px',
+        borderBottom: `1px solid ${C.border}`,
+        background: 'rgba(10,14,26,0.8)',
+        backdropFilter: 'blur(12px)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+      }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {Icons.logo}
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+            <span style={{ fontFamily: C.heading, fontSize: 18, fontWeight: 700, color: C.accent, letterSpacing: '0.5px' }}>ZeroFico</span>
+            <span style={{ color: C.textMuted, fontSize: 11, fontWeight: 500, letterSpacing: '0.4px' }}>Complete your access</span>
+          </div>
+        </div>
+        <button
+          type="button"
+          style={{ ...s.backBtn, ...(h.is('so') ? { color: C.accentLight } : {}) }}
+          {...h.bind('so')}
+          onClick={() => onSignOut?.()}
+        >
+          Sign Out
+        </button>
+      </header>
+
+      <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 20px' }}>
+        {paymentStatus === 'success' && (
+          <div style={{ ...cardShell, textAlign: 'center' }}>
+            <div style={{ fontSize: 56, marginBottom: 16 }}>✅</div>
+            <h1 style={{ fontFamily: C.heading, fontSize: 24, color: C.accentLight, marginBottom: 12 }}>Payment Successful!</h1>
+            <p style={{ fontSize: 15, color: C.textSecondary, lineHeight: 1.75, marginBottom: 16, whiteSpace: 'pre-line' }}>
+              Welcome to ZeroFico.{'\n'}Your lifetime access is now active.
+            </p>
+            {refPaymentId && (
+              <p style={{ fontSize: 12, color: C.textMuted, marginBottom: 20, fontFamily: C.mono }}>
+                Payment reference: {refPaymentId}
+              </p>
+            )}
+            <button
+              type="button"
+              style={{ ...s.btnPrimary, width: '100%', padding: '16px 20px', fontSize: 16, fontWeight: 700 }}
+              onClick={() => navigate('home')}
+            >
+              Start Learning Now →
+            </button>
+            <p style={{ fontSize: 12, color: C.textMuted, marginTop: 18, lineHeight: 1.6, marginBottom: 0 }}>
+              For any issues email{' '}
+              <a href="mailto:manupandit75@gmail.com" style={{ color: C.accent }}>manupandit75@gmail.com</a>
+            </p>
+          </div>
+        )}
+
+        {paymentStatus === 'cancelled' && (
+          <div style={{ ...cardShell }}>
+            <div style={{
+              padding: 16,
+              borderRadius: 8,
+              borderLeft: `4px solid ${C.warning}`,
+              background: 'rgba(212,164,74,0.12)',
+              color: C.warning,
+              marginBottom: 20,
+              fontSize: 14,
+              lineHeight: 1.65,
+            }}
+            >
+              <strong>Payment was not completed.</strong>
+              <br />
+              No amount has been charged.
+            </div>
+            <button type="button" style={{ ...s.btnPrimary, width: '100%', padding: '14px 20px' }} onClick={() => { setPaymentStatus('checkout'); openRazorpay(); }}>
+              Try Again
+            </button>
+          </div>
+        )}
+
+        {paymentStatus === 'failure' && (
+          <div style={{ ...cardShell }}>
+            <div style={{
+              padding: 16,
+              borderRadius: 8,
+              borderLeft: '4px solid #ef4444',
+              background: 'rgba(239,68,68,0.1)',
+              color: '#fca5a5',
+              marginBottom: 16,
+              fontSize: 14,
+              lineHeight: 1.65,
+            }}
+            >
+              <strong>Payment failed. Please try again.</strong>
+              <br />
+              No amount has been charged.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <button type="button" style={{ ...s.btnPrimary, width: '100%', padding: '14px 20px' }} onClick={() => { setPaymentStatus('checkout'); openRazorpay(); }}>
+                Try Again
+              </button>
+              <a
+                href="mailto:manupandit75@gmail.com"
+                style={{
+                  display: 'block',
+                  textAlign: 'center',
+                  padding: '12px 20px',
+                  borderRadius: 8,
+                  border: `1px solid ${C.border}`,
+                  color: C.accentLight,
+                  textDecoration: 'none',
+                  fontSize: 14,
+                  fontFamily: C.body,
+                }}
+              >
+                Contact Support
+              </a>
+            </div>
+          </div>
+        )}
+
+        {paymentStatus === 'checkout' && (
+          <div style={{ ...cardShell, textAlign: 'left' }}>
+            <h1 style={{ fontFamily: C.heading, fontSize: 24, color: C.accentLight, marginBottom: 8, textAlign: 'center' }}>
+              Complete Your ZeroFico Access
+            </h1>
+            <p style={{ fontSize: 15, color: C.textSecondary, marginBottom: 22, textAlign: 'center', lineHeight: 1.5 }}>
+              One-time payment — lifetime access
+            </p>
+
+            <div style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.7 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
+                <span style={{ color: C.textMuted }}>Item</span>
+                <span style={{ color: C.accentLight, fontWeight: 600, textAlign: 'right' }}>ZeroFico — SAP FICO Learning Platform</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
+                <span style={{ color: C.textMuted }}>Access</span>
+                <span style={{ color: C.accentLight }}>Lifetime Access</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
+                <span style={{ color: C.textMuted }}>Amount</span>
+                <span style={{ fontFamily: C.heading, fontSize: 18, color: C.accent, fontWeight: 700 }}>₹5,000</span>
+              </div>
+              <p style={{ fontSize: 12, color: C.textMuted, marginTop: 4, marginBottom: 0 }}>GST included. No recurring charges.</p>
+            </div>
+
+            <div style={divider} />
+
+            <div style={{ fontSize: 13, color: C.textMuted, marginBottom: 8, fontWeight: 600 }}>What you get:</div>
+            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', fontSize: 14, color: C.textSecondary, lineHeight: 1.85 }}>
+              <li>✓ 8 modules + SAP Simulator</li>
+              <li>✓ T-Code Speed Drill + Error Decoder</li>
+              <li>✓ Document Trail Panel</li>
+              <li>✓ All future updates included</li>
+            </ul>
+
+            <button
+              type="button"
+              style={{ ...s.btnPrimary, width: '100%', padding: '18px 20px', fontSize: 17, fontWeight: 700 }}
+              onClick={() => {
+                if (!import.meta.env.VITE_RAZORPAY_KEY_ID) {
+                  setPaymentStatus('failure');
+                  return;
+                }
+                if (!window.Razorpay) {
+                  setTimeout(() => openRazorpay(), 400);
+                  return;
+                }
+                openRazorpay();
+              }}
+            >
+              Pay ₹5,000 — Get Lifetime Access
+            </button>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
+function WaitlistPage({ navigate }) {
+  const h = useHover();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [founderCount, setFounderCount] = useState(null);
+  const [feedback, setFeedback] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { count, error } = await supabase
+        .from('waitlist')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_founding_member', true);
+      if (!cancelled && !error) setFounderCount(count ?? 0);
+      if (!cancelled && error) setFounderCount(null);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setFeedback(null);
+    const nameTrim = name.trim();
+    const emailNorm = email.trim().toLowerCase();
+    if (!nameTrim || !emailNorm) return;
+    setSubmitting(true);
+    try {
+      const { data: existing, error: exErr } = await supabase
+        .from('waitlist')
+        .select('id')
+        .eq('email', emailNorm)
+        .maybeSingle();
+      if (exErr) throw exErr;
+      if (existing) {
+        setFeedback({
+          type: 'gold',
+          text: "You're already a ZeroFico Founder!\nWe'll notify you when the platform is ready.",
+        });
+        setSubmitting(false);
+        return;
+      }
+
+      const { data: cfgRow, error: cfgErr } = await supabase
+        .from('config')
+        .select('value')
+        .eq('key', 'founding_member_cutoff')
+        .maybeSingle();
+      if (cfgErr || !cfgRow?.value) {
+        setFeedback({
+          type: 'red',
+          text: 'Something went wrong. Please try again or WhatsApp us directly.',
+        });
+        setSubmitting(false);
+        return;
+      }
+
+      const cutoffRaw = String(cfgRow.value).trim();
+      const cutoffDate = cutoffRaw.length >= 10 ? cutoffRaw.slice(0, 10) : cutoffRaw;
+      const today = new Date().toISOString().slice(0, 10);
+      const isFounding = today <= cutoffDate;
+
+      const { error: insErr } = await supabase.from('waitlist').insert({
+        email: emailNorm,
+        name: nameTrim,
+        phone: phone.trim() || null,
+        is_founding_member: isFounding,
+      });
+      if (insErr) throw insErr;
+
+      if (isFounding) {
+        setFounderCount((c) => (typeof c === 'number' ? c + 1 : c));
+        setFeedback({
+          type: 'green',
+          text: "🎉 Welcome to ZeroFico Founders!\nYou've secured lifetime free access.\nWe'll WhatsApp you when ready to log in.",
+        });
+        setSubmitting(false);
+        window.setTimeout(() => navigate('waitlist_success'), 1400);
+        return;
+      }
+
+      setFeedback({
+        type: 'amber',
+        text: "You're on the waitlist. Access is ₹5,000 — payment link coming soon.",
+      });
+    } catch {
+      setFeedback({
+        type: 'red',
+        text: 'Something went wrong. Please try again or WhatsApp us directly.',
+      });
+    }
+    setSubmitting(false);
+  };
+
+  const feedbackStyle = (type) => {
+    const map = {
+      gold: { borderLeft: `4px solid ${C.accent}`, background: 'rgba(200,169,110,0.12)', color: C.accentLight },
+      green: { borderLeft: `4px solid ${C.success}`, background: 'rgba(74,170,122,0.12)', color: C.success },
+      amber: { borderLeft: `4px solid ${C.warning}`, background: 'rgba(212,164,74,0.12)', color: C.warning },
+      red: { borderLeft: '4px solid #ef4444', background: 'rgba(239,68,68,0.1)', color: '#fca5a5' },
+    };
+    return map[type] || map.red;
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', fontFamily: C.body, background: C.bgPrimary }}>
+      <header style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '16px 32px',
+        borderBottom: `1px solid ${C.border}`,
+        background: 'rgba(10,14,26,0.8)',
+        backdropFilter: 'blur(12px)',
+        position: 'sticky', top: 0, zIndex: 100,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {Icons.logo}
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+            <span style={{ fontFamily: C.heading, fontSize: 18, fontWeight: 700, color: C.accent, letterSpacing: '0.5px' }}>ZeroFico</span>
+            <span style={{ color: C.textMuted, fontSize: 11, fontWeight: 500, letterSpacing: '0.4px' }}>
+              SAP Training Built for Chartered Accountants
+            </span>
+          </div>
+        </div>
+        <button type="button" style={{ ...s.backBtn, ...(h.is('back') ? { color: C.accentLight } : {}) }} {...h.bind('back')} onClick={() => navigate('home')}>
+          {Icons.back} Back to Home
+        </button>
+      </header>
+
+      <main style={{ maxWidth: 720, margin: '0 auto', padding: '40px 32px 64px' }}>
+        <section style={{ marginBottom: 36, textAlign: 'center' }}>
+          <h1 style={{ fontFamily: C.heading, fontSize: 32, fontWeight: 700, color: C.accentLight, marginBottom: 12, lineHeight: 1.2 }}>
+            Join ZeroFico Founders
+          </h1>
+          <p style={{ fontSize: 18, color: C.accent, fontWeight: 600, marginBottom: 16 }}>
+            Get Lifetime Access — Free
+          </p>
+          <p style={{ fontSize: 15, color: C.textSecondary, lineHeight: 1.7, maxWidth: 560, margin: '0 auto' }}>
+            The first SAP FICO platform built exclusively for Chartered Accountants. Join ZeroFico Founders before the cutoff and get lifetime access free.
+          </p>
+        </section>
+
+        <div style={{
+          ...s.card,
+          cursor: 'default',
+          padding: 24,
+          marginBottom: 32,
+          border: `2px solid ${C.accent}`,
+          background: 'rgba(200,169,110,0.06)',
+        }}>
+          <div style={{ fontFamily: C.heading, fontSize: 16, fontWeight: 700, color: C.accent, marginBottom: 16 }}>
+            ZeroFico Founders Get:
+          </div>
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+            {WAITLIST_BENEFITS.map((line) => (
+              <li key={line} style={{ fontSize: 14, color: C.textSecondary, marginBottom: 10, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                <span style={{ color: C.accent, flexShrink: 0 }}>✓</span>
+                <span>{line}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div style={{ textAlign: 'center', marginBottom: 20, fontSize: 15, color: C.accentLight, fontWeight: 600 }}>
+          {founderCount === null ? (
+            <span style={{ color: C.textMuted }}>Loading founder count…</span>
+          ) : (
+            <>{founderCount} CAs have already joined ZeroFico Founders</>
+          )}
+        </div>
+
+        <form
+          onSubmit={handleSubmit}
+          style={{
+            ...s.card,
+            cursor: 'default',
+            maxWidth: 480,
+            margin: '0 auto 20px',
+            padding: 28,
+          }}
+        >
+          {feedback && (
+            <div style={{ ...feedbackStyle(feedback.type), padding: 14, borderRadius: 8, marginBottom: 18, fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-line' }}>
+              {feedback.text}
+            </div>
+          )}
+          <label style={{ display: 'block', marginBottom: 8, fontSize: 12, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+            Full Name *
+          </label>
+          <input
+            required
+            type="text"
+            value={name}
+            onChange={(ev) => setName(ev.target.value)}
+            style={{ ...inputBase, marginBottom: 18 }}
+            placeholder="Your full name"
+          />
+          <label style={{ display: 'block', marginBottom: 8, fontSize: 12, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+            Email *
+          </label>
+          <input
+            required
+            type="email"
+            value={email}
+            onChange={(ev) => setEmail(ev.target.value)}
+            style={{ ...inputBase, marginBottom: 18 }}
+            placeholder="you@example.com"
+          />
+          <label style={{ display: 'block', marginBottom: 8, fontSize: 12, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+            WhatsApp Number (optional)
+          </label>
+          <input
+            type="tel"
+            value={phone}
+            onChange={(ev) => setPhone(ev.target.value)}
+            style={{ ...inputBase, marginBottom: 22 }}
+            placeholder="+91 …"
+          />
+          <button
+            type="submit"
+            disabled={submitting}
+            style={{
+              ...s.btnPrimary,
+              width: '100%',
+              opacity: submitting ? 0.7 : 1,
+              cursor: submitting ? 'wait' : 'pointer',
+            }}
+          >
+            {submitting ? 'Submitting…' : 'Join ZeroFico Founders →'}
+          </button>
+        </form>
+
+        <p style={{ textAlign: 'center', fontSize: 14, color: C.textMuted, maxWidth: 480, margin: '0 auto', lineHeight: 1.6 }}>
+          After the founders cutoff, access will be ₹5,000 one-time payment.
+        </p>
+      </main>
+      <PlatformFooter navigate={navigate} />
+    </div>
+  );
+}
+
+function WaitlistSuccessPage({ navigate }) {
+  const h = useHover();
+  const siteUrl = import.meta.env.VITE_SITE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+  const shareText = `I just secured free lifetime access to ZeroFico — SAP FICO training built for CAs. Join before the cutoff: ${siteUrl}`;
+  const waUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+
+  return (
+    <div style={{ minHeight: '100vh', fontFamily: C.body, background: C.bgPrimary, display: 'flex', flexDirection: 'column' }}>
+      <header style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '16px 32px',
+        borderBottom: `1px solid ${C.border}`,
+        background: 'rgba(10,14,26,0.8)',
+        backdropFilter: 'blur(12px)',
+        position: 'sticky', top: 0, zIndex: 100,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {Icons.logo}
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+            <span style={{ fontFamily: C.heading, fontSize: 18, fontWeight: 700, color: C.accent, letterSpacing: '0.5px' }}>ZeroFico</span>
+            <span style={{ color: C.textMuted, fontSize: 11, fontWeight: 500, letterSpacing: '0.4px' }}>
+              SAP Training Built for Chartered Accountants
+            </span>
+          </div>
+        </div>
+        <button type="button" style={{ ...s.backBtn, ...(h.is('back') ? { color: C.accentLight } : {}) }} {...h.bind('back')} onClick={() => navigate('home')}>
+          {Icons.back} Back to Home
+        </button>
+      </header>
+
+      <main style={{ flex: 1, maxWidth: 560, margin: '0 auto', padding: '48px 32px 64px', textAlign: 'center' }}>
+        <div style={{ marginBottom: 28, display: 'flex', justifyContent: 'center' }}>
+          <svg width="88" height="88" viewBox="0 0 88 88" fill="none" aria-hidden>
+            <circle cx="44" cy="44" r="40" stroke="#c8a96e" strokeWidth="3" fill="rgba(200,169,110,0.12)" />
+            <path d="M28 46l12 12 24-28" stroke="#e8d5a3" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+        <h1 style={{ fontFamily: C.heading, fontSize: 30, fontWeight: 700, color: C.accentLight, marginBottom: 16, lineHeight: 1.25 }}>
+          You&apos;re a ZeroFico Founder! 🎉
+        </h1>
+        <p style={{ fontSize: 16, color: C.textSecondary, lineHeight: 1.75, marginBottom: 28 }}>
+          Your free lifetime access is secured. We&apos;ll reach out on WhatsApp as soon as the platform is ready for login.
+        </p>
+        <p style={{ fontSize: 13, color: C.textMuted, marginBottom: 12 }}>Share with a fellow CA:</p>
+        <a
+          href={waUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            padding: '12px 22px',
+            borderRadius: 8,
+            background: '#25D366',
+            color: '#fff',
+            fontWeight: 600,
+            fontSize: 14,
+            textDecoration: 'none',
+            fontFamily: C.body,
+            marginBottom: 28,
+          }}
+        >
+          Share on WhatsApp
+        </a>
+        <div>
+          <button
+            type="button"
+            style={{ ...s.btnPrimary, ...(h.is('explore') ? s.btnPrimaryHover : {}) }}
+            {...h.bind('explore')}
+            onClick={() => navigate('home')}
+          >
+            Explore the Platform →
+          </button>
+        </div>
+      </main>
+      <PlatformFooter navigate={navigate} />
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PAGE: PRICING
+// ═══════════════════════════════════════════════════════════════════════════════
+const PRICING_FAQ = [
+  {
+    q: 'Is this a subscription?',
+    a: 'No. ZeroFico is a one-time payment of ₹5,000. Lifetime access including all future updates. No renewal. No monthly fees.',
+  },
+  {
+    q: 'What is ZeroFico Founders?',
+    a: 'CAs who join the waitlist before 30 June 2026 get full platform access completely free, forever. Same platform, same content.',
+  },
+  {
+    q: 'Is this useful if I have never used SAP?',
+    a: 'That is exactly who ZeroFico is built for. It assumes 20 years of CA knowledge and zero SAP experience. No basic accounting explanations — just SAP mapped to what you already know from Tally.',
+  },
+  {
+    q: 'What if I am auditing a client on SAP?',
+    a: 'The simulator and Error Decoder are particularly useful for CAs auditing SAP clients. Navigate real transaction screens and understand document trails without needing client system access.',
+  },
+  {
+    q: 'Is there a refund policy?',
+    a: 'Yes — full refund within 7 days if the platform does not meet your expectations. No questions asked. Email manupandit75@gmail.com',
+  },
+];
+
+function PricingPage({ navigate }) {
+  const h = useHover();
+  const [openFaq, setOpenFaq] = useState(null);
+
+  const featureList = WAITLIST_BENEFITS;
+
+  const foundersCardStyle = {
+    ...s.card,
+    cursor: 'default',
+    flex: '1 1 300px',
+    maxWidth: 480,
+    padding: 32,
+    border: `2px solid ${C.accent}`,
+    background: 'rgba(200,169,110,0.08)',
+    boxShadow: `0 0 48px rgba(200,169,110,0.22), 0 0 96px rgba(200,169,110,0.08), 0 12px 40px rgba(0,0,0,0.35)`,
+    position: 'relative',
+    zIndex: 1,
+  };
+
+  const standardCardStyle = {
+    ...s.card,
+    cursor: 'default',
+    flex: '1 1 300px',
+    maxWidth: 440,
+    padding: 24,
+    border: `1px solid ${C.border}`,
+    background: C.bgCard,
+  };
+
+  const dividerLine = {
+    height: 1,
+    background: `linear-gradient(90deg, transparent, ${C.accent}55, transparent)`,
+    margin: '20px 0',
+  };
+
+  const renderFeatures = () => (
+    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+      {featureList.map((line) => (
+        <li key={line} style={{ fontSize: 14, color: C.textSecondary, marginBottom: 10, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+          <span style={{ color: C.accent, flexShrink: 0 }}>✓</span>
+          <span>{line}</span>
+        </li>
+      ))}
+    </ul>
+  );
+
+  return (
+    <div style={{ minHeight: '100vh', fontFamily: C.body, background: C.bgPrimary, display: 'flex', flexDirection: 'column' }}>
+      <header style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '16px 32px',
+        borderBottom: `1px solid ${C.border}`,
+        background: 'rgba(10,14,26,0.8)',
+        backdropFilter: 'blur(12px)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+      }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {Icons.logo}
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+            <span style={{ fontFamily: C.heading, fontSize: 18, fontWeight: 700, color: C.accent, letterSpacing: '0.5px' }}>ZeroFico</span>
+            <span style={{ color: C.textMuted, fontSize: 11, fontWeight: 500, letterSpacing: '0.4px' }}>
+              SAP Training Built for Chartered Accountants
+            </span>
+          </div>
+        </div>
+        <button type="button" style={{ ...s.backBtn, ...(h.is('back') ? { color: C.accentLight } : {}) }} {...h.bind('back')} onClick={() => navigate('home')}>
+          {Icons.back} Back to Home
+        </button>
+      </header>
+
+      <main style={{ width: '100%', maxWidth: 1100, margin: '0 auto', padding: '40px 24px 64px', boxSizing: 'border-box' }}>
+        <header style={{ textAlign: 'center', marginBottom: 40 }}>
+          <h1 style={{ fontFamily: C.heading, fontSize: 32, fontWeight: 700, color: C.accentLight, marginBottom: 16, lineHeight: 1.2 }}>
+            Simple, Transparent Pricing
+          </h1>
+          <p style={{ fontSize: 16, color: C.textSecondary, lineHeight: 1.65, maxWidth: 640, margin: '0 auto', whiteSpace: 'pre-line' }}>
+            One platform. Everything a CA needs{'\n'}to go from zero SAP experience to Day 1 ready.
+          </p>
+        </header>
+
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'stretch',
+            justifyContent: 'center',
+            gap: 24,
+            marginBottom: 48,
+          }}
+        >
+          {/* Founders */}
+          <div style={foundersCardStyle}>
+            <div style={{
+              display: 'inline-block',
+              padding: '6px 14px',
+              borderRadius: 20,
+              background: 'rgba(200,169,110,0.2)',
+              border: `1px solid ${C.accent}`,
+              color: C.accentLight,
+              fontSize: 12,
+              fontWeight: 700,
+              marginBottom: 18,
+              fontFamily: C.body,
+            }}
+            >
+              ⭐ ZeroFico Founders
+            </div>
+            <div style={{ fontFamily: C.heading, fontSize: 42, fontWeight: 800, color: C.accentLight, lineHeight: 1.1, marginBottom: 8 }}>
+              FREE
+            </div>
+            <p style={{ fontSize: 14, color: C.textMuted, marginBottom: 4, lineHeight: 1.5 }}>
+              Lifetime access — no credit card needed
+            </p>
+            <div style={dividerLine} />
+            {renderFeatures()}
+            <button
+              type="button"
+              style={{
+                ...s.btnPrimary,
+                width: '100%',
+                marginTop: 24,
+                padding: '14px 20px',
+                fontSize: 15,
+                fontWeight: 700,
+              }}
+              onClick={() => navigate('waitlist')}
+            >
+              Join ZeroFico Founders Free →
+            </button>
+            <p style={{ fontSize: 13, color: '#ef4444', textAlign: 'center', marginTop: 14, marginBottom: 0, fontWeight: 600 }}>
+              Founders access closes 30 June 2026
+            </p>
+          </div>
+
+          {/* Comparison */}
+          <div
+            style={{
+              flex: '1 1 220px',
+              minWidth: 180,
+              maxWidth: 320,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '16px 12px',
+              alignSelf: 'center',
+            }}
+          >
+            <p style={{
+              fontSize: 14,
+              color: C.accent,
+              lineHeight: 1.65,
+              textAlign: 'center',
+              fontWeight: 600,
+              margin: 0,
+              whiteSpace: 'pre-line',
+            }}
+            >
+              Join free before 30 June 2026 — or pay ₹5,000{'\n'}after. Same platform, same lifetime access.
+            </p>
+          </div>
+
+          {/* Standard */}
+          <div style={standardCardStyle}>
+            <div style={{
+              display: 'inline-block',
+              padding: '6px 14px',
+              borderRadius: 20,
+              background: C.bgSecondary,
+              border: `1px solid ${C.border}`,
+              color: C.textSecondary,
+              fontSize: 12,
+              fontWeight: 700,
+              marginBottom: 18,
+              fontFamily: C.body,
+            }}
+            >
+              Standard
+            </div>
+            <div style={{ fontFamily: C.heading, fontSize: 36, fontWeight: 800, color: C.accentLight, lineHeight: 1.1, marginBottom: 8 }}>
+              ₹5,000
+            </div>
+            <p style={{ fontSize: 14, color: C.textMuted, marginBottom: 4, lineHeight: 1.5 }}>
+              One-time payment — lifetime access
+            </p>
+            <div style={dividerLine} />
+            {renderFeatures()}
+            <button
+              type="button"
+              style={{
+                width: '100%',
+                marginTop: 24,
+                padding: '14px 20px',
+                fontSize: 15,
+                fontWeight: 700,
+                fontFamily: C.body,
+                borderRadius: 8,
+                cursor: 'pointer',
+                background: 'transparent',
+                color: C.accentLight,
+                border: `2px solid ${C.accent}`,
+                boxSizing: 'border-box',
+              }}
+              onClick={() => navigate('payment')}
+            >
+              Get Access for ₹5,000 →
+            </button>
+            <p style={{ fontSize: 13, color: C.textMuted, textAlign: 'center', marginTop: 14, marginBottom: 0, lineHeight: 1.5 }}>
+              No subscription. Pay once, use forever.
+            </p>
+          </div>
+        </div>
+
+        <section>
+          <h2 style={{ fontFamily: C.heading, fontSize: 22, fontWeight: 700, color: C.accentLight, textAlign: 'center', marginBottom: 24 }}>
+            Frequently asked questions
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {PRICING_FAQ.map((item, i) => {
+              const isOpen = openFaq === i;
+              return (
+                <div
+                  key={item.q}
+                  style={{
+                    borderBottom: `1px solid ${C.border}`,
+                    background: C.bgCard,
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenFaq(isOpen ? null : i)}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 16,
+                      padding: '16px 20px',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontFamily: C.body,
+                      textAlign: 'left',
+                      color: C.textPrimary,
+                    }}
+                  >
+                    <span style={{ fontSize: 15, fontWeight: 600, color: C.accentLight }}>{item.q}</span>
+                    <span
+                      style={{
+                        color: C.accent,
+                        fontSize: 14,
+                        flexShrink: 0,
+                        transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                        transition: 'transform 0.3s ease',
+                      }}
+                    >
+                      ▼
+                    </span>
+                  </button>
+                  <div
+                    style={{
+                      overflow: 'hidden',
+                      maxHeight: isOpen ? 400 : 0,
+                      transition: 'max-height 0.35s ease',
+                    }}
+                  >
+                    <div style={{ padding: '0 20px 20px 20px', fontSize: 14, color: C.textSecondary, lineHeight: 1.75 }}>
+                      {item.a}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      </main>
+      <PlatformFooter navigate={navigate} />
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // APP SHELL — Navigation Router
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function App() {
   const PROGRESS_KEY = 'zerofico_progress';
-  const [page, setPage] = useState('home');
+  const [authStatus, setAuthStatus] = useState('loading');
+  const [authUser, setAuthUser] = useState(null);
+  const [page, setPage] = useState('login');
   const [moduleIndex, setModuleIndex] = useState(0);
   const [lessonIndex, setLessonIndex] = useState(0);
   const [completedLessons, setCompletedLessons] = useState(() => new Set());
@@ -8534,7 +9899,127 @@ export default function App() {
     return () => window.removeEventListener('zerofico-reset-progress', onResetRequest);
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const token = localStorage.getItem(ZEROFICO_SESSION_KEY);
+      if (!token) {
+        if (!cancelled) {
+          setAuthStatus('guest');
+          setAuthUser(null);
+          setPage('login');
+        }
+        return;
+      }
+      const { data: sess, error: sErr } = await supabase
+        .from('sessions')
+        .select('id, user_id, email, expires_at, is_active')
+        .eq('token', token)
+        .eq('is_active', true)
+        .maybeSingle();
+      if (cancelled) return;
+      if (sErr || !sess) {
+        localStorage.removeItem(ZEROFICO_SESSION_KEY);
+        setAuthStatus('guest');
+        setAuthUser(null);
+        setPage('login');
+        return;
+      }
+      if (new Date(sess.expires_at) <= new Date()) {
+        await supabase.from('sessions').delete().eq('id', sess.id);
+        localStorage.removeItem(ZEROFICO_SESSION_KEY);
+        setAuthStatus('guest');
+        setAuthUser(null);
+        setPage('login');
+        return;
+      }
+      const { data: user, error: uErr } = await supabase
+        .from('users')
+        .select('id, email, name, access_type, is_active')
+        .eq('id', sess.user_id)
+        .maybeSingle();
+      if (cancelled) return;
+      if (uErr || !user || !user.is_active) {
+        localStorage.removeItem(ZEROFICO_SESSION_KEY);
+        setAuthStatus('guest');
+        setAuthUser(null);
+        setPage('login');
+        return;
+      }
+      setAuthUser(user);
+      setAuthStatus('authed');
+      if (user.access_type === 'pending') {
+        setPage('payment');
+      } else {
+        setPage('home');
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (authStatus === 'guest' && !AUTH_GUEST_PUBLIC_PAGES.has(page)) {
+      setPage('login');
+    }
+  }, [authStatus, page]);
+
+  useEffect(() => {
+    if (authStatus !== 'authed' || !authUser) return;
+    if (authUser.access_type === 'pending' && page !== 'payment' && !AUTH_GUEST_PUBLIC_PAGES.has(page)) {
+      setPage('payment');
+    }
+  }, [authStatus, authUser, page]);
+
+  useEffect(() => {
+    if (authStatus !== 'authed' || !authUser) return;
+    if (page === 'login' || page === 'signup') {
+      setPage(authUser.access_type === 'pending' ? 'payment' : 'home');
+    }
+  }, [authStatus, authUser, page]);
+
+  const handleSignOut = async () => {
+    const token = localStorage.getItem(ZEROFICO_SESSION_KEY);
+    if (token) {
+      await supabase.from('sessions').delete().eq('token', token);
+    }
+    localStorage.removeItem(ZEROFICO_SESSION_KEY);
+    setAuthUser(null);
+    setAuthStatus('guest');
+    setPage('login');
+  };
+
+  const onLoggedIn = (user) => {
+    setAuthUser(user);
+    setAuthStatus('authed');
+  };
+
   const navigate = (target, modIdx, lesIdx) => {
+    if (authStatus === 'loading') {
+      if (!AUTH_GUEST_PUBLIC_PAGES.has(target)) return;
+    } else if (authStatus === 'guest') {
+      if (!AUTH_GUEST_PUBLIC_PAGES.has(target)) {
+        setPage('login');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+    } else if (authStatus === 'authed' && authUser) {
+      if (authUser.access_type === 'founding' && target === 'payment') {
+        setPage('home');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      if (authUser.access_type === 'pending' && target !== 'payment' && !AUTH_GUEST_PUBLIC_PAGES.has(target)) {
+        setPage('payment');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      if ((target === 'login' || target === 'signup')) {
+        setPage(authUser.access_type === 'pending' ? 'payment' : 'home');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+    }
+
     setPage(target);
     if (modIdx !== undefined) setModuleIndex(modIdx);
     if (lesIdx !== undefined) setLessonIndex(lesIdx);
@@ -8586,6 +10071,22 @@ export default function App() {
 
   let body;
   switch (page) {
+    case 'login':
+      body = <LoginPage navigate={navigate} onLoggedIn={onLoggedIn} />;
+      break;
+    case 'signup':
+      body = <SignupPage navigate={navigate} onLoggedIn={onLoggedIn} />;
+      break;
+    case 'payment':
+      body = (
+        <PaymentPage
+          currentUser={authUser}
+          setAuthUser={setAuthUser}
+          navigate={navigate}
+          onSignOut={handleSignOut}
+        />
+      );
+      break;
     case 'about':
       body = <AboutPage navigate={navigate} />;
       break;
@@ -8597,6 +10098,15 @@ export default function App() {
       break;
     case 'terms':
       body = <TermsPage navigate={navigate} />;
+      break;
+    case 'waitlist':
+      body = <WaitlistPage navigate={navigate} />;
+      break;
+    case 'waitlist_success':
+      body = <WaitlistSuccessPage navigate={navigate} />;
+      break;
+    case 'pricing':
+      body = <PricingPage navigate={navigate} />;
       break;
     case 'errors':
       body = <ErrorDecoder navigate={navigate} setSimState={setSimState} />;
@@ -8657,9 +10167,31 @@ export default function App() {
             navigate('lesson', lastLesson.moduleId, lastLesson.lessonId);
           }}
           resetSuccessMsg={resetSuccessMsg}
+          onSignOut={handleSignOut}
         />
       );
       break;
+  }
+
+  if (authStatus === 'loading') {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: C.bgPrimary,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: C.body,
+        color: C.accentLight,
+      }}
+      >
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ marginBottom: 16 }}>{Icons.logo}</div>
+          <div style={{ fontSize: 15, color: C.textSecondary }}>Loading…</div>
+        </div>
+        <Analytics />
+      </div>
+    );
   }
 
   return (
