@@ -8642,7 +8642,7 @@ function AdminPage({ navigate }) {
         supabase.from('users').select('id', { count: 'exact', head: true }).eq('access_type', 'founding'),
         supabase.from('users').select('id', { count: 'exact', head: true }).eq('access_type', 'paid'),
         supabase.from('waitlist').select('id', { count: 'exact', head: true }),
-        supabase.from('users').select('id, email, name, phone, access_type, created_at, last_login').order('created_at', { ascending: false }),
+        supabase.from('users').select('id, email, name, phone, access_type, created_at, last_login, access_expires_at').order('created_at', { ascending: false }),
         supabase.from('waitlist').select('*').order('joined_at', { ascending: false }),
         supabase.from('payments').select('*').eq('status', 'success').order('paid_at', { ascending: false }),
       ]);
@@ -8682,6 +8682,18 @@ function AdminPage({ navigate }) {
     if (t === 'founding') return { ...base, background: 'rgba(200,169,110,0.2)', color: C.accent, border: `1px solid ${C.accent}` };
     if (t === 'paid') return { ...base, background: 'rgba(74,170,122,0.15)', color: C.success, border: `1px solid ${C.success}` };
     return { ...base, background: 'rgba(239,68,68,0.12)', color: '#fca5a5', border: '1px solid #ef4444' };
+  };
+
+  const expiresOnCell = (iso) => {
+    if (!iso) return { text: '—', color: C.textSecondary };
+    const exp = new Date(iso);
+    const now = new Date();
+    const label = formatAccessExpiryDisplay(iso);
+    const ms = exp.getTime() - now.getTime();
+    const fifteenDaysMs = 15 * 24 * 60 * 60 * 1000;
+    if (ms < 0) return { text: label, color: '#ef4444' };
+    if (ms <= fifteenDaysMs) return { text: label, color: C.warning };
+    return { text: label, color: C.success };
   };
 
   const exportWaitlistCsv = () => {
@@ -8813,18 +8825,23 @@ function AdminPage({ navigate }) {
                   <th style={{ padding: '10px 8px' }}>Access Type</th>
                   <th style={{ padding: '10px 8px' }}>Joined</th>
                   <th style={{ padding: '10px 8px' }}>Last Login</th>
+                  <th style={{ padding: '10px 8px' }}>Expires On</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers.map((u, i) => (
+                {filteredUsers.map((u, i) => {
+                  const expCell = expiresOnCell(u.access_expires_at);
+                  return (
                   <tr key={u.id || u.email || i} style={{ background: i % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent' }}>
                     <td style={{ padding: '10px 8px', color: C.textPrimary }}>{u.name || '—'}</td>
                     <td style={{ padding: '10px 8px', color: C.textSecondary }}>{u.email}</td>
                     <td style={{ padding: '10px 8px' }}><span style={accessChip(u.access_type)}>{u.access_type || '—'}</span></td>
                     <td style={{ padding: '10px 8px', color: C.textSecondary }}>{u.created_at ? new Date(u.created_at).toLocaleString('en-IN') : '—'}</td>
                     <td style={{ padding: '10px 8px', color: C.textSecondary }}>{u.last_login ? new Date(u.last_login).toLocaleString('en-IN') : '—'}</td>
+                    <td style={{ padding: '10px 8px', color: expCell.color }}>{expCell.text}</td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
