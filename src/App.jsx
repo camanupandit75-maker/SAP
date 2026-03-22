@@ -8642,7 +8642,7 @@ function AdminPage({ navigate }) {
         supabase.from('users').select('id', { count: 'exact', head: true }).eq('access_type', 'founding'),
         supabase.from('users').select('id', { count: 'exact', head: true }).eq('access_type', 'paid'),
         supabase.from('waitlist').select('id', { count: 'exact', head: true }),
-        supabase.from('users').select('id, email, name, phone, access_type, created_at, last_login, access_expires_at').order('created_at', { ascending: false }),
+        supabase.from('users').select('id, email, name, phone, access_type, created_at, last_login, login_count, access_expires_at').order('created_at', { ascending: false }),
         supabase.from('waitlist').select('*').order('joined_at', { ascending: false }),
         supabase.from('payments').select('*').eq('status', 'success').order('paid_at', { ascending: false }),
       ]);
@@ -8825,6 +8825,7 @@ function AdminPage({ navigate }) {
                   <th style={{ padding: '10px 8px' }}>Access Type</th>
                   <th style={{ padding: '10px 8px' }}>Joined</th>
                   <th style={{ padding: '10px 8px' }}>Last Login</th>
+                  <th style={{ padding: '10px 8px' }}>Logins</th>
                   <th style={{ padding: '10px 8px' }}>Expires On</th>
                 </tr>
               </thead>
@@ -8838,6 +8839,7 @@ function AdminPage({ navigate }) {
                     <td style={{ padding: '10px 8px' }}><span style={accessChip(u.access_type)}>{u.access_type || '—'}</span></td>
                     <td style={{ padding: '10px 8px', color: C.textSecondary }}>{u.created_at ? new Date(u.created_at).toLocaleString('en-IN') : '—'}</td>
                     <td style={{ padding: '10px 8px', color: C.textSecondary }}>{u.last_login ? new Date(u.last_login).toLocaleString('en-IN') : '—'}</td>
+                    <td style={{ padding: '10px 8px', color: C.textSecondary }}>{String(u.login_count ?? 0)}</td>
                     <td style={{ padding: '10px 8px', color: expCell.color }}>{expCell.text}</td>
                   </tr>
                   );
@@ -9194,7 +9196,7 @@ function LoginPage({ navigate, onLoggedIn }) {
     try {
       const { data: user, error: uErr } = await supabase
         .from('users')
-        .select('id, email, name, password_hash, access_type, is_active')
+        .select('id, email, name, password_hash, access_type, is_active, login_count')
         .eq('email', emailNorm)
         .maybeSingle();
       if (uErr) throw uErr;
@@ -9225,6 +9227,13 @@ function LoginPage({ navigate, onLoggedIn }) {
         is_active: true,
       });
       if (sErr) throw sErr;
+      await supabase
+        .from('users')
+        .update({
+          login_count: (user.login_count || 0) + 1,
+          last_login: new Date().toISOString(),
+        })
+        .eq('email', emailNorm);
       localStorage.setItem(ZEROFICO_SESSION_KEY, token);
       onLoggedIn({
         id: user.id,
