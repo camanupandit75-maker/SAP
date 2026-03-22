@@ -9403,9 +9403,7 @@ function SignupPage({ navigate, onLoggedIn }) {
         .single();
       if (insErr) throw insErr;
 
-      if (isFounding) {
-        await supabase.from('waitlist').update({ converted_to_user: true }).eq('email', emailNorm);
-      }
+      await supabase.from('waitlist').update({ converted_to_user: true }).eq('email', emailNorm);
 
       const token = newSessionToken();
       const expiresAt = newSessionExpiresAtIso();
