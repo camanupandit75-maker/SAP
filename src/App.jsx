@@ -10147,7 +10147,7 @@ const PRICING_FAQ = [
   },
   {
     q: 'Is there a refund policy?',
-    a: 'Yes — full refund within 7 days if the platform does not meet your expectations. No questions asked. Email zerofico2026@gmail.com',
+    a: 'All payments are final and non-refundable. As this is a digital learning platform, we do not offer refunds once access has been granted. Please explore the free Founders access or review the platform content before purchasing. For any concerns email zerofico2026@gmail.com',
   },
 ];
 
