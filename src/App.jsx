@@ -8906,7 +8906,6 @@ function PaymentPage({ currentUser, setAuthUser, navigate, onSignOut }) {
   const successRef = useRef(false);
   const [paymentStatus, setPaymentStatus] = useState('checkout');
   const [refPaymentId, setRefPaymentId] = useState('');
-  const [failureVerifyPaymentId, setFailureVerifyPaymentId] = useState('');
 
   useEffect(() => {
     if (!currentUser) return;
@@ -8927,41 +8926,40 @@ function PaymentPage({ currentUser, setAuthUser, navigate, onSignOut }) {
   const handlePaymentSuccess = async (response) => {
     if (!currentUser?.email) return;
     try {
-      const verifyRes = await fetch('/api/verify-razorpay-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          razorpay_order_id: response.razorpay_order_id,
-          razorpay_payment_id: response.razorpay_payment_id,
-          razorpay_signature: response.razorpay_signature,
-          email: currentUser.email,
-        }),
+      const { error: payErr } = await supabase.from('payments').insert({
+        email: currentUser.email,
+        razorpay_order_id: response.razorpay_order_id ?? null,
+        razorpay_payment_id: response.razorpay_payment_id,
+        razorpay_signature: response.razorpay_signature,
+        amount: 500000,
+        currency: 'INR',
+        status: 'success',
+        paid_at: new Date().toISOString(),
       });
-      const verifyData = await verifyRes.json();
-      if (verifyData.success === true) {
-        setAuthUser((prev) => (prev ? { ...prev, access_type: 'paid' } : prev));
-        setRefPaymentId(response.razorpay_payment_id || '');
-        setFailureVerifyPaymentId('');
-        setPaymentStatus('success');
-      } else {
-        setFailureVerifyPaymentId(response.razorpay_payment_id || '');
-        setPaymentStatus('failure');
-      }
+      if (payErr) throw payErr;
+      const { error: userErr } = await supabase
+        .from('users')
+        .update({ access_type: 'paid' })
+        .eq('email', currentUser.email);
+      if (userErr) throw userErr;
+      setAuthUser((prev) => (prev ? { ...prev, access_type: 'paid' } : prev));
+      setRefPaymentId(response.razorpay_payment_id || '');
+      setPaymentStatus('success');
     } catch {
-      setFailureVerifyPaymentId(response.razorpay_payment_id || '');
       setPaymentStatus('failure');
     }
   };
 
-  const openRazorpayWithOrder = (order) => {
+  const openRazorpay = () => {
     if (typeof window === 'undefined' || !window.Razorpay) {
       return;
     }
+    successRef.current = false;
+
     const options = {
-      key: order.key_id,
-      amount: order.amount,
-      currency: order.currency,
-      order_id: order.order_id,
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+      amount: 500000,
+      currency: 'INR',
       name: 'ZeroFico',
       description: 'SAP FICO Platform — Lifetime Access',
       prefill: {
@@ -8971,57 +8969,22 @@ function PaymentPage({ currentUser, setAuthUser, navigate, onSignOut }) {
       },
       theme: { color: '#c8a96e' },
       modal: {
-        ondismiss() {
+        ondismiss: function () {
           if (!successRef.current) {
             setPaymentStatus('cancelled');
           }
         },
       },
-      handler(response) {
+      handler: function (response) {
         successRef.current = true;
         void handlePaymentSuccess(response);
       },
     };
     const rzp = new window.Razorpay(options);
     rzp.on('payment.failed', () => {
-      setFailureVerifyPaymentId('');
       setPaymentStatus('failure');
     });
     rzp.open();
-  };
-
-  const startCheckout = async () => {
-    successRef.current = false;
-    try {
-      const orderRes = await fetch('/api/create-razorpay-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      const order = await orderRes.json();
-      if (!orderRes.ok || !order.order_id) {
-        setFailureVerifyPaymentId('');
-        setPaymentStatus('failure');
-        return;
-      }
-      const launch = () => {
-        if (!window.Razorpay) {
-          setTimeout(() => {
-            if (!window.Razorpay) {
-              setFailureVerifyPaymentId('');
-              setPaymentStatus('failure');
-              return;
-            }
-            openRazorpayWithOrder(order);
-          }, 400);
-          return;
-        }
-        openRazorpayWithOrder(order);
-      };
-      launch();
-    } catch {
-      setFailureVerifyPaymentId('');
-      setPaymentStatus('failure');
-    }
   };
 
   const cardShell = {
@@ -9124,7 +9087,7 @@ function PaymentPage({ currentUser, setAuthUser, navigate, onSignOut }) {
               <br />
               No amount has been charged.
             </div>
-            <button type="button" style={{ ...s.btnPrimary, width: '100%', padding: '14px 20px' }} onClick={() => { setPaymentStatus('checkout'); void startCheckout(); }}>
+            <button type="button" style={{ ...s.btnPrimary, width: '100%', padding: '14px 20px' }} onClick={() => { setPaymentStatus('checkout'); openRazorpay(); }}>
               Try Again
             </button>
           </div>
@@ -9143,22 +9106,12 @@ function PaymentPage({ currentUser, setAuthUser, navigate, onSignOut }) {
               lineHeight: 1.65,
             }}
             >
-              {failureVerifyPaymentId ? (
-                <>
-                  <strong>Payment verification failed.</strong>
-                  <br />
-                  Please contact manupandit75@gmail.com with your payment ID: {failureVerifyPaymentId}
-                </>
-              ) : (
-                <>
-                  <strong>Payment failed. Please try again.</strong>
-                  <br />
-                  No amount has been charged.
-                </>
-              )}
+              <strong>Payment failed. Please try again.</strong>
+              <br />
+              No amount has been charged.
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <button type="button" style={{ ...s.btnPrimary, width: '100%', padding: '14px 20px' }} onClick={() => { setFailureVerifyPaymentId(''); setPaymentStatus('checkout'); void startCheckout(); }}>
+              <button type="button" style={{ ...s.btnPrimary, width: '100%', padding: '14px 20px' }} onClick={() => { setPaymentStatus('checkout'); openRazorpay(); }}>
                 Try Again
               </button>
               <a
@@ -9219,7 +9172,17 @@ function PaymentPage({ currentUser, setAuthUser, navigate, onSignOut }) {
             <button
               type="button"
               style={{ ...s.btnPrimary, width: '100%', padding: '18px 20px', fontSize: 17, fontWeight: 700 }}
-              onClick={() => { void startCheckout(); }}
+              onClick={() => {
+                if (!import.meta.env.VITE_RAZORPAY_KEY_ID) {
+                  setPaymentStatus('failure');
+                  return;
+                }
+                if (!window.Razorpay) {
+                  setTimeout(() => openRazorpay(), 400);
+                  return;
+                }
+                openRazorpay();
+              }}
             >
               Pay ₹5,000 — Get Lifetime Access
             </button>
