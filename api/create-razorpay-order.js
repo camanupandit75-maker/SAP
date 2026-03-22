@@ -12,7 +12,7 @@ module.exports = async (req, res) => {
     })
     
     const order = await razorpay.orders.create({
-      amount: 500000,
+      amount: 200000,
       currency: 'INR',
       receipt: 'zerofico_' + Date.now()
     })

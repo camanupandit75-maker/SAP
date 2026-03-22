@@ -11,6 +11,25 @@ function isAdminUser(user) {
 
 const FooterAuthContext = createContext(null);
 
+function isUserAccessExpired(user) {
+  if (!user) return false;
+  if (user.access_type === 'expired') return true;
+  if (user.access_expires_at && new Date(user.access_expires_at) < new Date()) return true;
+  return false;
+}
+
+function formatAccessExpiryDisplay(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+/** Pages an expired (by date or type) user may view without triggering session clear. */
+const EXPIRED_SESSION_ALLOWED_PAGES = new Set([
+  'expired', 'login', 'signup', 'payment',
+  'waitlist', 'waitlist_success', 'pricing', 'about', 'disclaimer', 'terms', 'testimonials',
+]);
+
 // ─── Curriculum (CA-focused: where to click, what to type; no accounting theory) ─
 const curriculum = [
   {
@@ -8638,7 +8657,7 @@ function AdminPage({ navigate }) {
       });
       const spc = payData?.length ?? 0;
       setSuccessPayCount(spc);
-      setRevenuePaise(spc * 500000);
+      setRevenuePaise(spc * 200000);
       setUsersRows(usersData || []);
       setWaitlistRows(wlData || []);
       setPaymentsRows(payData || []);
@@ -9048,7 +9067,7 @@ const WAITLIST_BENEFITS = [
   'SAP Error Decoder',
   'Document Trail Panel',
   'Progress tracking across sessions',
-  'Lifetime access — no subscription',
+  '3 Months Access — no subscription',
   'All future updates free',
   'No credit card needed',
 ];
@@ -9081,7 +9100,7 @@ function newSessionToken() {
 
 const AUTH_GUEST_PUBLIC_PAGES = new Set([
   'login', 'signup', 'waitlist', 'waitlist_success', 'pricing',
-  'home', 'about', 'disclaimer', 'terms', 'testimonials',
+  'home', 'about', 'disclaimer', 'terms', 'testimonials', 'expired', 'payment',
 ]);
 /** Pages unpaid (pending) users may open without being forced to payment (not home — they must pay first). */
 const PENDING_MARKETING_PAGES = new Set([
@@ -9442,7 +9461,7 @@ function PaymentPage({ currentUser, setAuthUser, navigate, onSignOut }) {
         razorpay_order_id: response.razorpay_order_id ?? null,
         razorpay_payment_id: response.razorpay_payment_id,
         razorpay_signature: response.razorpay_signature,
-        amount: 500000,
+        amount: 200000,
         currency: 'INR',
         status: 'success',
         paid_at: new Date().toISOString(),
@@ -9469,10 +9488,10 @@ function PaymentPage({ currentUser, setAuthUser, navigate, onSignOut }) {
 
     const options = {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-      amount: 500000,
+      amount: 200000,
       currency: 'INR',
       name: 'ZeroFico',
-      description: 'SAP FICO Platform — Lifetime Access',
+      description: 'SAP FICO Platform — 3 Months Access',
       prefill: {
         name: currentUser?.name || '',
         email: currentUser?.email || '',
@@ -9560,7 +9579,7 @@ function PaymentPage({ currentUser, setAuthUser, navigate, onSignOut }) {
             <div style={{ fontSize: 56, marginBottom: 16 }}>✅</div>
             <h1 style={{ fontFamily: C.heading, fontSize: 24, color: C.accentLight, marginBottom: 12 }}>Payment Successful!</h1>
             <p style={{ fontSize: 15, color: C.textSecondary, lineHeight: 1.75, marginBottom: 16, whiteSpace: 'pre-line' }}>
-              Welcome to ZeroFico.{'\n'}Your lifetime access is now active.
+              Welcome to ZeroFico.{'\n'}Your 3 months access is now active.
             </p>
             {refPaymentId && (
               <p style={{ fontSize: 12, color: C.textMuted, marginBottom: 20, fontFamily: C.mono }}>
@@ -9651,7 +9670,7 @@ function PaymentPage({ currentUser, setAuthUser, navigate, onSignOut }) {
               Complete Your ZeroFico Access
             </h1>
             <p style={{ fontSize: 15, color: C.textSecondary, marginBottom: 22, textAlign: 'center', lineHeight: 1.5 }}>
-              One-time payment — lifetime access
+              One-time payment — 3 months access
             </p>
 
             <div style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.7 }}>
@@ -9661,11 +9680,11 @@ function PaymentPage({ currentUser, setAuthUser, navigate, onSignOut }) {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
                 <span style={{ color: C.textMuted }}>Access</span>
-                <span style={{ color: C.accentLight }}>Lifetime Access</span>
+                <span style={{ color: C.accentLight }}>3 Months Access</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
                 <span style={{ color: C.textMuted }}>Amount</span>
-                <span style={{ fontFamily: C.heading, fontSize: 18, color: C.accent, fontWeight: 700 }}>₹5,000</span>
+                <span style={{ fontFamily: C.heading, fontSize: 18, color: C.accent, fontWeight: 700 }}>₹2,000</span>
               </div>
               <p style={{ fontSize: 12, color: C.textMuted, marginTop: 4, marginBottom: 0 }}>GST included. No recurring charges.</p>
             </div>
@@ -9695,7 +9714,7 @@ function PaymentPage({ currentUser, setAuthUser, navigate, onSignOut }) {
                 openRazorpay();
               }}
             >
-              Pay ₹5,000 — Get Lifetime Access
+              Pay ₹2,000 — Get 3 Months Access
             </button>
           </div>
         )}
@@ -9780,7 +9799,7 @@ function WaitlistPage({ navigate }) {
         setFounderCount((c) => (typeof c === 'number' ? c + 1 : c));
         setFeedback({
           type: 'green',
-          text: "🎉 Welcome to ZeroFico Founders!\nYou've secured lifetime free access.\nWe'll WhatsApp you when ready to log in.",
+          text: "🎉 Welcome to ZeroFico Founders!\nYou've secured 3 months free access.\nWe'll WhatsApp you when ready to log in.",
         });
         setSubmitting(false);
         window.setTimeout(() => navigate('waitlist_success'), 1400);
@@ -9789,7 +9808,7 @@ function WaitlistPage({ navigate }) {
 
       setFeedback({
         type: 'amber',
-        text: "You're on the waitlist. Access is ₹5,000 — payment link coming soon.",
+        text: "You're on the waitlist. Access is ₹2,000 — payment link coming soon.",
       });
     } catch {
       setFeedback({
@@ -9840,10 +9859,10 @@ function WaitlistPage({ navigate }) {
             Join ZeroFico Founders
           </h1>
           <p style={{ fontSize: 18, color: C.accent, fontWeight: 600, marginBottom: 16 }}>
-            Get Lifetime Access — Free
+            Get 3 Months Access — Free
           </p>
           <p style={{ fontSize: 15, color: C.textSecondary, lineHeight: 1.7, maxWidth: 560, margin: '0 auto' }}>
-            The first SAP FICO platform built exclusively for Chartered Accountants. Join ZeroFico Founders before the cutoff and get lifetime access free.
+            The first SAP FICO platform built exclusively for Chartered Accountants. Join ZeroFico Founders before 5th April 2026 and get 3 months access free.
           </p>
         </section>
 
@@ -9938,7 +9957,7 @@ function WaitlistPage({ navigate }) {
         </form>
 
         <p style={{ textAlign: 'center', fontSize: 14, color: C.textMuted, maxWidth: 480, margin: '0 auto', lineHeight: 1.6 }}>
-          After the founders cutoff, access will be ₹5,000 one-time payment.
+          After the founders cutoff, access will be ₹2,000 one-time payment.
         </p>
       </main>
       <PlatformFooter navigate={navigate} />
@@ -9949,7 +9968,7 @@ function WaitlistPage({ navigate }) {
 function WaitlistSuccessPage({ navigate }) {
   const h = useHover();
   const siteUrl = import.meta.env.VITE_SITE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
-  const shareText = `I just secured free lifetime access to ZeroFico — SAP FICO training built for CAs. Join before the cutoff: ${siteUrl}`;
+  const shareText = `I just secured free 3 months access to ZeroFico — SAP FICO training built for CAs. Join before 5th April 2026: ${siteUrl}`;
   const waUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
 
   return (
@@ -9987,7 +10006,7 @@ function WaitlistSuccessPage({ navigate }) {
           You&apos;re a ZeroFico Founder! 🎉
         </h1>
         <p style={{ fontSize: 16, color: C.textSecondary, lineHeight: 1.75, marginBottom: 28 }}>
-          Your free lifetime access is secured. We&apos;ll reach out on WhatsApp as soon as the platform is ready for login.
+          Your free 3 months access is secured. We&apos;ll reach out on WhatsApp as soon as the platform is ready for login.
         </p>
         <p style={{ fontSize: 13, color: C.textMuted, marginBottom: 12 }}>Share with a fellow CA:</p>
         <a
@@ -10034,11 +10053,11 @@ function WaitlistSuccessPage({ navigate }) {
 const PRICING_FAQ = [
   {
     q: 'Is this a subscription?',
-    a: 'No. ZeroFico is a one-time payment of ₹5,000. Lifetime access including all future updates. No renewal. No monthly fees.',
+    a: 'No. ZeroFico is a one-time payment of ₹2,000. 3 Months Access including all future updates. No renewal. No monthly fees.',
   },
   {
     q: 'What is ZeroFico Founders?',
-    a: 'CAs who join the waitlist before 30 June 2026 get full platform access completely free, forever. Same platform, same content.',
+    a: 'CAs who join the waitlist before 5th April 2026 get full platform access completely free for 3 months. Same platform, same content.',
   },
   {
     q: 'Is this useful if I have never used SAP?',
@@ -10170,7 +10189,7 @@ function PricingPage({ navigate }) {
               FREE
             </div>
             <p style={{ fontSize: 14, color: C.textMuted, marginBottom: 4, lineHeight: 1.5 }}>
-              Lifetime access — no credit card needed
+              3 Months Access — no credit card needed
             </p>
             <div style={dividerLine} />
             {renderFeatures()}
@@ -10189,7 +10208,7 @@ function PricingPage({ navigate }) {
               Join ZeroFico Founders Free →
             </button>
             <p style={{ fontSize: 13, color: '#ef4444', textAlign: 'center', marginTop: 14, marginBottom: 0, fontWeight: 600 }}>
-              Founders access closes 30 June 2026
+              Founders access closes 5th April 2026
             </p>
           </div>
 
@@ -10216,7 +10235,7 @@ function PricingPage({ navigate }) {
               whiteSpace: 'pre-line',
             }}
             >
-              Join free before 30 June 2026 — or pay ₹5,000{'\n'}after. Same platform, same lifetime access.
+              Join free before 5th April 2026 — or pay ₹2,000{'\n'}after. Same platform, same 3 months access.
             </p>
           </div>
 
@@ -10238,10 +10257,10 @@ function PricingPage({ navigate }) {
               Standard
             </div>
             <div style={{ fontFamily: C.heading, fontSize: 36, fontWeight: 800, color: C.accentLight, lineHeight: 1.1, marginBottom: 8 }}>
-              ₹5,000
+              ₹2,000
             </div>
             <p style={{ fontSize: 14, color: C.textMuted, marginBottom: 4, lineHeight: 1.5 }}>
-              One-time payment — lifetime access
+              One-time payment — 3 months access
             </p>
             <div style={dividerLine} />
             {renderFeatures()}
@@ -10263,10 +10282,10 @@ function PricingPage({ navigate }) {
               }}
               onClick={() => navigate('payment')}
             >
-              Get Access for ₹5,000 →
+              Get Access for ₹2,000 →
             </button>
             <p style={{ fontSize: 13, color: C.textMuted, textAlign: 'center', marginTop: 14, marginBottom: 0, lineHeight: 1.5 }}>
-              No subscription. Pay once, use forever.
+              Valid for 3 months from date of purchase
             </p>
           </div>
         </div>

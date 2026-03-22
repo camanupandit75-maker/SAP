@@ -47,9 +47,15 @@ module.exports = async (req, res) => {
     })
 
     // Upgrade user access
+    const expiryDate = new Date(
+      Date.now() + 90 * 24 * 60 * 60 * 1000
+    ).toISOString()
     await supabase
       .from('users')
-      .update({ access_type: 'paid' })
+      .update({
+        access_type: 'paid',
+        access_expires_at: expiryDate
+      })
       .eq('email', email)
 
     res.status(200).json({ success: true })
