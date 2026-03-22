@@ -8642,7 +8642,7 @@ function AdminPage({ navigate }) {
         supabase.from('users').select('id', { count: 'exact', head: true }).eq('access_type', 'founding'),
         supabase.from('users').select('id', { count: 'exact', head: true }).eq('access_type', 'paid'),
         supabase.from('waitlist').select('id', { count: 'exact', head: true }),
-        supabase.from('users').select('id, email, name, phone, access_type, created_at, last_login, login_count, access_expires_at').order('created_at', { ascending: false }),
+        supabase.from('users').select('id, email, name, location, phone, access_type, created_at, last_login, login_count, access_expires_at').order('created_at', { ascending: false }),
         supabase.from('waitlist').select('*').order('joined_at', { ascending: false }),
         supabase.from('payments').select('*').eq('status', 'success').order('paid_at', { ascending: false }),
       ]);
@@ -8821,6 +8821,7 @@ function AdminPage({ navigate }) {
               <thead>
                 <tr style={{ color: C.textMuted, textAlign: 'left', borderBottom: `1px solid ${C.border}` }}>
                   <th style={{ padding: '10px 8px' }}>Name</th>
+                  <th style={{ padding: '10px 8px' }}>Location</th>
                   <th style={{ padding: '10px 8px' }}>Email</th>
                   <th style={{ padding: '10px 8px' }}>Access Type</th>
                   <th style={{ padding: '10px 8px' }}>Joined</th>
@@ -8835,6 +8836,7 @@ function AdminPage({ navigate }) {
                   return (
                   <tr key={u.id || u.email || i} style={{ background: i % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent' }}>
                     <td style={{ padding: '10px 8px', color: C.textPrimary }}>{u.name || '—'}</td>
+                    <td style={{ padding: '10px 8px', color: C.textSecondary }}>{u.location || '—'}</td>
                     <td style={{ padding: '10px 8px', color: C.textSecondary }}>{u.email}</td>
                     <td style={{ padding: '10px 8px' }}><span style={accessChip(u.access_type)}>{u.access_type || '—'}</span></td>
                     <td style={{ padding: '10px 8px', color: C.textSecondary }}>{u.created_at ? new Date(u.created_at).toLocaleString('en-IN') : '—'}</td>
@@ -8859,6 +8861,7 @@ function AdminPage({ navigate }) {
                   <th style={{ padding: '10px 8px' }}>Name</th>
                   <th style={{ padding: '10px 8px' }}>Email</th>
                   <th style={{ padding: '10px 8px' }}>Phone</th>
+                  <th style={{ padding: '10px 8px' }}>Location</th>
                   <th style={{ padding: '10px 8px' }}>Joined Date</th>
                   <th style={{ padding: '10px 8px' }}>Founding Member</th>
                   <th style={{ padding: '10px 8px' }}>Converted</th>
@@ -8870,6 +8873,7 @@ function AdminPage({ navigate }) {
                     <td style={{ padding: '10px 8px', color: C.textPrimary }}>{w.name || '—'}</td>
                     <td style={{ padding: '10px 8px', color: C.textSecondary }}>{w.email}</td>
                     <td style={{ padding: '10px 8px', color: C.textSecondary }}>{w.phone || '—'}</td>
+                    <td style={{ padding: '10px 8px', color: C.textSecondary }}>{w.location || '—'}</td>
                     <td style={{ padding: '10px 8px', color: C.textSecondary }}>{w.joined_at ? new Date(w.joined_at).toLocaleString('en-IN') : '—'}</td>
                     <td style={{ padding: '10px 8px' }}>{w.is_founding_member ? '✅' : '❌'}</td>
                     <td style={{ padding: '10px 8px' }}>{w.converted_to_user ? '✅' : '❌'}</td>
@@ -9316,6 +9320,7 @@ function LoginPage({ navigate, onLoggedIn }) {
 function SignupPage({ navigate, onLoggedIn }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [location, setLocation] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
@@ -9338,7 +9343,8 @@ function SignupPage({ navigate, onLoggedIn }) {
     setError('');
     const nameTrim = name.trim();
     const emailNorm = email.trim().toLowerCase();
-    if (!nameTrim || !emailNorm) return;
+    const locationTrim = location.trim();
+    if (!nameTrim || !emailNorm || !locationTrim) return;
     if (password.length < 8) {
       setError('Password must be at least 8 characters.');
       return;
@@ -9372,12 +9378,23 @@ function SignupPage({ navigate, onLoggedIn }) {
       const accessType = isFounding ? 'founding' : 'pending';
       const passwordHash = hashPassword(password);
 
+      let signupIp = '';
+      try {
+        const geoRes = await fetch('https://ipapi.co/json/');
+        const geoData = await geoRes.json();
+        signupIp = geoData.ip || '';
+      } catch {
+        /* ignore geolocation failure */
+      }
+
       const { data: newUser, error: insErr } = await supabase
         .from('users')
         .insert({
           email: emailNorm,
           name: nameTrim,
           phone: null,
+          location: locationTrim,
+          signup_ip: signupIp,
           password_hash: passwordHash,
           access_type: accessType,
           is_active: true,
@@ -9437,6 +9454,16 @@ function SignupPage({ navigate, onLoggedIn }) {
         <input type="text" required value={name} onChange={(ev) => setName(ev.target.value)} style={{ ...inputBase, marginBottom: 16 }} autoComplete="name" />
         <label style={{ display: 'block', marginBottom: 8, fontSize: 12, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.6px' }}>Email</label>
         <input type="email" required value={email} onChange={(ev) => setEmail(ev.target.value)} style={{ ...inputBase, marginBottom: 16 }} autoComplete="email" />
+        <label style={{ display: 'block', marginBottom: 8, fontSize: 12, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.6px' }}>CITY *</label>
+        <input
+          required
+          name="location"
+          type="text"
+          value={location}
+          onChange={(ev) => setLocation(ev.target.value)}
+          style={{ ...inputBase, marginBottom: 16 }}
+          placeholder="e.g. Mumbai, Delhi, Bangalore"
+        />
         <label style={{ display: 'block', marginBottom: 8, fontSize: 12, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.6px' }}>Password (min 8 characters)</label>
         <input type="password" required minLength={8} value={password} onChange={(ev) => setPassword(ev.target.value)} style={{ ...inputBase, marginBottom: 16 }} autoComplete="new-password" />
         <label style={{ display: 'block', marginBottom: 8, fontSize: 12, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.6px' }}>Confirm Password</label>
@@ -9754,6 +9781,7 @@ function WaitlistPage({ navigate }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [location, setLocation] = useState('');
   const [founderCount, setFounderCount] = useState(null);
   const [feedback, setFeedback] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -9776,7 +9804,8 @@ function WaitlistPage({ navigate }) {
     setFeedback(null);
     const nameTrim = name.trim();
     const emailNorm = email.trim().toLowerCase();
-    if (!nameTrim || !emailNorm) return;
+    const locationTrim = location.trim();
+    if (!nameTrim || !emailNorm || !locationTrim) return;
     setSubmitting(true);
     try {
       const { data: existing, error: exErr } = await supabase
@@ -9813,10 +9842,21 @@ function WaitlistPage({ navigate }) {
       const today = new Date().toISOString().slice(0, 10);
       const isFounding = today <= cutoffDate;
 
+      let ipAddress = '';
+      try {
+        const geoRes = await fetch('https://ipapi.co/json/');
+        const geoData = await geoRes.json();
+        ipAddress = geoData.ip || '';
+      } catch {
+        /* ignore geolocation failure */
+      }
+
       const { error: insErr } = await supabase.from('waitlist').insert({
         email: emailNorm,
         name: nameTrim,
         phone: phone.trim() || null,
+        location: locationTrim,
+        ip_address: ipAddress,
         is_founding_member: isFounding,
       });
       if (insErr) throw insErr;
@@ -9965,8 +10005,20 @@ function WaitlistPage({ navigate }) {
             type="tel"
             value={phone}
             onChange={(ev) => setPhone(ev.target.value)}
-            style={{ ...inputBase, marginBottom: 22 }}
+            style={{ ...inputBase, marginBottom: 18 }}
             placeholder="+91 …"
+          />
+          <label style={{ display: 'block', marginBottom: 8, fontSize: 12, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+            CITY *
+          </label>
+          <input
+            required
+            name="location"
+            type="text"
+            value={location}
+            onChange={(ev) => setLocation(ev.target.value)}
+            style={{ ...inputBase, marginBottom: 22 }}
+            placeholder="e.g. Mumbai, Delhi, Bangalore"
           />
           <button
             type="submit"
