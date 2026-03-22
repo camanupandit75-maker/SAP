@@ -2214,9 +2214,18 @@ function useHover() {
 // ═══════════════════════════════════════════════════════════════════════════════
 // PAGE 1: HOME
 // ═══════════════════════════════════════════════════════════════════════════════
-function HomePage({ navigate, completedLessons, returningUser, lastLessonName, onContinueLastLesson, resetSuccessMsg, onSignOut }) {
+function HomePage({ navigate, completedLessons, returningUser, lastLessonName, onContinueLastLesson, resetSuccessMsg, onSignOut, authStatus }) {
   const h = useHover();
   const [dismissWelcome, setDismissWelcome] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  const requireAuthOrShowModal = (target, modIdx, lesIdx) => {
+    if (authStatus === 'guest') {
+      setShowLoginModal(true);
+      return;
+    }
+    navigate(target, modIdx, lesIdx);
+  };
 
   const completedCount = completedLessons.size;
   const progressPct = totalLessons ? Math.round((completedCount / totalLessons) * 100) : 0;
@@ -2281,7 +2290,7 @@ function HomePage({ navigate, completedLessons, returningUser, lastLessonName, o
               ...(h.is('tcode-btn') ? { borderColor: C.tcode, color: '#7cc4ea' } : {}),
             }}
             {...h.bind('tcode-btn')}
-            onClick={() => navigate('tcode')}
+            onClick={() => requireAuthOrShowModal('tcode')}
           >
             T-Code Reference
           </button>
@@ -2299,7 +2308,7 @@ function HomePage({ navigate, completedLessons, returningUser, lastLessonName, o
               ...(h.is('scenarios-btn') ? { borderColor: C.accent, color: C.accentLight } : {}),
             }}
             {...h.bind('scenarios-btn')}
-            onClick={() => navigate('scenarios')}
+            onClick={() => requireAuthOrShowModal('scenarios')}
           >
             🎯 Scenarios
           </button>
@@ -2317,7 +2326,7 @@ function HomePage({ navigate, completedLessons, returningUser, lastLessonName, o
               ...(h.is('cheat-btn') ? { borderColor: C.tcode, color: '#7cc4ea' } : {}),
             }}
             {...h.bind('cheat-btn')}
-            onClick={() => navigate('cheatsheet')}
+            onClick={() => requireAuthOrShowModal('cheatsheet')}
           >
             Cheat Sheet
           </button>
@@ -2335,7 +2344,7 @@ function HomePage({ navigate, completedLessons, returningUser, lastLessonName, o
               ...(h.is('sim-btn') ? { borderColor: C.accent, color: C.accentLight } : {}),
             }}
             {...h.bind('sim-btn')}
-            onClick={() => navigate('simulator')}
+            onClick={() => requireAuthOrShowModal('simulator')}
           >
             🖥 Launch SAP Simulator
           </button>
@@ -2353,7 +2362,7 @@ function HomePage({ navigate, completedLessons, returningUser, lastLessonName, o
               ...(h.is('drill-btn') ? { borderColor: C.accent, color: C.accentLight } : {}),
             }}
             {...h.bind('drill-btn')}
-            onClick={() => navigate('drill')}
+            onClick={() => requireAuthOrShowModal('drill')}
           >
             ⚡ Speed Drill
           </button>
@@ -2371,7 +2380,7 @@ function HomePage({ navigate, completedLessons, returningUser, lastLessonName, o
               ...(h.is('errors-btn') ? { borderColor: '#ef4444', color: '#fca5a5' } : {}),
             }}
             {...h.bind('errors-btn')}
-            onClick={() => navigate('errors')}
+            onClick={() => requireAuthOrShowModal('errors')}
           >
             🔴 Error Decoder
           </button>
@@ -2433,27 +2442,51 @@ function HomePage({ navigate, completedLessons, returningUser, lastLessonName, o
           >
             About
           </button>
-          <button
-            type="button"
-            style={{
-              ...s.card,
-              padding: '8px 16px',
-              fontSize: 12,
-              color: C.textMuted,
-              fontFamily: C.body,
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              background: C.bgSecondary,
-              border: `1px solid ${C.border}`,
-              ...(h.is('signout-btn') ? { borderColor: C.accent, color: C.accentLight } : {}),
-            }}
-            {...h.bind('signout-btn')}
-            onClick={() => onSignOut?.()}
-          >
-            Sign Out
-          </button>
+          {authStatus === 'authed' ? (
+            <button
+              type="button"
+              style={{
+                ...s.card,
+                padding: '8px 16px',
+                fontSize: 12,
+                color: C.textMuted,
+                fontFamily: C.body,
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                background: C.bgSecondary,
+                border: `1px solid ${C.border}`,
+                ...(h.is('signout-btn') ? { borderColor: C.accent, color: C.accentLight } : {}),
+              }}
+              {...h.bind('signout-btn')}
+              onClick={() => onSignOut?.()}
+            >
+              Sign Out
+            </button>
+          ) : (
+            <button
+              type="button"
+              style={{
+                ...s.card,
+                padding: '8px 16px',
+                fontSize: 12,
+                color: C.accent,
+                fontFamily: C.body,
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                background: 'rgba(200,169,110,0.12)',
+                border: `1px solid ${C.accent}`,
+                ...(h.is('signin-btn') ? { borderColor: C.accentLight, color: C.accentLight } : {}),
+              }}
+              {...h.bind('signin-btn')}
+              onClick={() => navigate('login')}
+            >
+              Sign In
+            </button>
+          )}
         </div>
       </header>
 
@@ -2501,7 +2534,7 @@ function HomePage({ navigate, completedLessons, returningUser, lastLessonName, o
           </div>
         )}
 
-        {returningUser && !dismissWelcome && (
+        {authStatus === 'authed' && returningUser && !dismissWelcome && (
           <div style={{ ...s.card, borderLeft: `4px solid ${C.accent}`, padding: 16, marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
             <div>
               <div style={{ color: C.accentLight, fontWeight: 600, marginBottom: 4 }}>Welcome back. You left off at {lastLessonName || 'your last lesson'}.</div>
@@ -2530,7 +2563,13 @@ function HomePage({ navigate, completedLessons, returningUser, lastLessonName, o
               ...(h.is('continue') ? s.btnPrimaryHover : {}),
             }}
             {...h.bind('continue')}
-            onClick={() => firstIncomplete != null && navigate('lesson', firstIncomplete.mi, firstIncomplete.li)}
+            onClick={() => {
+              if (authStatus === 'guest') {
+                setShowLoginModal(true);
+                return;
+              }
+              if (firstIncomplete != null) navigate('lesson', firstIncomplete.mi, firstIncomplete.li);
+            }}
           >
             Continue Learning →
           </button>
@@ -2555,7 +2594,7 @@ function HomePage({ navigate, completedLessons, returningUser, lastLessonName, o
                   ...(h.is(`mod-${i}`) ? s.cardHover : {}),
                 }}
                 {...h.bind(`mod-${i}`)}
-                onClick={() => navigate('module', i)}
+                onClick={() => requireAuthOrShowModal('module', i)}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div style={{ color: C.accent, opacity: 0.8 }}>
@@ -2624,6 +2663,98 @@ function HomePage({ navigate, completedLessons, returningUser, lastLessonName, o
         </section>
       </section>
       <PlatformFooter navigate={navigate} />
+
+      {showLoginModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="login-modal-title"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+            padding: 20,
+          }}
+          onClick={() => setShowLoginModal(false)}
+        >
+          <div
+            style={{
+              ...s.card,
+              width: 'min(420px, 100%)',
+              padding: 28,
+              background: C.bgCard,
+              border: `2px solid ${C.accent}`,
+              position: 'relative',
+              boxSizing: 'border-box',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              aria-label="Close"
+              onClick={() => setShowLoginModal(false)}
+              style={{
+                position: 'absolute',
+                top: 12,
+                right: 12,
+                background: 'none',
+                border: 'none',
+                color: C.textMuted,
+                fontSize: 22,
+                lineHeight: 1,
+                cursor: 'pointer',
+                padding: 4,
+              }}
+            >
+              ×
+            </button>
+            <h2 id="login-modal-title" style={{ fontFamily: C.heading, fontSize: 22, color: C.accentLight, marginBottom: 10, paddingRight: 28 }}>
+              Login to Continue
+            </h2>
+            <p style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.6, marginBottom: 24 }}>
+              Sign in to access the learning platform.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <button
+                type="button"
+                style={{ ...s.btnPrimary, width: '100%', padding: '14px 18px', fontSize: 15, fontWeight: 700 }}
+                onClick={() => {
+                  setShowLoginModal(false);
+                  navigate('login');
+                }}
+              >
+                Sign In
+              </button>
+              <button
+                type="button"
+                style={{
+                  width: '100%',
+                  padding: '14px 18px',
+                  fontSize: 15,
+                  fontWeight: 600,
+                  fontFamily: C.body,
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  background: 'transparent',
+                  color: C.accentLight,
+                  border: `2px solid ${C.accent}`,
+                  boxSizing: 'border-box',
+                }}
+                onClick={() => {
+                  setShowLoginModal(false);
+                  navigate('waitlist');
+                }}
+              >
+                Join Free as Founder →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -8576,7 +8707,15 @@ function newSessionToken() {
   return crypto.randomUUID();
 }
 
-const AUTH_GUEST_PUBLIC_PAGES = new Set(['login', 'signup', 'waitlist', 'waitlist_success', 'pricing']);
+const AUTH_GUEST_PUBLIC_PAGES = new Set([
+  'login', 'signup', 'waitlist', 'waitlist_success', 'pricing',
+  'home', 'about', 'disclaimer', 'terms', 'testimonials',
+]);
+/** Pages unpaid (pending) users may open without being forced to payment (not home — they must pay first). */
+const PENDING_MARKETING_PAGES = new Set([
+  'waitlist', 'waitlist_success', 'login', 'signup', 'pricing',
+  'about', 'disclaimer', 'terms', 'testimonials',
+]);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // AUTH: LOGIN / SIGNUP / PAYMENT (pending)
@@ -9835,7 +9974,7 @@ export default function App() {
   const PROGRESS_KEY = 'zerofico_progress';
   const [authStatus, setAuthStatus] = useState('loading');
   const [authUser, setAuthUser] = useState(null);
-  const [page, setPage] = useState('login');
+  const [page, setPage] = useState('home');
   const [moduleIndex, setModuleIndex] = useState(0);
   const [lessonIndex, setLessonIndex] = useState(0);
   const [completedLessons, setCompletedLessons] = useState(() => new Set());
@@ -9902,7 +10041,7 @@ export default function App() {
         if (!cancelled) {
           setAuthStatus('guest');
           setAuthUser(null);
-          setPage('login');
+          setPage('home');
         }
         return;
       }
@@ -9917,7 +10056,7 @@ export default function App() {
         localStorage.removeItem(ZEROFICO_SESSION_KEY);
         setAuthStatus('guest');
         setAuthUser(null);
-        setPage('login');
+        setPage('home');
         return;
       }
       if (new Date(sess.expires_at) <= new Date()) {
@@ -9925,7 +10064,7 @@ export default function App() {
         localStorage.removeItem(ZEROFICO_SESSION_KEY);
         setAuthStatus('guest');
         setAuthUser(null);
-        setPage('login');
+        setPage('home');
         return;
       }
       const { data: user, error: uErr } = await supabase
@@ -9938,7 +10077,7 @@ export default function App() {
         localStorage.removeItem(ZEROFICO_SESSION_KEY);
         setAuthStatus('guest');
         setAuthUser(null);
-        setPage('login');
+        setPage('home');
         return;
       }
       setAuthUser(user);
@@ -9954,14 +10093,16 @@ export default function App() {
 
   useEffect(() => {
     if (authStatus === 'guest' && !AUTH_GUEST_PUBLIC_PAGES.has(page)) {
-      setPage('login');
+      setPage('home');
     }
   }, [authStatus, page]);
 
   useEffect(() => {
     if (authStatus !== 'authed' || !authUser) return;
-    if (authUser.access_type === 'pending' && page !== 'payment' && !AUTH_GUEST_PUBLIC_PAGES.has(page)) {
-      setPage('payment');
+    if (authUser.access_type === 'pending' && page !== 'payment') {
+      if (page === 'home' || !PENDING_MARKETING_PAGES.has(page)) {
+        setPage('payment');
+      }
     }
   }, [authStatus, authUser, page]);
 
@@ -9993,7 +10134,7 @@ export default function App() {
       if (!AUTH_GUEST_PUBLIC_PAGES.has(target)) return;
     } else if (authStatus === 'guest') {
       if (!AUTH_GUEST_PUBLIC_PAGES.has(target)) {
-        setPage('login');
+        setPage('home');
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
@@ -10003,10 +10144,12 @@ export default function App() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
-      if (authUser.access_type === 'pending' && target !== 'payment' && !AUTH_GUEST_PUBLIC_PAGES.has(target)) {
-        setPage('payment');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        return;
+      if (authUser.access_type === 'pending' && target !== 'payment') {
+        if (target === 'home' || !PENDING_MARKETING_PAGES.has(target)) {
+          setPage('payment');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
+        }
       }
       if ((target === 'login' || target === 'signup')) {
         setPage(authUser.access_type === 'pending' ? 'payment' : 'home');
@@ -10163,6 +10306,7 @@ export default function App() {
           }}
           resetSuccessMsg={resetSuccessMsg}
           onSignOut={handleSignOut}
+          authStatus={authStatus}
         />
       );
       break;
